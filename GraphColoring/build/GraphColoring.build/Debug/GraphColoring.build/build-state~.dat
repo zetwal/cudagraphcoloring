@@ -1,0 +1,59 @@
+TGraphColoring
+v7
+r0
+t291864760.627825
+cCheck dependencies
+cCompileC build/GraphColoring.build/Debug/GraphColoring.build/Objects-normal/x86_64/main.o "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/main.cpp" normal x86_64 c++ com.apple.compilers.gcc.4_2
+cLd "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/Debug/GraphColoring" normal x86_64
+
+N/Developer/SDKs/MacOSX10.6.sdk
+c000000004ABBF0FD00000000000000EE
+t1253830909
+s238
+
+N/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/Debug/GraphColoring
+t1270171960
+s37048
+
+N/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/GraphColoring.build/Debug/GraphColoring.build/Objects-normal/x86_64/GraphColoring.LinkFileList
+c000000004BB5493700000000000000AB
+t1270171959
+s171
+
+N/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/GraphColoring.build/Debug/GraphColoring.build/Objects-normal/x86_64/main.o
+t1270171960
+s110636
+
+N/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/main.cpp
+c000000004BB5493500000000000008FC
+t1270171957
+s2300
+i<iostream>
+
+CCheck dependencies
+r0
+lSLF07#2@18"Check dependencies291864759#291864759#0(0"0(0#1#0"4300885448#0"0#
+
+CCompileC build/GraphColoring.build/Debug/GraphColoring.build/Objects-normal/x86_64/main.o "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/main.cpp" normal x86_64 c++ com.apple.compilers.gcc.4_2
+s291864759.798447
+e291864760.429630
+r1
+xCompileC
+xbuild/GraphColoring.build/Debug/GraphColoring.build/Objects-normal/x86_64/main.o
+x/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/main.cpp
+xnormal
+xx86_64
+xc++
+xcom.apple.compilers.gcc.4_2
+lSLF07#2@106"Compile /Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/main.cpp291864759#291864760#0(0"0(0#0#98"/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/main.cpp4300885448#2029"    cd "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring"    setenv LANG en_US.US-ASCII    /Developer/usr/bin/gcc-4.2 -x c++ -arch x86_64 -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks -O0 -Wreturn-type -Wunused-variable -D_GLIBCXX_DEBUG=1 -D_GLIBCXX_DEBUG_PEDANTIC=1 -isysroot /Developer/SDKs/MacOSX10.6.sdk -mfix-and-continue -fvisibility-inlines-hidden -mmacosx-version-min=10.6 -gdwarf-2 -iquote "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/GraphColoring.build/Debug/GraphColoring.build/GraphColoring-generated-files.hmap" "-I/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/GraphColoring.build/Debug/GraphColoring.build/GraphColoring-own-target-headers.hmap" "-I/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/GraphColoring.build/Debug/GraphColoring.build/GraphColoring-all-target-headers.hmap" -iquote "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/GraphColoring.build/Debug/GraphColoring.build/GraphColoring-project-headers.hmap" "-F/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/Debug" "-I/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/Debug/include" "-I/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/GraphColoring.build/Debug/GraphColoring.build/DerivedSources/x86_64" "-I/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/GraphColoring.build/Debug/GraphColoring.build/DerivedSources" -c "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/main.cpp" -o "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/GraphColoring.build/Debug/GraphColoring.build/Objects-normal/x86_64/main.o"0#
+
+CLd "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/Debug/GraphColoring" normal x86_64
+s291864760.429799
+e291864760.627767
+r1
+xLd
+x/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/Debug/GraphColoring
+xnormal
+xx86_64
+lSLF07#2@120"Link /Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/Debug/GraphColoring291864760#291864760#0(0"0(0#0#0"4300885448#787"    cd "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring"    setenv MACOSX_DEPLOYMENT_TARGET 10.6    /Developer/usr/bin/g++-4.2 -arch x86_64 -isysroot /Developer/SDKs/MacOSX10.6.sdk "-L/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/Debug" "-F/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/Debug" -filelist "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/GraphColoring.build/Debug/GraphColoring.build/Objects-normal/x86_64/GraphColoring.LinkFileList" -mmacosx-version-min=10.6 -o "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/GraphColoring/build/Debug/GraphColoring"0#
+
