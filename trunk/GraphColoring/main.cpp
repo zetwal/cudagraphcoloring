@@ -11,7 +11,7 @@ const int GRAPHSIZE = 30;
 
 void generateMatrix(int matrix[GRAPHSIZE][GRAPHSIZE], int num){
 	int x, y;
-	int count;
+	int count = 0;
 	
 	while (count < num){
 		x = rand()%GRAPHSIZE;
