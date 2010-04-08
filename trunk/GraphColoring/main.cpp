@@ -2,6 +2,7 @@
 
 #include <stdio.h> 
 #include <stdlib.h> 
+#include <string.h>
 #include <time.h> 
 #include <iostream>
 #include <math.h> 
@@ -348,8 +349,11 @@ int main(){
 	
 	int numColors = 0; 
 	int maxDegree; 
+	//1270757717
+	int seed = time(NULL);
+	cout << "seed: " << seed << endl;
 	
-	srand ( time(NULL) );                                                           // initialize random numbers 
+	srand ( 1270757717  );                                                           // initialize random numbers 
 	
 	// initialize graph 
 	generateMatrix(adjacencyMatrix, GRAPHSIZE, 100); 
