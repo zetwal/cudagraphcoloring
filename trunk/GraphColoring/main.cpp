@@ -220,6 +220,10 @@ int getConflictedNodes(int *adjacencyMatrix, int *graphColors, int *conflict)
 	cout << endl; 
 	
 	cout<<"number of colors:"<<maxColor<<endl;
+
+	set<int> conflictSet;
+	conflictSet.clear();
+
 	
 	int conflictCount = 0;
 	for(n=0; n<numSub; n++)
@@ -246,8 +250,7 @@ int getConflictedNodes(int *adjacencyMatrix, int *graphColors, int *conflict)
 				
 				if( adjacencyMatrix[ii*GRAPHSIZE + j] == 1 && (graphColors[ii] == graphColors[j]))
 				{		
-					conflict[conflictCount] = min(ii,j) + 1;
-					conflictCount++;
+					conflictSet.insert(min(ii,j) + 1);
 				}
 			}		
 		}
@@ -257,52 +260,18 @@ int getConflictedNodes(int *adjacencyMatrix, int *graphColors, int *conflict)
 	delete[] subMatrix;
 	delete[] subgraphColors;
 	
-	int * newConflict = new int[GRAPHSIZE];
-	for(int i=0; i<GRAPHSIZE; i++)
-		newConflict[i] = conflict[i];
-	
+	set<int>::iterator it = conflictSet.begin();
     cout<<"List of conflicting nodes:"<<endl;
-    for (int k=0; k<conflictCount; k++) 
-		cout << conflict[k] << "  "; 	
+	for (int i=0; it != conflictSet.end(); it++) 
+	{
+		conflict[i] = *it;
+		i++;
+		cout << conflict[i] << "  "; 	
+	}
 	cout << "\n";
 	
-	//unique conflict 
-#ifdef UNIQUE_CONFLICT	
-	bool repeat = false;
-	int count = 0;
-	for(int i=0; i<GRAPHSIZE; i++)
-	{
-		repeat = false;
-		for(int j=0; j<i; j++)
-			if(conflict[i] == conflict[j] || conflict[i] == 0)
-				repeat = true;
-		if(!repeat)
-			count++;
-		
-	}
-	
-    conflictCount = count;
-	
-	count = 0;
-	for(int i=0; i<GRAPHSIZE; i++)
-	{
-		repeat = false;
-		for(int j=0; j<i; j++)
-			if(conflict[i] == conflict[j] || conflict[i] == 0)
-				repeat = true;
-		if(!repeat)
-		{
-			conflict[count] = newConflict[i];
-			count++;
-		}
-		
-	}
-	
-	delete []  newConflict;
-	
-#endif
-	
-	return conflictCount;
+
+	return conflictSet.size();
 	
 }
 
@@ -349,11 +318,11 @@ int main(){
 	
 	int numColors = 0; 
 	int maxDegree; 
-	//1270757717
+	//1270760275
 	int seed = time(NULL);
 	cout << "seed: " << seed << endl;
 	
-	srand ( 1270757717  );                                                           // initialize random numbers 
+	srand ( 1270760275  );                                                           // initialize random numbers 
 	
 	// initialize graph 
 	generateMatrix(adjacencyMatrix, GRAPHSIZE, 100); 
