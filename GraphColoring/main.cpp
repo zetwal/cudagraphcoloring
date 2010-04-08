@@ -5,6 +5,7 @@
  #include <time.h> 
  #include <iostream>
  #include <math.h> 
+#include <set>
  using namespace std; 
   
 const int GRAPHSIZE = 30; 
@@ -12,15 +13,49 @@ const int SUBSIZE = 10;
   
 #define UNIQUE_CONFLICT
 
-void   solveConflict(int *matrix, int size, int *conflict, int conflictSize, int *graphColors)
+int   solveConflict(int *matrix, int size, int *conflict, int conflictSize, int *graphColors)
 {
+	set<int> localColor;
+	set<int> globalColor;
+	set<int>::iterator it;
+	int colorCount = 0;
+
+	for(int i = 0; i<size; i++)
+		globalColor.insert(graphColors[i]);
+	
 	//go over all the conflicts
+
 	for(int i=0; i<conflictSize; i++)
 	{
+		localColor.clear();
+		int nodeIndex = conflict[i]-1;  //index begin with zero
+		int currentColor = graphColors[nodeIndex];
+		//check all the adjacency node
+		for(int j = 0; j < size; j++)
+			if(matrix[nodeIndex*size + j] ==1) //adjacency to current node
+				localColor.insert(graphColors[j]);
+				
+		//recolor the current conflict based on the adjacency color stored in localColor
 
-
+		//get coloring = globalColor - localColor
+		set<int> coloring = globalColor;
+		it = localColor.begin();
+		for(; it != localColor.end(); it++)
+			coloring.erase(*it);
+	
+		if(coloring.size() != 0)
+		{
+			it = coloring.begin();
+			graphColors[nodeIndex] = *it;
+		}
+		else
+		{
+			globalColor.insert(globalColor.size() + 1);
+			graphColors[nodeIndex] = globalColor.size() + 1;
+		}
 
 	}
+	return globalColor.size();
 
 
 }
@@ -300,7 +335,7 @@ int getConflictedNodes(int *adjacencyMatrix, int *graphColors, int *conflict)
           
          // graph coloring 
          numColors = colorGraph(adjacencyMatrix, graphColors, GRAPHSIZE, maxDegree);     
-	 cout<<"Number of colors:"<<numColors<<endl;    
+	    cout<<"Number of colors:"<<numColors<<endl;    
           
          cout<<"global graph coloring results:"<<endl;
          for (int k=0; k<GRAPHSIZE; k++) 
@@ -322,9 +357,13 @@ int getConflictedNodes(int *adjacencyMatrix, int *graphColors, int *conflict)
 	//original adjacencyMatrix 
 	//conflict nodes
 	//check each nodes to find the right color
-    solveConflict(adjacencyMatrix,  GRAPHSIZE, conflict, conflictCount, graphColors);
+	 //get new color 
+    numColors = solveConflict(adjacencyMatrix,  GRAPHSIZE, conflict, conflictCount, graphColors);
+    cout<<"Number of colors after solve conflict:"<<numColors<<endl;    
+    cout<<"global graph coloring results:"<<endl;
+    for (int k=0; k<GRAPHSIZE; k++) 
+           cout << graphColors[k] << "  "; 
 
-	
 	delete[] adjacencyMatrix;
 	delete[] graphColors;
 	delete[] conflict;
