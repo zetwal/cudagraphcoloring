@@ -51,7 +51,7 @@ int   solveConflict(int *matrix, int size, int *conflict, int conflictSize, int 
 		else
 		{
 			globalColor.insert(globalColor.size() + 1);
-			graphColors[nodeIndex] = globalColor.size() + 1;
+			graphColors[nodeIndex] = globalColor.size();
 		}
 
 	}
@@ -194,7 +194,8 @@ int getConflictedNodes(int *adjacencyMatrix, int *graphColors, int *conflict)
                  cout << endl; 
              }
 
-	     maxDegree = getMaxDegree(subMatrix, SUBSIZE); 
+	     maxDegree = getMaxDegree(subMatrix, SUBSIZE);
+ 
              cout << "Max degree of subMatrix: " << maxDegree << endl; 
 	     numColors = colorGraph(subMatrix, subgraphColors, SUBSIZE, maxDegree);
 
