@@ -11,7 +11,7 @@ __global__ void colorGraph(int *adjacencyMatrixD, int *colors, int size, int sub
 
 	subGraphSize = size/gridDim.x;
 	start = (size/gridDim.x * blockIdx.x) + (subGraphSize/blockDim.x * threadIdx.x);	// node starting with
-	end = start + subGraphSize/blockDim.x;
+	end = start + SUBSIZE;
 
 	//printf("Block: %d   Thread: %d  - start: %d   end: %d \n",blockIdx.x, threadIdx.x, start, end);
 
