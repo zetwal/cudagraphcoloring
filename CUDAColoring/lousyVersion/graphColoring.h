@@ -9,11 +9,11 @@
 #include <cuda.h>
 
 
-const int GRAPHSIZE = 30; 
-const int SUBSIZE = 10;
+const int GRAPHSIZE = 32; 
+const int SUBSIZE = 4;
 
-#define BLOCKSIZE_X 32
-#define BLOCKSIZE_Y 4
+#define GRIDSIZE 2
+#define BLOCKSIZE 4			// number of threads in a block
 
 #ifdef __cplusplus
 	#define CHECK_EXT extern "C"

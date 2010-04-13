@@ -306,7 +306,6 @@ int getConflictedNodes(int *adjacencyMatrix, int *graphColors, int *conflict)
 #endif
 	
 	return conflictCount;
-	
 }
 
 
@@ -315,87 +314,60 @@ int getConflictedNodes(int *adjacencyMatrix, int *graphColors, int *conflict)
 
 int getConflicts(int *adjacencyMatrix, int *graphColors, int *conflict)
 {	
-	int numSub = ceil((float)GRAPHSIZE/(float)SUBSIZE);
+	int numSub = GRIDSIZE*BLOCKSIZE;
 	int i,j,n;
-	
-	
-	int conflictCount = 0;
-	for(n=0; n<numSub; n++)
-	{
-		int size;
-		if(n < numSub-1)
-		{
-			size = SUBSIZE;
-		}
-		else
-		{
-			size = GRAPHSIZE - (numSub-1)*SUBSIZE;
-		}
-		
-		for(i = 0; i < size; i++)
-		{
-			int ii = i + n*SUBSIZE;
-			for(j = (ii+1); j < GRAPHSIZE; j++)
-			{
-				if(j > n*SUBSIZE && j < (n+1)*SUBSIZE)
-				{
-					continue;
-				}
-				
-				if( adjacencyMatrix[ii*GRAPHSIZE + j] == 1 && (graphColors[ii] == graphColors[j]))
-				{		
-					conflict[conflictCount] = min(ii,j) + 1;
-					conflictCount++;
-				}
-			}		
-		}
-	}
-	
-	
-	int * newConflict = new int[GRAPHSIZE];
-	for(int i=0; i<GRAPHSIZE; i++)
-		newConflict[i] = conflict[i];
-	
-    cout<<"List of conflicting nodes:"<<endl;
-    for (int k=0; k<conflictCount; k++) 
-		cout << conflict[k] << "  "; 	
-	cout << "\n";
-	
-	//unique conflict 
-#ifdef UNIQUE_CONFLICT	
-	bool repeat = false;
-	int count = 0;
-	for(int i=0; i<GRAPHSIZE; i++)
-	{
-		repeat = false;
-		for(int j=0; j<i; j++)
-			if(conflict[i] == conflict[j] || conflict[i] == 0)
-				repeat = true;
-		if(!repeat)
-			count++;
-		
-	}
-	
-    conflictCount = count;
-	
-	count = 0;
-	for(int i=0; i<GRAPHSIZE; i++)
-	{
-		repeat = false;
-		for(int j=0; j<i; j++)
-			if(conflict[i] == conflict[j] || conflict[i] == 0)
-				repeat = true;
-		if(!repeat)
-		{
-			conflict[count] = newConflict[i];
-			count++;
-		}
-	}
-	
-	delete []  newConflict;
-#endif
-	
-	return conflictCount;
+
+	set<int> conflictSet;
+        conflictSet.clear();
+
+        
+        int conflictCount = 0;
+        for(n=0; n<numSub; n++)
+        {
+                int size;
+                if(n < numSub-1)
+                {
+                        size = SUBSIZE;
+                }
+                else
+                {
+                        size = GRAPHSIZE - (numSub-1)*SUBSIZE;
+                }
+                
+                for(i = 0; i < size; i++)
+                {
+                        int ii = i + n*SUBSIZE;
+                        for(j = (ii+1); j < GRAPHSIZE; j++)
+                        {
+                                if(j > n*SUBSIZE && j < (n+1)*SUBSIZE)
+                                {
+                                        continue;
+                                }
+                                
+                                if( adjacencyMatrix[ii*GRAPHSIZE + j] == 1 && (graphColors[ii] == graphColors[j]))
+                                {               
+                                        conflictSet.insert(min(ii,j) + 1);
+                                }
+                        }               
+                }
+                
+        }
+        
+    
+        
+        set<int>::iterator it = conflictSet.begin();
+    		cout<<"List of conflicting nodes:"<<endl;
+        for (int i=0; it != conflictSet.end(); it++) 
+        {
+                conflict[i] = *it;
+                i++;
+                cout << conflict[i] << "  ";    
+        }
+        cout << "\n";
+        
+
+        return conflictSet.size();
+
 }
 
 
@@ -441,8 +413,11 @@ int main(){
 	memset(adjacencyMatrix, 0, GRAPHSIZE*GRAPHSIZE*sizeof(int));
 	memset(graphColors, 0, GRAPHSIZE*sizeof(int));
 	
+	int numColorsSeq, numColorsParallel;
 	int numColors = 0; 
 	int maxDegree; 
+	numColorsSeq = numColorsParallel = 0;
+
 	
 	srand ( time(NULL) );                                                           // initialize random numbers 
 	
@@ -465,6 +440,7 @@ int main(){
 	
 	// graph coloring 
 	numColors = colorGraph(adjacencyMatrix, graphColors, GRAPHSIZE, maxDegree);     
+	numColorsSeq = numColors;
 	
 	cout<<"Number of colors:"<<numColors<<endl;    
 	
@@ -481,6 +457,8 @@ int main(){
 	// partition and color subgraphs
 	int *conflict = new int[GRAPHSIZE*sizeof(int)];
 	memset(conflict, 0, GRAPHSIZE*sizeof(int));
+	memset(graphColors, 0, GRAPHSIZE*sizeof(int));  
+
 	//int conflictCount = getConflictedNodes(adjacencyMatrix, graphColors, conflict);
 	subGraphColoring(adjacencyMatrix, graphColors, maxDegree);
 	int conflictCount = getConflicts(adjacencyMatrix, graphColors, conflict);
@@ -497,7 +475,7 @@ int main(){
 	//check each nodes to find the right color
 	//get new color 
     numColors = solveConflict(adjacencyMatrix,  GRAPHSIZE, conflict, conflictCount, graphColors);
-
+	numColorsParallel = numColors;
 	
 	
 	
@@ -512,7 +490,9 @@ int main(){
 		cout << graphColors[k] << "  "; 
 	cout << endl;
 	
-    cout<<"Number of colors after solve conflict:" << numColors << endl;    
+    cout <<"Number of colors after solve conflict:" << numColors << endl;    
+
+	cout << endl << "Sequential Colors: " << numColorsSeq << " 	- 	Prarallel Colors: " << numColorsParallel << endl;    
 	
 	
 	// Checking for color conflict

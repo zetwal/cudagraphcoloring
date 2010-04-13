@@ -9,12 +9,15 @@ __global__ void colorGraph(int *adjacencyMatrixD, int *colors, int size, int sub
 	int i, j, start, end;
 	int numColors = 0; 
 
-	start = (size/gridDim.x * blockIdx.x) + (subGraphSize/blockDim.x * threadIdx.x);	// y position of start of row
-	end = start + subGraphSize;
+	subGraphSize = size/gridDim.x;
+	start = (size/gridDim.x * blockIdx.x) + (subGraphSize/blockDim.x * threadIdx.x);	// node starting with
+	end = start + subGraphSize/blockDim.x;
+
+	//printf("Block: %d   Thread: %d  - start: %d   end: %d \n",blockIdx.x, threadIdx.x, start, end);
 
 	//int *degreeArray; 
 	//degreeArray = new int[maxDegree+1]; 
-	int degreeArray[50]; 
+	int degreeArray[32]; 
 	
 
 	for (i=start; i<end; i++) 
@@ -31,19 +34,19 @@ __global__ void colorGraph(int *adjacencyMatrixD, int *colors, int size, int sub
 			
 			// check connected 
 			if (adjacencyMatrixD[i*size + j] == 1) 
-				if (colors[j-start] != 0) 
-					degreeArray[colors[j-start]-1] = 0;   // set connected spots to 0 
+				if (colors[j] != 0) 
+					degreeArray[colors[j]-1] = 0;   // set connected spots to 0 
 		} 
 		
 
 		for (j=0; j<=maxDegree; j++) 
-			if (degreeArray[j-start] != 0){ 
-				colors[i-start] = degreeArray[j-start]; 
+			if (degreeArray[j] != 0){ 
+				colors[i] = degreeArray[j]; 
 				break; 
 			} 
 		
-		if (colors[(i-start)] > numColors) 
-			numColors=colors[(i-start)]; 
+		if (colors[i] > numColors) 
+			numColors=colors[i]; 
 	} 
 
 	//delete[] degreeArray;
@@ -55,12 +58,14 @@ extern "C" __host__ void subGraphColoring(int *adjacencyMatrix, int *graphColors
 {
 	// partitioning
 	int numSub = ceil((float)GRAPHSIZE/(float)SUBSIZE);
-	memset(graphColors, 0, GRAPHSIZE*sizeof(int));  
-
-
-	
 	int k, maxColor = 1;
 	int *adjacencyMatrixD, *colorsD;
+
+	cudaEvent_t start, stop;	
+	float elapsedTime;
+	
+
+	
 
 	// Allocating memory on device
 	cudaMalloc((void**)&adjacencyMatrixD, GRAPHSIZE*GRAPHSIZE * sizeof(int));
@@ -69,13 +74,21 @@ extern "C" __host__ void subGraphColoring(int *adjacencyMatrix, int *graphColors
 
 	// transfer data to destination [ device(GPU) ] from source [ host(CPU) ]
 	cudaMemcpy(adjacencyMatrixD, adjacencyMatrix, GRAPHSIZE*GRAPHSIZE * sizeof(int), cudaMemcpyHostToDevice);
-	cudaMemcpy(colorsD, 			 graphColors,     GRAPHSIZE * sizeof(int),        cudaMemcpyHostToDevice);
+	cudaMemcpy(colorsD, 			 graphColors,     GRAPHSIZE * sizeof(int),        	 cudaMemcpyHostToDevice);
 
 
 	// graph coloring
-	dim3 dimGrid( ceil(GRAPHSIZE/(float)BLOCKSIZE_Y) );
-	dim3 dimBlock( BLOCKSIZE_Y );
+	dim3 dimGrid( GRIDSIZE );
+	dim3 dimBlock( BLOCKSIZE );
+
+	cudaEventCreate(&start);	cudaEventCreate(&stop);
+	cudaEventRecord(start, 0);
+
 	colorGraph<<<dimGrid, dimBlock>>>(adjacencyMatrixD, colorsD, GRAPHSIZE, SUBSIZE, maxDegree);
+
+	cudaEventRecord(stop, 0);	cudaEventSynchronize(stop);	cudaEventElapsedTime(&elapsedTime, start, stop);
+
+	printf("CPU - Time taken: %f ms\n",elapsedTime);
 
 
 	// transfer result to destination[ host(CPU) ] from source from [ device(GPU) ]
@@ -86,13 +99,16 @@ extern "C" __host__ void subGraphColoring(int *adjacencyMatrix, int *graphColors
 	cudaFree(adjacencyMatrixD);
 	cudaFree(colorsD);
 
+
+
+
 	
 
 	//cout<<"partitioned graphColors:"<<endl;	
 	printf("Partitioned graph colors: \n"); 
 	for (k=0; k<GRAPHSIZE; k++) 
 		//cout << graphColors[k] << "  "; 
-		printf("%d ", graphColors[k]);
+		printf("%d  ", graphColors[k]);
 	
 	printf("\n"); 
 	//cout << endl; 

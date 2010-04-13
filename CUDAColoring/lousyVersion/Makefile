@@ -27,18 +27,25 @@ all: graphDriver.o libmyCuda.so
 	$(CC) graphDriver.o  $(FLAGS) -o $(EXEC) -arch i386  #MacOSX
 	# $(CC) graphDriver.o  $(FLAGS) -o $(EXEC)  #Linux
 	
+debug: graphDriver.o libDebugMyCuda.so
+	$(CC) graphDriver.o  $(FLAGS) -o $(EXEC) -arch i386  	# MacOSX
+	#$(CC) graphDriver.o  $(FLAGS) -o $(EXEC)  				# Linux
 
 
 graphDriver.o: graphDriver.cpp graphColoring.h
 	$(CC) $(CFLAGS) -I$(CUDA_INCLUDE) graphDriver.cpp
 
+
 libmyCuda.so: graphColoring.h graphColoring.cu
 	$(NVCC) $(NVCFLAGS) graphColoring.cu -o libmyCuda.so
+
+libDebugMyCuda.so: graphColoring.h graphColoring.cu
+	$(NVCC) -deviceemu $(NVCFLAGS) graphColoring.cu -o libmyCuda.so		# -deviceemu for emulation mode
 
 
 
 clean:
-	rm -rf *.o *.so cuExe
+	rm -rf *.o *.so $(EXEC)
 	clear
 
 
