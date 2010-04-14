@@ -13,11 +13,18 @@ if( CUDA_CUDA_LIBRARY)
 	include_directories(${CMAKE_SOURCE_DIR} /usr/local/cuda/include) 
 
 #${CUDA_INCLUDE_DIRS} ${CUDA_SDK_ROOT_DIR} ${CUDA_SDK_ROOT_DIR}/common/inc 
+	cuda_add_library(CUDAGraphColoring SHARED ../graphColoring.cu)
+	target_link_libraries(CUDAGraphColoring ${CUDA_LIBRARIES})
 
 	include_directories(${CUDA_INCLUDE_DIRS}) 
 
 	#this compiles and links the binary, which is called eg
-	cuda_add_executable(cudaGraphColoring ../graphColoring.cu ../graphDriver)
+	cuda_add_executable(cudaGraphColoring ../graphDriver)
+	set (libs_to_link  ${CUDA_LIBRARIES} /usr/local/cuda/lib64/libcudart.so /usr/lib64/libcuda.so /usr/local/cuda/lib64/libcublas.so)
+
+#${CUDA_SDK_ROOT_DIR}/lib/libcutil.a
+
+	target_link_libraries(cudaGraphColoring CUDAGraphColoring ${libs_to_link})
 
 
 else( CUDA_CUDA_LIBRARY)
