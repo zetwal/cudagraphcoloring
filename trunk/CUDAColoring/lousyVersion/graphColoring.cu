@@ -1,28 +1,29 @@
 #include "graphColoring.h"
 
-// adjacencyMatrixD:adjacncy matrix
-// colors:			storage for colors
-// size: 		 	number of nodes
-// subGraphSize: 	number of nodes per subgraph
-// maxDegree:	    maximum degree of the graph
-__global__ void colorGraph(int *adjacencyMatrixD, int *colors, int size, int subGraphSize, int maxDegree){ 
+// Author: Pascal
+// Break a graph into parts and color them
+	// adjacencyMatrixD:adjacncy matrix
+	// colors:			storage for colors
+	// size: 		 	number of nodes
+	// maxDegree:	    maximum degree of the graph
+__global__ void colorGraph(int *adjacencyMatrixD, int *colors, int size, int maxDegree){ 
 	int i, j, start, end;
-	int numColors = 0; 
+	int subGraphSize, numColors = 0; 
 
-	subGraphSize = size/gridDim.x;
-	start = (size/gridDim.x * blockIdx.x) + (subGraphSize/blockDim.x * threadIdx.x);	// node starting with
-	end = start + SUBSIZE;
+
+	subGraphSize = size/(gridDim.x * blockDim.x);								// number of nodes that a thread processes
+	start = (size/gridDim.x * blockIdx.x) + (subGraphSize * threadIdx.x);	// node starting with
+	end = start + subGraphSize;
 
 	//printf("Block: %d   Thread: %d  - start: %d   end: %d \n",blockIdx.x, threadIdx.x, start, end);
-
 	//int *degreeArray; 
 	//degreeArray = new int[maxDegree+1]; 
-	int degreeArray[32]; 
+	int degreeArray[100]; 					// needs to change!!!
 	
 
 	for (i=start; i<end; i++) 
 	{                
-		// initialize degree array: stores colors used
+		// initialize degree array: stores colors that might be used
 		for (j=0; j<=maxDegree; j++) 
 			degreeArray[j] = j+1; 
 		
@@ -54,12 +55,12 @@ __global__ void colorGraph(int *adjacencyMatrixD, int *colors, int size, int sub
 
 
 
+// Author: Pascal
+// Calls the cuda code
 extern "C" __host__ void subGraphColoring(int *adjacencyMatrix, int *graphColors, int maxDegree)
 {
 	// partitioning
-	int numSub = ceil((float)GRAPHSIZE/(float)SUBSIZE);
-	int k, maxColor = 1;
-	int *adjacencyMatrixD, *colorsD;
+	int k, *adjacencyMatrixD, *colorsD;
 
 	cudaEvent_t start, stop;	
 	float elapsedTime;
@@ -84,11 +85,11 @@ extern "C" __host__ void subGraphColoring(int *adjacencyMatrix, int *graphColors
 	cudaEventCreate(&start);	cudaEventCreate(&stop);
 	cudaEventRecord(start, 0);
 
-	colorGraph<<<dimGrid, dimBlock>>>(adjacencyMatrixD, colorsD, GRAPHSIZE, SUBSIZE, maxDegree);
+	colorGraph<<<dimGrid, dimBlock>>>(adjacencyMatrixD, colorsD, GRAPHSIZE, maxDegree);
 
 	cudaEventRecord(stop, 0);	cudaEventSynchronize(stop);	cudaEventElapsedTime(&elapsedTime, start, stop);
 
-	printf("CPU - Time taken: %f ms\n",elapsedTime);
+	printf("Partitioning and coloring on GPU - Time taken: %f ms\n",elapsedTime);
 
 
 	// transfer result to destination[ host(CPU) ] from source from [ device(GPU) ]
@@ -101,16 +102,13 @@ extern "C" __host__ void subGraphColoring(int *adjacencyMatrix, int *graphColors
 
 
 
-
-	
-
-	//cout<<"partitioned graphColors:"<<endl;	
+// Display
+/**/
 	printf("Partitioned graph colors: \n"); 
 	for (k=0; k<GRAPHSIZE; k++) 
-		//cout << graphColors[k] << "  "; 
 		printf("%d  ", graphColors[k]);
 	
-	printf("\n"); 
-	//cout << endl; 
-	//cout<<"number of colors:"<< maxColor << endl;
+	printf("\n");
+/**/ 
+	
 }
