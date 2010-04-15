@@ -273,13 +273,19 @@ int main(){
 	memset(adjacencyMatrix, 0, GRAPHSIZE*GRAPHSIZE*sizeof(int));
 	memset(graphColors, 0, GRAPHSIZE*sizeof(int));
 
-	clock_t start,finish;
-	double timeTakenCPU, timeTakenGPU;
+	
 	int numColorsSeq, numColorsParallel;
 	int maxDegree; 
 	numColorsSeq = numColorsParallel = 0;
+	float GPUtime;
 
-	srand ( time(NULL) );  // initialize random numbers                                                           
+	srand ( time(NULL) );  // initialize random numbers   
+
+
+	cudaEvent_t start, stop, stop_1, stop_2, stop_3, stop_4;	
+	float elapsedTimeCPU, elapsedTimeGPU, elapsedTimeGPU_1, elapsedTimeGPU_2, elapsedTimeGPU_3, elapsedTimeGPU_4;
+	
+                                                       
 	
 
 //------------- Graph Creation --------------//
@@ -287,14 +293,16 @@ int main(){
 	generateMatrix(adjacencyMatrix, GRAPHSIZE, NUMEDGES); 
 
 	
-// Display graph 
+// Display graph
+/** 
 	for (int i=0; i<GRAPHSIZE; i++){ 
 		for (int j=0; j<GRAPHSIZE; j++) 
 			cout << adjacencyMatrix[i*GRAPHSIZE + j] << "  "; 
 		
 		cout << endl; 
 	} 
-		
+/**/	
+	
 // determining the maximum degree 
 	maxDegree = getMaxDegree(adjacencyMatrix, GRAPHSIZE); 
 	
@@ -306,15 +314,15 @@ int main(){
 //------------- Sequential Graph Coloring --------------//
 
 
-	start = clock();
+	
+	cudaEventCreate(&start);	cudaEventCreate(&stop);
+	cudaEventRecord(start, 0); 
 
 	numColorsSeq = colorGraph(adjacencyMatrix, graphColors, GRAPHSIZE, maxDegree);     
 
-	finish = clock();
-	timeTakenCPU = (double(finish)-double(start))/CLOCKS_PER_SEC;
+	cudaEventRecord(stop, 0);	cudaEventSynchronize(stop);	cudaEventElapsedTime(&elapsedTimeCPU, start, stop);
 	
-
-	cout<<"Sequential coloring = Number of colors: "<< numColorsSeq << " in " << timeTakenCPU << " ms." << endl;   
+   
 	cout<<"global graph coloring results:"<<endl;
 	for (int k=0; k<GRAPHSIZE; k++) 
 		cout << graphColors[k] << "  "; 
@@ -338,23 +346,40 @@ int main(){
 
 	memset(graphColors, 0, GRAPHSIZE*sizeof(int));  				// reset colors to 0
 
-	
-	start = clock();
+
+	cudaEventCreate(&start);	cudaEventCreate(&stop);
+	cudaEventCreate(&stop_1);
+	cudaEventCreate(&stop_2);
+	cudaEventCreate(&stop_3);
+	cudaEventCreate(&stop_4);
+	cudaEventRecord(start, 0);
+
 
 
 // Steps 1 & 2: partition and color
 	subGraphColoring(adjacencyMatrix, graphColors, maxDegree);					// subgraph coloring @ CUDA
 
+	cudaEventRecord(stop_1, 0);	cudaEventSynchronize(stop_1);	
+	cudaEventRecord(stop_2, 0);	cudaEventSynchronize(stop_2);	
+
+
+
 // Step 3:	get conflicts
 	int conflictCount = getConflicts(adjacencyMatrix, graphColors, conflict);	
 	
+	cudaEventRecord(stop_3, 0);	cudaEventSynchronize(stop_3);
+
+
+
 // Step 4: solve conflicts
     numColorsParallel = solveConflict(adjacencyMatrix,  GRAPHSIZE, conflict, conflictCount, graphColors);
 
-	
-	finish = clock();
-	timeTakenGPU = (double(finish)-double(start))/CLOCKS_PER_SEC;
-	
+	
+
+	cudaEventRecord(stop, 0);	cudaEventSynchronize(stop);	cudaEventElapsedTime(&elapsedTimeGPU, start, stop);
+	cudaEventElapsedTime(&elapsedTimeGPU_1, start, stop_1);
+	cudaEventElapsedTime(&elapsedTimeGPU_2, start, stop_2);
+	cudaEventElapsedTime(&elapsedTimeGPU_3, start, stop_3);
 
 
 // Display information
@@ -370,8 +395,13 @@ int main(){
 	cout << endl << endl;
 	
 
-    cout <<"Number of colors after solve conflict:" << numColorsParallel << " in " << timeTakenGPU << " ms" << endl;    
-	cout << "CPU time: " << timeTakenCPU << " - GPU Time: " << timeTakenGPU << endl;
+       
+	//cout << "GPU Partitioning and coloring time: " << GPUtime << " ms" << endl;
+	cout << "CPU time: " << elapsedTimeCPU << " ms    - GPU Time: " << elapsedTimeGPU << " ms" << endl;
+	cout << "ALGO step 1: " << elapsedTimeGPU_1 << " ms" << endl;
+	cout << "ALGO step 2: " << elapsedTimeGPU_2 << " ms" << endl;
+	cout << "ALGO step 3: " << elapsedTimeGPU_3 - elapsedTimeGPU_2 << " ms" << endl;
+	cout << "ALGO step 4: " << elapsedTimeGPU - elapsedTimeGPU_3 << " ms" << endl;
 	cout << endl << "Sequential Colors: " << numColorsSeq << " 	- 	Prarallel Colors: " << numColorsParallel << endl;    
 	
 
