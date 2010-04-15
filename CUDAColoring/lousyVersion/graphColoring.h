@@ -9,11 +9,11 @@
 #include <cuda.h>
 
 
-const int GRAPHSIZE = 256; 	// number of nodes
-const int NUMEDGES = 5000;	// number of edges
+const int GRAPHSIZE = 10240; 	// number of nodes
+const int NUMEDGES = 200000;	// number of edges
 
 #define GRIDSIZE 2			// number of blocks
-#define BLOCKSIZE 16			// number of threads in a block
+#define BLOCKSIZE 512			// number of threads in a block
 
 const int SUBSIZE = GRAPHSIZE/(GRIDSIZE*BLOCKSIZE);
 

@@ -60,12 +60,13 @@ __global__ void colorGraph(int *adjacencyMatrixD, int *colors, int size, int max
 extern "C" __host__ void subGraphColoring(int *adjacencyMatrix, int *graphColors, int maxDegree)
 {
 	// partitioning
-	int k, *adjacencyMatrixD, *colorsD;
+	int *adjacencyMatrixD, *colorsD;
 
-	cudaEvent_t start, stop;	
-	float elapsedTime;
+//	cudaEvent_t start, stop;	
+//	float elapsedTime;
 	
-
+//	cudaEventCreate(&start);//	cudaEventCreate(&stop);
+//	cudaEventRecord(start, 0);
 	
 
 	// Allocating memory on device
@@ -82,14 +83,13 @@ extern "C" __host__ void subGraphColoring(int *adjacencyMatrix, int *graphColors
 	dim3 dimGrid( GRIDSIZE );
 	dim3 dimBlock( BLOCKSIZE );
 
-	cudaEventCreate(&start);	cudaEventCreate(&stop);
-	cudaEventRecord(start, 0);
+	
 
 	colorGraph<<<dimGrid, dimBlock>>>(adjacencyMatrixD, colorsD, GRAPHSIZE, maxDegree);
 
-	cudaEventRecord(stop, 0);	cudaEventSynchronize(stop);	cudaEventElapsedTime(&elapsedTime, start, stop);
+	
 
-	printf("Partitioning and coloring on GPU - Time taken: %f ms\n",elapsedTime);
+	//printf("Partitioning and coloring on GPU - Time taken: %f ms\n",elapsedTime);
 
 
 	// transfer result to destination[ host(CPU) ] from source from [ device(GPU) ]
@@ -100,15 +100,18 @@ extern "C" __host__ void subGraphColoring(int *adjacencyMatrix, int *graphColors
 	cudaFree(adjacencyMatrixD);
 	cudaFree(colorsD);
 
+	
+//	cudaEventRecord(stop, 0);//	cudaEventSynchronize(stop);//	cudaEventElapsedTime(&elapsedTime, start, stop);
+
 
 
 // Display
-/**/
+/**
 	printf("Partitioned graph colors: \n"); 
-	for (k=0; k<GRAPHSIZE; k++) 
+	for (int k=0; k<GRAPHSIZE; k++) 
 		printf("%d  ", graphColors[k]);
 	
 	printf("\n");
 /**/ 
-	
+
 }
