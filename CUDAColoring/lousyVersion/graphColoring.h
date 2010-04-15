@@ -9,11 +9,13 @@
 #include <cuda.h>
 
 
-const int GRAPHSIZE = 32; 
-const int SUBSIZE = 4;
+const int GRAPHSIZE = 256; 	// number of nodes
+const int NUMEDGES = 5000;	// number of edges
 
-#define GRIDSIZE 2
-#define BLOCKSIZE 4			// number of threads in a block
+#define GRIDSIZE 2			// number of blocks
+#define BLOCKSIZE 16			// number of threads in a block
+
+const int SUBSIZE = GRAPHSIZE/(GRIDSIZE*BLOCKSIZE);
 
 #ifdef __cplusplus
 	#define CHECK_EXT extern "C"
