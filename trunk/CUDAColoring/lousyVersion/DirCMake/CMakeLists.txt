@@ -10,7 +10,7 @@ if( CUDA_CUDA_LIBRARY)
 	#this block sets up the shared library called prog1
 	set (CUDA_NVCC_FLAGS --shared  --compiler-options;'-fPIC' )
  
-	include_directories(${CMAKE_SOURCE_DIR} /usr/local/cuda/include) 
+	include_directories(${CMAKE_SOURCE_DIR}) 
 
 #${CUDA_INCLUDE_DIRS} ${CUDA_SDK_ROOT_DIR} ${CUDA_SDK_ROOT_DIR}/common/inc 
 	cuda_add_library(CUDAGraphColoring SHARED ../graphColoring.cu)
@@ -20,7 +20,8 @@ if( CUDA_CUDA_LIBRARY)
 
 	#this compiles and links the binary, which is called eg
 	cuda_add_executable(cudaGraphColoring ../graphDriver)
-	set (libs_to_link  ${CUDA_LIBRARIES} /usr/local/cuda/lib64/libcudart.so /usr/lib64/libcuda.so /usr/local/cuda/lib64/libcublas.so)
+	set (libs_to_link  ${CUDA_LIBRARIES} )
+#/usr/local/cuda/lib64/libcudart.so /usr/lib64/libcuda.so /usr/local/cuda/lib64/libcublas.so
 
 #${CUDA_SDK_ROOT_DIR}/lib/libcutil.a
 
