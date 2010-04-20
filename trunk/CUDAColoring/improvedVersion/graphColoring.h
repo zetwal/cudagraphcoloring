@@ -29,6 +29,7 @@ const int SUBSIZE_BOUNDARY = 256;
   
  CHECK_EXT __host__ void subGraphColoring(int *adjacencyMatrix, int *graphColors, int maxDegree); 
  CHECK_EXT void colorConfilctDetection(int *adjacencyMatrix, int *boundaryList, int *graphColors, int *conflict, int boundarySize); 
+ CHECK_EXT void colorAndConflict(int *adjacencyMatrix, int *boundaryList, int *graphColors, int *conflict, int boundarySize, int maxDegree);
   
  #endif // _GRAPHCOLORING_H_ 
  
