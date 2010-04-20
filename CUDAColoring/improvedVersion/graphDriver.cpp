@@ -307,7 +307,7 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
   
          memset(adjacencyMatrix, 0, GRAPHSIZE*GRAPHSIZE*sizeof(int)); 
          memset(graphColors, 0, GRAPHSIZE*sizeof(int)); 
-  	 memset(boundaryList, 0, GRAPHSIZE*sizeof(int)); 
+  	 	 memset(boundaryList, 0, GRAPHSIZE*sizeof(int)); 
           
          int numColorsSeq, numColorsParallel; 
          int maxDegree;  
@@ -396,7 +396,8 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
          cudaEventRecord(start, 0); 
   
   
-  
+ /**
+//
  // Steps 1 & 2: partition and color 
          subGraphColoring(adjacencyMatrix, graphColors, maxDegree);                                      // subgraph coloring @ CUDA 
   
@@ -410,20 +411,50 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
   
   
  // Step 3:      get conflicts 
-	 //cout<<"do confilct detection"<<endl;
-         //int conflictCount = getConflicts(adjacencyMatrix, graphColors, conflict);        
-         int conflictCount = 0;
-	 int *conflictTmp = new int[boundaryCount*sizeof(int)]; 
-	 memset(conflictTmp, 0, boundaryCount*sizeof(int));        
-	 //colorConfilctDetection(adjacencyMatrix, graphColors, conflictTmp);
-	cout<<"boundary nodes count="<<boundaryCount<<endl;
-	colorConfilctDetection(adjacencyMatrix, boundaryList, graphColors, conflictTmp, boundaryCount);
+	 	//cout<<"do confilct detection"<<endl;
+     	//int conflictCount = getConflicts(adjacencyMatrix, graphColors, conflict);        
+        int conflictCount = 0;
+	 	int *conflictTmp = new int[boundaryCount*sizeof(int)]; 
+	 	memset(conflictTmp, 0, boundaryCount*sizeof(int));        
+
+	 	//colorConfilctDetection(adjacencyMatrix, graphColors, conflictTmp);
+		cout<<"boundary nodes count="<<boundaryCount<<endl;
+
+		colorConfilctDetection(adjacencyMatrix, boundaryList, graphColors, conflictTmp, boundaryCount);
 	
-         cudaEventRecord(stop_3, 0); 
+        cudaEventRecord(stop_3, 0); 
+        cudaEventSynchronize(stop_3); 
   
-         cudaEventSynchronize(stop_3); 
-  
-         
+ /**/
+
+
+/**/
+// Merging of coloring and conflict
+ 		int conflictCount = 0;
+	 	int *conflictTmp = new int[boundaryCount*sizeof(int)];
+ 
+	 	memset(conflictTmp, 0, boundaryCount*sizeof(int));        
+		cout<<"boundary nodes count="<<boundaryCount<<endl;
+
+
+		colorAndConflict(adjacencyMatrix, boundaryList, graphColors, conflictTmp, boundaryCount, maxDegree);
+	
+
+		cudaEventRecord(stop_1, 0); 
+        cudaEventSynchronize(stop_1); 
+          
+        cudaEventRecord(stop_2, 0); 
+        cudaEventSynchronize(stop_2); 
+
+        cudaEventRecord(stop_3, 0); 
+        cudaEventSynchronize(stop_3); 
+
+
+
+/**/
+
+
+       
 	 /*for(int i=0; i< GRAPHSIZE; i++)
 	{
 		cout<<"conflictTmp="<<conflictTmp[i]<<endl;
@@ -482,7 +513,7 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
          cout << "CPU time: " << elapsedTimeCPU << " ms    - GPU Time: " << elapsedTimeGPU << " ms" << endl; 
          cout << "ALGO step 1: " << elapsedTimeGPU_1 << " ms" << endl; 
          cout << "ALGO step 2: " << elapsedTimeGPU_2 << " ms" << endl; 
-         cout << "ALGO step 3: " << elapsedTimeGPU_3 - elapsedTimeGPU_2 << " ms" << endl; 
+         cout << "ALGO step 3: " << elapsedTimeGPU_3 << " ms" << endl; 
          cout << "ALGO step 4: " << elapsedTimeGPU - elapsedTimeGPU_3 << " ms" << endl; 
          cout << endl << "Sequential Colors: " << numColorsSeq << "      -       Prarallel Colors: " << numColorsParallel << endl;     
           
@@ -496,7 +527,7 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
          delete[] adjacencyMatrix; 
          delete[] graphColors; 
          delete[] conflict; 
-	 delete[] boundaryList;
+	 	 delete[] boundaryList;
           
          return 0;  
  }  

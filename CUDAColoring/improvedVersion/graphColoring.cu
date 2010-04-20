@@ -51,7 +51,7 @@ __host__ void subGraphColoring(int *adjacencyMatrix, int *graphColors, int maxDe
 	cudaMalloc((void**)&colorsD, GRAPHSIZE*sizeof(int));
 
 	cudaMemcpy(adjacencyMatrixD, adjacencyMatrix, GRAPHSIZE*GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
-        cudaMemcpy(colorsD, graphColors, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(colorsD, graphColors, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
 
 	dim3 dimGrid(GRIDSIZE);
 	dim3 dimBlock(BLOCKSIZE);
@@ -130,32 +130,45 @@ __global__ void detectConflicts(int *adjacencyMatrixD, int *boundaryListD, int *
 extern "C"
 void colorConfilctDetection(int *adjacencyMatrix, int *boundaryList, int *graphColors, int *conflict, int boundarySize)
 {
-	//cout<<"enter conflict detection wrapper"<<endl;	
 	int *adjacencyMatrixD, *colorsD, *conflictD, *boundaryListD;
 	
-        
+/**
+	cudaEvent_t start, stop;         
+    float elapsedTimeCPU; 
+
+	 cudaEventCreate(&start); 
+     cudaEventCreate(&stop); 
+     cudaEventRecord(start, 0);       
+/**/      
+
 	cudaMalloc((void**)&adjacencyMatrixD, GRAPHSIZE*GRAPHSIZE*sizeof(int));
 	cudaMalloc((void**)&colorsD, GRAPHSIZE*sizeof(int));
 	cudaMalloc((void**)&conflictD, boundarySize*sizeof(int));
 	cudaMalloc((void**)&boundaryListD, boundarySize*sizeof(int));
 
 	cudaMemcpy(adjacencyMatrixD, adjacencyMatrix, GRAPHSIZE*GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
-        cudaMemcpy(colorsD, graphColors, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(colorsD, graphColors, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemcpy(boundaryListD, boundaryList, boundarySize*sizeof(int), cudaMemcpyHostToDevice);
 
-        int gridsize = ceil((float)boundarySize/(float)SUBSIZE_BOUNDARY);
+
+/**
+    cudaEventRecord(stop, 0); 
+    cudaEventSynchronize(stop); 
+    cudaEventElapsedTime(&elapsedTimeCPU, start, stop); 
+
+ 	cout << "GPU time: " << elapsedTimeCPU << endl; 
+/**/
+
+
+    int gridsize = ceil((float)boundarySize/(float)SUBSIZE_BOUNDARY);
 	int blocksize = SUBSIZE_BOUNDARY;
-	//int gridsize = ceil((float)GRAPHSIZE/(float)BLOCKSIZE);
-	//int blocksize = BLOCKSIZE;
+
 
 	dim3 dimGrid(gridsize);
 	dim3 dimBlock(blocksize);
-	
-        //cout<<"call conflict detection kernel"<<endl;
+	  
 	detectConflicts<<<dimGrid, dimBlock>>>(adjacencyMatrixD, boundaryListD, colorsD, conflictD, GRAPHSIZE, boundarySize);
-	//detectConflicts<<<GRIDSIZE, BLOCKSIZE>>>(adjacencyMatrixD, colorsD, conflictD, GRAPHSIZE);
-
-        //cout<<"call kernel complete"<<endl;
+	
 	cudaMemcpy(graphColors, colorsD, GRAPHSIZE*sizeof(int), cudaMemcpyDeviceToHost);
 	cudaMemcpy(conflict, conflictD, boundarySize*sizeof(int), cudaMemcpyDeviceToHost);
 
@@ -167,6 +180,85 @@ void colorConfilctDetection(int *adjacencyMatrix, int *boundaryList, int *graphC
 
 
 
+
+// Author:Peihong & Pascal
+// Description: Merging of colorConfilctDetection & subGraphColoring
+//				to save on data transfer time
+extern "C"
+void colorAndConflict(int *adjacencyMatrix, int *boundaryList, int *graphColors, int *conflict, int boundarySize, int maxDegree)
+{
+	int *adjacencyMatrixD, *colorsD, *conflictD, *boundaryListD;     
+	int gridsize = ceil((float)boundarySize/(float)SUBSIZE_BOUNDARY);
+	int blocksize = SUBSIZE_BOUNDARY;
+
+	cudaEvent_t start_col, start_confl, stop_col, stop_confl, start_mem, stop_mem;         
+    float elapsedTime_memory, elapsedTime_col, elapsedTime_confl; 
+
+
+// memory transfer
+	cudaEventCreate(&start_mem); 
+    cudaEventCreate(&stop_mem); 
+    cudaEventRecord(start_mem, 0); 
+
+	cudaMalloc((void**)&adjacencyMatrixD, GRAPHSIZE*GRAPHSIZE*sizeof(int));
+	cudaMalloc((void**)&colorsD, GRAPHSIZE*sizeof(int));
+	cudaMalloc((void**)&conflictD, boundarySize*sizeof(int));
+	cudaMalloc((void**)&boundaryListD, boundarySize*sizeof(int));
+
+	cudaMemcpy(adjacencyMatrixD, adjacencyMatrix, GRAPHSIZE*GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(colorsD, graphColors, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
+	cudaMemcpy(boundaryListD, boundaryList, boundarySize*sizeof(int), cudaMemcpyHostToDevice);
+
+
+	cudaEventRecord(stop_mem, 0); 
+    cudaEventSynchronize(stop_mem); 
+
+
+
+	
+	dim3 dimGrid_col(GRIDSIZE);
+	dim3 dimBlock_col(BLOCKSIZE);
+
+	dim3 dimGrid_confl(gridsize);
+	dim3 dimBlock_confl(blocksize);
+
+
+// Graph coloring
+	cudaEventCreate(&start_col); 
+    cudaEventCreate(&stop_col); 
+    cudaEventRecord(start_col, 0); 
+
+	colorGraph<<<dimGrid_col, dimBlock_col>>>(adjacencyMatrixD, colorsD, GRAPHSIZE, maxDegree);
+	
+	cudaEventRecord(stop_col, 0); 
+    cudaEventSynchronize(stop_col); 
+   
+    
+
+// Conflict resolution
+	cudaEventCreate(&start_confl); 
+    cudaEventCreate(&stop_confl); 
+    cudaEventRecord(start_confl, 0); 
+	  
+	detectConflicts<<<dimGrid_confl, dimBlock_confl>>>(adjacencyMatrixD, boundaryListD, colorsD, conflictD, GRAPHSIZE, boundarySize);
+
+	cudaEventRecord(stop_confl, 0); 
+    cudaEventSynchronize(stop_confl); 
+
+	 cudaEventElapsedTime(&elapsedTime_memory, start_mem, stop_mem); 
+	 cudaEventElapsedTime(&elapsedTime_col, start_col, stop_col); 
+	 cudaEventElapsedTime(&elapsedTime_confl, start_confl, stop_confl); 
+	cout << "GPU time ~ Memory: " << elapsedTime_memory  << "  Color: " << elapsedTime_col << "  Conflict: " << elapsedTime_confl << endl; 
+	
+
+	cudaMemcpy(graphColors, colorsD, GRAPHSIZE*sizeof(int), cudaMemcpyDeviceToHost);
+	cudaMemcpy(conflict, conflictD, boundarySize*sizeof(int), cudaMemcpyDeviceToHost);
+
+	cudaFree(adjacencyMatrixD);
+	cudaFree(colorsD);
+	cudaFree(conflictD);
+	cudaFree(boundaryListD);
+}
 
 
 
