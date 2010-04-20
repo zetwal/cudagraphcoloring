@@ -317,7 +317,7 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
          srand ( time(NULL) );  // initialize random numbers    
   
   
-         cudaEvent_t start, stop, stop_1, stop_2, stop_3, stop_4;         
+         cudaEvent_t start, stop, stop_1, stop_2, stop_3, stop_4, stop_5;         
          float elapsedTimeCPU, elapsedTimeGPU, elapsedTimeGPU_1, elapsedTimeGPU_2, elapsedTimeGPU_3, elapsedTimeGPU_4; 
           
                                                          
@@ -468,7 +468,6 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
 
 	for(int i=0; i< boundaryCount; i++)
 	{
-		
 		int node = conflictTmp[i];
 		//cout<<"conflictTmp["<<i<<"]="<<node<<endl;	
 		if(node >= 1)
@@ -479,8 +478,12 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
 		}
 	}
   	delete[] conflictTmp;
-        cout<<"conflict count="<<conflictCount<<endl;
+    cout<<"conflict count="<<conflictCount<<endl;
   
+	cudaEventRecord(stop_4, 0); 
+    cudaEventSynchronize(stop_4); 
+
+
  // Step 4: solve conflicts 
      numColorsParallel = solveConflict(adjacencyMatrix,  GRAPHSIZE, conflict, conflictCount, graphColors); 
   
@@ -493,6 +496,7 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
          cudaEventElapsedTime(&elapsedTimeGPU_1, start, stop_1); 
          cudaEventElapsedTime(&elapsedTimeGPU_2, start, stop_2); 
          cudaEventElapsedTime(&elapsedTimeGPU_3, start, stop_3); 
+		 cudaEventElapsedTime(&elapsedTimeGPU_4, start, stop_4); 
   
   
  // Display information 
@@ -514,7 +518,8 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
          cout << "ALGO step 1: " << elapsedTimeGPU_1 << " ms" << endl; 
          cout << "ALGO step 2: " << elapsedTimeGPU_2 << " ms" << endl; 
          cout << "ALGO step 3: " << elapsedTimeGPU_3 << " ms" << endl; 
-         cout << "ALGO step 4: " << elapsedTimeGPU - elapsedTimeGPU_3 << " ms" << endl; 
+		 cout << "Boundary count: " << elapsedTimeGPU_4 - elapsedTimeGPU_3 << " ms" << endl; 
+         cout << "ALGO step 4: " << elapsedTimeGPU - elapsedTimeGPU_4 << " ms" << endl; 
          cout << endl << "Sequential Colors: " << numColorsSeq << "      -       Prarallel Colors: " << numColorsParallel << endl;     
           
   
