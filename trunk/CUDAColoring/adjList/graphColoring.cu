@@ -13,27 +13,18 @@ __global__ void colorGraphAdjL(int *adjacencyListD, int *colors, int size, int m
 	int degreeArray[100];
 	for(i=start; i<end; i++)
 	{
-		for(j=0; j<=maxDegree; j++)
+		for(j=0; j<maxDegree; j++)
 			degreeArray[j] = j+1;
-		/*
-		for(j=start; j<end; j++){
-			if(i==j)
-			    continue;
-			
-			if(adjacencyMatrixD[i*size + j] == 1)
-				if(colors[j] != 0)
-					degreeArray[colors[j]-1] = 0;
-		}	
-		*/
 
-		for (j=0; j<=maxDegree; j++)
-			if (adjacencyListD[i*size + j] != -1)
-				degreeArray[colors[ adjacencyListD[i*subGraphSize + j]-1 ]] = 0;
+
+		for (j=0; j<maxDegree; j++)
+			if (adjacencyListD[i*maxDegree + j] != -1)
+				degreeArray[colors[ adjacencyListD[i*maxDegree + j] ]] = 0;
 			else
 				break;
 		
 
-		for(j=0; j<=maxDegree; j++)
+		for(j=0; j<maxDegree; j++)
 			if(degreeArray[j] != 0){
 				colors[i] = degreeArray[j];
 				break;
@@ -341,7 +332,19 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	cudaEvent_t start_col, start_confl, stop_col, stop_confl, start_mem, stop_mem;         
     float elapsedTime_memory, elapsedTime_col, elapsedTime_confl; 
 	
-	
+/*
+	// Adj list display
+	for (int i=0; i<10; i++){
+		for (int j=0; j<maxDegree; j++){
+			cout << adjacentList[i*maxDegree + j] << " ";
+		}
+		cout << endl;
+	}
+*/
+
+	cout << "Max deg: " << maxDegree << endl;
+
+
 	// memory transfer
 	cudaEventCreate(&start_mem); 
     cudaEventCreate(&stop_mem); 
@@ -400,7 +403,9 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	
 	cudaMemcpy(graphColors, colorsD, GRAPHSIZE*sizeof(int), cudaMemcpyDeviceToHost);
 	cudaMemcpy(conflict, conflictD, boundarySize*sizeof(int), cudaMemcpyDeviceToHost);
+
 	
+
 	cudaFree(adjacentListD);
 	cudaFree(colorsD);
 	cudaFree(conflictD);

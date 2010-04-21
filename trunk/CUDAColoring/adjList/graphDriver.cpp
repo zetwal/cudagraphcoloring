@@ -60,6 +60,14 @@ void getAdjacentList(int *adjacencyMatrix, int *adjacentList, int size, int maxD
 		}
 		//cout<<"number of neighbor count="<<nbCount<<endl;
 	}
+
+	// Adj list display
+	for (int i=0; i<10; i++){
+		for (int j=0; j<maxDegree; j++){
+			cout << adjacentList[i*maxDegree + j] << " ";
+		}
+		cout << endl;
+	}
 }
 
 // Author: Pascal 
@@ -241,8 +249,9 @@ int getConflicts(int *adjacencyMatrix, int *graphColors, int *conflict)
 
 
 // Author: Pascal
+
 // Solves conflicts 
-int conflictSolve(int *Adjlist, int size, int *conflict, int conflictSize, int *graphColors, int maxDegree){
+int conflictSolve_old(int *Adjlist, int size, int *conflict, int conflictSize, int *graphColors, int maxDegree){
 	int i, j, vertex, *colorList, *setColors;
 	colorList = new int[maxDegree];
 	setColors = new int[maxDegree];
@@ -276,6 +285,41 @@ int conflictSolve(int *Adjlist, int size, int *conflict, int conflictSize, int *
 		}
 	}
 
+}
+
+
+
+int conflictSolve(int *Adjlist, int size, int *conflict, int conflictSize, int *graphColors, int maxDegree){
+        int i, j, vertex, *colorList, *setColors;
+        colorList = new int[maxDegree];
+        setColors = new int[maxDegree];
+
+        // assign colors up to maxDegree in setColors
+        for (i=0; i<maxDegree; i++){
+                setColors[i] = i+1;
+        }
+
+
+        for (i=0; i<conflictSize; i++){
+                memcpy(colorList, setColors, maxDegree*sizeof(int));                    // set the colors in colorList to be same as setColors
+                
+                vertex = conflict[i]-1;
+
+                for (j=0; j<maxDegree; j++){                                            // cycle through the graph
+                        if ( Adjlist[vertex*maxDegree + j] != -1 )                      //      check if node is connected
+                              colorList[ graphColors[j]-1 ] = 0;
+                        else 
+                              break;                  
+                }
+
+
+                for (j=0; j<maxDegree; j++){                                            // check the colorList array
+                        if (colorList[j] != 0){                                         //       at the first spot where we have a color not assigned
+                                graphColors[vertex] = j+1;                              //       we assign that color to the node and
+                                break;                                                                  //   exit to the next
+                        }
+                }
+        }
 }
 
 
@@ -418,7 +462,7 @@ int main(){
 	//maxDegree = getMaxDegree(adjacencyMatrix, GRAPHSIZE);  
 	maxDegree = getBoundaryList(adjacencyMatrix, boundaryList, GRAPHSIZE, boundaryCount);
 	cout << "Max degree: " << maxDegree << endl;  
-
+	
 	int *adjacentList = new int[GRAPHSIZE*maxDegree*sizeof(int)];
 	memset(adjacentList, -1, GRAPHSIZE*maxDegree*sizeof(int)); 
 	getAdjacentList(adjacencyMatrix, adjacentList, GRAPHSIZE, maxDegree);
@@ -567,7 +611,7 @@ int main(){
 	
 	// Step 4: solve conflicts 
 	//numColorsParallel = solveConflict(adjacencyMatrix,  GRAPHSIZE, conflict, conflictCount, graphColors); 
-	conflictSolve(adjacencyMatrix,  GRAPHSIZE, conflict, conflictCount, graphColors, maxDegree); 
+	conflictSolve(adjacentList,  GRAPHSIZE, conflict, conflictCount, graphColors, maxDegree); 
 
 	
 	
@@ -626,7 +670,7 @@ int main(){
 	
 	
 	//------------- Checking for color conflict --------------// 
-	//checkCorrectColoring(adjacencyMatrix, graphColors); 
+	checkCorrectColoring(adjacencyMatrix, graphColors); 
 	
 	
 	
