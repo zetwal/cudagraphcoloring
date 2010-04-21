@@ -571,12 +571,12 @@ int main(){
 	cudaEventRecord(stop_3, 0); 
 	cudaEventSynchronize(stop_3); 
 	
-/*
+
 	cout<<"GPU raph coloring results:"<<endl; 
 	for (int k=0; k<GRAPHSIZE; k++)  
 		cout << graphColors[k] << "  ";  
 	cout << endl;  
-*/	
+	
 	/**/
 	
 	
@@ -650,10 +650,7 @@ int main(){
 	 cout << endl << endl;  */
 	
 	
-	/*cout << "Global graph coloring results:"<<endl; 
-	 for (int k=0; k<GRAPHSIZE; k++)  
-	 cout << graphColors[k] << "  ";  
-	 cout << endl << endl; */
+
 	
 	
 	
@@ -670,7 +667,7 @@ int main(){
 	
 	
 	//------------- Checking for color conflict --------------// 
-	checkCorrectColoring(adjacencyMatrix, graphColors); 
+	//checkCorrectColoring(adjacencyMatrix, graphColors); 
 	
 	
 	

@@ -17,11 +17,16 @@ __global__ void colorGraphAdjL(int *adjacencyListD, int *colors, int size, int m
 			degreeArray[j] = j+1;
 
 
-		for (j=0; j<maxDegree; j++)
-			if (adjacencyListD[i*maxDegree + j] != -1)
-				degreeArray[colors[ adjacencyListD[i*maxDegree + j] ]] = 0;
+		for (j=0; j<maxDegree; j++){
+			int vertexNeigh = i*maxDegree + j;
+
+			if (adjacencyListD[vertexNeigh] != -1){
+				if (colors[ adjacencyListD[vertexNeigh] ] != 0)
+					degreeArray[ colors[adjacencyListD[vertexNeigh]] -1 ] = 0;
+			}
 			else
 				break;
+		}
 		
 
 		for(j=0; j<maxDegree; j++)
