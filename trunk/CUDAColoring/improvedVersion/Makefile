@@ -24,12 +24,12 @@ FLAGS = -I$(CUDA_INCLUDE) -L$(CURRENT_LIB) -lmyCuda -L$(CUDA_LIB) -lcuda -lcudar
 
 
 all: graphDriver.o libmyCuda.so
-	#$(CC) graphDriver.o  $(FLAGS) -o $(EXEC) -arch i386  #MacOSX
-	 $(CC) graphDriver.o  $(FLAGS) -o $(EXEC)  #Linux
+	$(CC) graphDriver.o  $(FLAGS) -o $(EXEC) -arch i386  #MacOSX
+	#$(CC) graphDriver.o  $(FLAGS) -o $(EXEC)  #Linux
 	
 debug: graphDriver.o libDebugMyCuda.so
-	#$(CC) graphDriver.o  $(FLAGS) -o $(EXEC) -arch i386  	# MacOSX
-	$(CC) graphDriver.o  $(FLAGS) -o $(EXEC)  				# Linux
+	$(CC) graphDriver.o  $(FLAGS) -o $(EXEC) -arch i386  	# MacOSX
+	#$(CC) graphDriver.o  $(FLAGS) -o $(EXEC)  				# Linux
 
 
 graphDriver.o: graphDriver.cpp graphColoring.h
@@ -45,7 +45,7 @@ libDebugMyCuda.so: graphColoring.h graphColoring.cu
 
 
 clean:
-	rm -rf *.o *.so $(EXEC)
+	rm -rf *.o *.so  *~ $(EXEC)
 	clear
 
 
