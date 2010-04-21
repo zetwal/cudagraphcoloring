@@ -293,6 +293,8 @@ int conflictSolve(int *Adjlist, int size, int *conflict, int conflictSize, int *
         int i, j, vertex, *colorList, *setColors;
         colorList = new int[maxDegree];
         setColors = new int[maxDegree];
+	
+	std:cout << "Size: " << size << "  conflictSize: " << conflictSize << " maxDegree: " << maxDegree << std::endl;
 
         // assign colors up to maxDegree in setColors
         for (i=0; i<maxDegree; i++){
@@ -302,20 +304,28 @@ int conflictSolve(int *Adjlist, int size, int *conflict, int conflictSize, int *
 
         for (i=0; i<conflictSize; i++){
                 memcpy(colorList, setColors, maxDegree*sizeof(int));                    // set the colors in colorList to be same as setColors
-                
+		////DEBUG
+
+
                 vertex = conflict[i]-1;
+                
 
                 for (j=0; j<maxDegree; j++){                                            // cycle through the graph
                         if ( Adjlist[vertex*maxDegree + j] != -1 )                      //      check if node is connected
-                              colorList[ graphColors[j]-1 ] = 0;
-                        else 
-                              break;                  
+                        {      
+				colorList[ graphColors[Adjlist[vertex*maxDegree + j]]-1 ] = 0;
+
+                        }
+			else {
+                              break;    
+
+			}              
                 }
 
 
                 for (j=0; j<maxDegree; j++){                                            // check the colorList array
                         if (colorList[j] != 0){                                         //       at the first spot where we have a color not assigned
-                                graphColors[vertex] = j+1;                              //       we assign that color to the node and
+                                graphColors[vertex] = colorList[j];                              //       we assign that color to the node and
                                 break;                                                                  //   exit to the next
                         }
                 }
@@ -351,8 +361,8 @@ int solveConflict(int *matrix, int size, int *conflict, int conflictSize, int *g
 		//cout<<"nodeIndex="<<nodeIndex<<endl;
 		//check all the adjacency node 
 		for(int j = 0; j < size; j++) 
-			if(matrix[nodeIndex*size + j] ==1) //adjacency to current node 
-				localColor.insert(graphColors[j]); 
+			if(matrix[nodeIndex*size + j] != -1) //adjacency to current node 
+				localColor.insert(graphColors[matrix[nodeIndex*size + j]]); 
 		
 		//recolor the current conflict based on the adjacency color stored in localColor 
 		
@@ -667,7 +677,7 @@ int main(){
 	
 	
 	//------------- Checking for color conflict --------------// 
-	//checkCorrectColoring(adjacencyMatrix, graphColors); 
+	checkCorrectColoring(adjacencyMatrix, graphColors); 
 	
 	
 	
