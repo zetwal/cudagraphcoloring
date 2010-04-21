@@ -10,8 +10,8 @@
 #include <iostream>
 
 
-const int GRAPHSIZE = 2048;    // number of nodes
-const int NUMEDGES = 15000;    // number of edges 
+const int GRAPHSIZE = 10240;    // number of nodes
+const int NUMEDGES = 150000;    // number of edges 
 
 #define GRIDSIZE 4                      // number of blocks 
 #define BLOCKSIZE 512                  // number of threads in a block 
@@ -31,5 +31,4 @@ CHECK_EXT __host__ void subGraphColoring(int *adjacencyMatrix, int *graphColors,
 CHECK_EXT void colorConfilctDetection(int *adjacencyMatrix, int *boundaryList, int *graphColors, int *conflict, int boundarySize); 
 CHECK_EXT void colorAndConflict(int *adjacencyMatrix, int *boundaryList, int *graphColors, int *conflict, int boundarySize, int maxDegree);
 
-#endif // _GRAPHCOLORING_H_ 
-
+#endif // _GRAPHCOLORING_H_
