@@ -241,7 +241,8 @@ int getConflicts(int *adjacencyMatrix, int *graphColors, int *conflict)
 
 
 // Author: Pascal
-int conflictSolve(int *matrix, int size, int *conflict, int conflictSize, int *graphColors, int maxDegree){
+// Solves conflicts 
+int conflictSolve(int *Adjlist, int size, int *conflict, int conflictSize, int *graphColors, int maxDegree){
 	int i, j, vertex, *colorList, *setColors;
 	colorList = new int[maxDegree];
 	setColors = new int[maxDegree];
@@ -256,11 +257,14 @@ int conflictSolve(int *matrix, int size, int *conflict, int conflictSize, int *g
 		memcpy(colorList, setColors, maxDegree*sizeof(int));			// set the colors in colorList to be same as setColors
 		
 		vertex = conflict[i]-1;
-		if(vertex == 7105) cout<<" find 7105"<<endl;
+		//if(vertex == 7105) cout<<" find 7105"<<endl;
 
-		for (j=0; j<GRAPHSIZE; j++){						// cycle through the graph
-			if ( matrix[vertex*GRAPHSIZE + j] == 1 )		// 	check if node is connected
-				colorList[ graphColors[j]-1 ] = 0;		//	get the color of that node and set its spot in colorList to 0
+		for (j=0; j<maxDegree; j++){						// cycle through the graph
+			if ( Adjlist[vertex*maxDegree + j] != -1 )			// 	check if node is connected
+				colorList[ graphColors[j]-1 ] = 0;
+			else 
+				break;			//	get the color of that node and set its spot in colorList to 0, means you can't use this color
+
 		}
 
 
