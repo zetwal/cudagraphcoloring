@@ -21,9 +21,9 @@ const int SUBSIZE = GRAPHSIZE/(GRIDSIZE*BLOCKSIZE);
 const int SUBSIZE_BOUNDARY = 256;
 
 #ifdef __cplusplus 
-#define CHECK_EXT extern "C" 
+	#define CHECK_EXT extern "C" 
 #else 
-#define CHECK_EXT 
+	#define CHECK_EXT 
 #endif 
 
 

@@ -93,7 +93,7 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
                 for (int j=0; j<size; j++){          
                         if ( adjacencyMatrix[i*size + j] == 1)  
                                 degree++;  
-                        if ( adjacencyMatrix[i*size + j] == 1 && (j < start || j > end))
+                        if ( adjacencyMatrix[i*size + j] == 1 && (j < start || j >= end))
                         {
                                 boundarySet.insert(i);
                         }
@@ -368,9 +368,9 @@ int main(){
         numColorsSeq = numColorsParallel = 0;
         float GPUtime;
        
-    long randSeed = time(NULL);
+    	long randSeed = time(NULL);
         srand ( randSeed );  // initialize random numbers  
-        //srand ( 10 );  // initialize random numbers  
+        //srand ( 1271876520 );  // initialize random numbers  
        
        
         cudaEvent_t start, stop, stop_1, stop_2, stop_3, stop_4, stop_5;        
@@ -593,7 +593,7 @@ int main(){
        
         //cout << "GPU Partitioning and coloring time: " << GPUtime << " ms" << endl;
         cout << "Vertices: " << GRAPHSIZE << "   Edges: " << NUMEDGES << "   Density: " << (2*NUMEDGES)/((float)GRAPHSIZE*(GRAPHSIZE-1))<< "   Degree: " << maxDegree << endl;
-        cout << "Random sed used: " << randSeed << endl;
+        cout << "Random seed used: " << randSeed << endl;
         cout << "CPU time: " << elapsedTimeCPU << " ms    - GPU Time: " << elapsedTimeGPU << " ms" << endl;
         cout << "ALGO step 1: " << elapsedTimeGPU_1 << " ms" << endl;
         cout << "ALGO step 2: " << elapsedTimeGPU_2 << " ms" << endl;

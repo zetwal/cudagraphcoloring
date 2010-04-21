@@ -4,38 +4,38 @@ using namespace std;
 //Author: Pascal
 
 __global__ void colorGraph(int *adjacencyMatrixD, int *colors, int size, int maxDegree){
-int i, j, start, end;
-int subGraphSize, numColors = 0;
+	int i, j, start, end;
+	int subGraphSize, numColors = 0;
 
-subGraphSize = size/(gridDim.x * blockDim.x);
-start = (size/gridDim.x * blockIdx.x) + (subGraphSize * threadIdx.x);
-end = start + subGraphSize;
+	subGraphSize = size/(gridDim.x * blockDim.x);
+	start = (size/gridDim.x * blockIdx.x) + (subGraphSize * threadIdx.x);
+	end = start + subGraphSize;
 
-int degreeArray[100];
+	int degreeArray[100];
 
-for(i=start; i<end; i++)
-{
-for(j=0; j<=maxDegree; j++)
-degreeArray[j] = j+1;
+	for(i=start; i<end; i++)
+	{
+		for(j=0; j<=maxDegree; j++)
+			degreeArray[j] = j+1;
 
-for(j=start; j<end; j++){
-if(i==j)
-continue;
+		for(j=start; j<end; j++){
+			if(i==j)
+				continue;
 
-if(adjacencyMatrixD[i*size + j] == 1)
-if(colors[j] != 0)
-degreeArray[colors[j]-1] = 0;
-}
+			if(adjacencyMatrixD[i*size + j] == 1)
+				if(colors[j] != 0)
+					degreeArray[colors[j]-1] = 0;
+		}
 
-for(j=0; j<=maxDegree; j++)
-if(degreeArray[j] != 0){
-colors[i] = degreeArray[j];
-break;
-}
+		for(j=0; j<=maxDegree; j++)
+			if(degreeArray[j] != 0){
+				colors[i] = degreeArray[j];
+				break;
+			}
 
-if(colors[i] > numColors)
-numColors = colors[i];
-}
+		if(colors[i] > numColors)
+			numColors = colors[i];
+	}
 }
 
 
@@ -43,48 +43,46 @@ numColors = colors[i];
 extern "C"
 __host__ void subGraphColoring(int *adjacencyMatrix, int *graphColors, int maxDegree)
 {
-int *adjacencyMatrixD, *colorsD;
+	int *adjacencyMatrixD, *colorsD;
 
-cudaMalloc((void**)&adjacencyMatrixD, GRAPHSIZE*GRAPHSIZE*sizeof(int));
-cudaMalloc((void**)&colorsD, GRAPHSIZE*sizeof(int));
+	cudaMalloc((void**)&adjacencyMatrixD, GRAPHSIZE*GRAPHSIZE*sizeof(int));
+	cudaMalloc((void**)&colorsD, GRAPHSIZE*sizeof(int));
 
-cudaMemcpy(adjacencyMatrixD, adjacencyMatrix, GRAPHSIZE*GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
-cudaMemcpy(colorsD, graphColors, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
+	cudaMemcpy(adjacencyMatrixD, adjacencyMatrix, GRAPHSIZE*GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
+	cudaMemcpy(colorsD, graphColors, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
 
-dim3 dimGrid(GRIDSIZE);
-dim3 dimBlock(BLOCKSIZE);
+	dim3 dimGrid(GRIDSIZE);
+	dim3 dimBlock(BLOCKSIZE);
 
-colorGraph<<<dimGrid, dimBlock>>>(adjacencyMatrixD, colorsD, GRAPHSIZE, maxDegree);
+	colorGraph<<<dimGrid, dimBlock>>>(adjacencyMatrixD, colorsD, GRAPHSIZE, maxDegree);
 
-cudaMemcpy(graphColors, colorsD, GRAPHSIZE*sizeof(int), cudaMemcpyDeviceToHost);
-cudaFree(adjacencyMatrixD);
-cudaFree(colorsD);
-
+	cudaMemcpy(graphColors, colorsD, GRAPHSIZE*sizeof(int), cudaMemcpyDeviceToHost);
+	cudaFree(adjacencyMatrixD);
+	cudaFree(colorsD);
 }
 
 
 // Author :Peihong
 __global__ void detectConflicts(int *adjacencyMatrixD, int *colors, int *conflictD, int size){
-int i, j, start, end;
-int subGraphSize, numColors = 0;
+	int i, j, start, end;
+	int subGraphSize, numColors = 0;
 
-subGraphSize = size/(gridDim.x * blockDim.x);
-start = (size/gridDim.x * blockIdx.x) + (subGraphSize * threadIdx.x);
-end = start + subGraphSize;
+	subGraphSize = size/(gridDim.x * blockDim.x);
+	start = (size/gridDim.x * blockIdx.x) + (subGraphSize * threadIdx.x);
+	end = start + subGraphSize;
 
-if(end > size) end = size;
+	if(end > size) end = size;
 
-for(i=start; i<end; i++)
-{
-for(j=end; j < size; j++)
-{
-if(adjacencyMatrixD[i*size + j] == 1 && (colors[i] == colors[j]))
-{
-conflictD[min(i,j)] = 1;
-}
-}
-}
-
+	for(i=start; i<end; i++)
+	{
+		for(j=end; j < size; j++)
+		{
+			if(adjacencyMatrixD[i*size + j] == 1 && (colors[i] == colors[j]))
+			{
+				conflictD[min(i,j)] = 1;
+			}
+		}
+	}
 }
 
 //Author: Peihong
