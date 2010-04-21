@@ -622,7 +622,7 @@ int main(){
 	
 	
 	//------------- Checking for color conflict --------------// 
-	checkCorrectColoring(adjacencyMatrix, graphColors); 
+	//checkCorrectColoring(adjacencyMatrix, graphColors); 
 	
 	
 	
