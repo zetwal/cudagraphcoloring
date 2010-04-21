@@ -1,8 +1,52 @@
 #include "graphColoring.h"
 using namespace std;
+//Author: Pascal
+__global__ void colorGraphAdjL(int *adjacencyListD, int *colors, int size, int maxDegree){
+	int i, j, start, end;
+	int subGraphSize, numColors = 0;
+	
+	subGraphSize = size/(gridDim.x * blockDim.x);
+	start = (size/gridDim.x * blockIdx.x) + (subGraphSize * threadIdx.x);
+	end = start + subGraphSize;
+	
+
+	int degreeArray[100];
+	for(i=start; i<end; i++)
+	{
+		for(j=0; j<=maxDegree; j++)
+			degreeArray[j] = j+1;
+		/*
+		for(j=start; j<end; j++){
+			if(i==j)
+			    continue;
+			
+			if(adjacencyMatrixD[i*size + j] == 1)
+				if(colors[j] != 0)
+					degreeArray[colors[j]-1] = 0;
+		}	
+		*/
+
+		for (j=0; j<=maxDegree; j++)
+			if (adjacencyListD[i*size + j] != -1)
+				degreeArray[colors[ adjacencyListD[i*subGraphSize + j]-1 ]] = 0;
+			else
+				break;
+		
+
+		for(j=0; j<=maxDegree; j++)
+			if(degreeArray[j] != 0){
+				colors[i] = degreeArray[j];
+				break;
+			}
+		
+		if(colors[i] > numColors)
+			numColors = colors[i];		
+	}
+}
+
+
 
 //Author: Pascal
-
 __global__ void colorGraph(int *adjacencyMatrixD, int *colors, int size, int maxDegree){
 	int i, j, start, end;
 	int subGraphSize, numColors = 0;
@@ -263,56 +307,12 @@ void colorAndConflict(int *adjacencyMatrix, int *boundaryList, int *graphColors,
 
 
 
-__global__ void coloringGraph(int *adjacentListD, int *colors, int size, int maxDegree){
-	int i, j, start, end;
-	int subGraphSize, numColors = 0;
-	
-	subGraphSize = size/(gridDim.x * blockDim.x);
-	start = (size/gridDim.x * blockIdx.x) + (subGraphSize * threadIdx.x);
-	end = start + subGraphSize;
-	
-	int degreeArray[maxDegree];
-	int adjacencyMatrixD[subGraphSize*subGraphSize];
-	
-	for(i=start; i<end; i++)
-		for(j=start; j<end; j++)
-		{
-			
-		}
-	
-	
-	for(i=start; i<end; i++)
-	{
-		for(j=0; j<=maxDegree; j++)
-			degreeArray[j] = j+1;
-		
-		for(j=start; j<end; j++){
-			if(i==j)
-			    continue;
-			
-			if(adjacencyMatrixD[i*size + j] == 1)
-				if(colors[j] != 0)
-					degreeArray[colors[j]-1] = 0;
-		}	   
-		
-		for(j=0; j<=maxDegree; j++)
-			if(degreeArray[j] != 0){
-				colors[i] = degreeArray[j];
-				break;
-			}
-		
-		if(colors[i] > numColors)
-			numColors = colors[i];		
-	}
-}
-
-
 
 
 //Author: Peihong
 __global__ void conflictsDetection(int *adjacentListD, int *boundaryListD, int *colors, int *conflictD, int size, int boundarySize, int maxDegree){
 	int idx = blockIdx.x*blockDim.x + threadIdx.x;
-	int i;
+	int i, j;
 	if(idx < boundarySize){
 		i = boundaryListD[idx];
 		conflictD[idx] = 0;
@@ -339,13 +339,13 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	int blocksize = SUBSIZE_BOUNDARY;
 	
 	cudaEvent_t start_col, start_confl, stop_col, stop_confl, start_mem, stop_mem;         
-        float elapsedTime_memory, elapsedTime_col, elapsedTime_confl; 
+    float elapsedTime_memory, elapsedTime_col, elapsedTime_confl; 
 	
 	
 	// memory transfer
 	cudaEventCreate(&start_mem); 
-        cudaEventCreate(&stop_mem); 
-        cudaEventRecord(start_mem, 0); 
+    cudaEventCreate(&stop_mem); 
+    cudaEventRecord(start_mem, 0); 
 	
 	cudaMalloc((void**)&adjacentListD, GRAPHSIZE*maxDegree*sizeof(int));
 	cudaMalloc((void**)&colorsD, GRAPHSIZE*sizeof(int));
@@ -353,12 +353,12 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	cudaMalloc((void**)&boundaryListD, boundarySize*sizeof(int));
 	
 	cudaMemcpy(adjacentListD, adjacentList, GRAPHSIZE*maxDegree*sizeof(int), cudaMemcpyHostToDevice);
-        cudaMemcpy(colorsD, graphColors, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(colorsD, graphColors, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemcpy(boundaryListD, boundaryList, boundarySize*sizeof(int), cudaMemcpyHostToDevice);
 	
 	
 	cudaEventRecord(stop_mem, 0); 
-        cudaEventSynchronize(stop_mem); 
+    cudaEventSynchronize(stop_mem); 
 	
 	
 	dim3 dimGrid_col(GRIDSIZE);
@@ -373,7 +373,9 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
         cudaEventCreate(&stop_col); 
         cudaEventRecord(start_col, 0); 
 	
-	colorGraph<<<dimGrid_col, dimBlock_col>>>(adjacentListD, colorsD, GRAPHSIZE, maxDegree);
+	//colorGraph<<<dimGrid_col, dimBlock_col>>>(adjacentListD, colorsD, GRAPHSIZE, maxDegree);
+	colorGraphAdjL<<<dimGrid_col, dimBlock_col>>>(adjacentListD, colorsD, GRAPHSIZE, maxDegree);
+
 	
 	
 	cudaEventRecord(stop_col, 0); 
@@ -399,7 +401,7 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	cudaMemcpy(graphColors, colorsD, GRAPHSIZE*sizeof(int), cudaMemcpyDeviceToHost);
 	cudaMemcpy(conflict, conflictD, boundarySize*sizeof(int), cudaMemcpyDeviceToHost);
 	
-	cudaFree(adjacencyMatrixD);
+	cudaFree(adjacentListD);
 	cudaFree(colorsD);
 	cudaFree(conflictD);
 	cudaFree(boundaryListD);
