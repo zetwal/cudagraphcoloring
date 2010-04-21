@@ -10,7 +10,7 @@
 #include <iostream>
 
 
-const int GRAPHSIZE = 10240;    // number of nodes
+const int GRAPHSIZE = 2048;    // number of nodes
 const int NUMEDGES = 15000;    // number of edges 
 
 #define GRIDSIZE 4                      // number of blocks 
