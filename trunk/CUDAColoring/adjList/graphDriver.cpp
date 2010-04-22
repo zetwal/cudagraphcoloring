@@ -742,7 +742,10 @@ int main(){
 	
 	
 	//colorAndConflict(adjacencyMatrix, boundaryList, graphColors, conflictTmp, boundaryCount, maxDegree);
-	cudaGraphColoring(adjacentList, boundaryList, graphColors, conflictTmp, boundaryCount, maxDegree);
+	//cudaGraphColoring(adjacentList, boundaryList, graphColors, conflictTmp, boundaryCount, maxDegree);
+	cudaGraphColoring_complex(adjacentList, boundaryList, graphColors, degreeList, conflictTmp, boundaryCount, maxDegree);
+	
+	
 	
 	cudaEventRecord(stop_1, 0); 
 	cudaEventSynchronize(stop_1); 
