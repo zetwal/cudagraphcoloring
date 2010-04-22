@@ -1,5 +1,100 @@
 #include "graphColoring.h"
 using namespace std;
+
+//Author: Shusen
+
+// returns the degree of that node
+int __device__ degree(int vertex, int *degreeList){
+	return degreeList[vertex];
+}
+
+int __device__ saturation(int vertex, int *adjacencyList, int *graphColors, int maxDegree){
+	int saturation = 0;
+	int colors[100];
+
+	//memset(colors, 0, (maxDegree+1)*sizeof(int));		// initialize array
+
+
+	for (int i=0; i<maxDegree; i++){
+		if (adjacencyList[vertex*maxDegree + i] != -1)
+			colors[ graphColors[vertex] ] = 1;			// at each colored set the array to 1
+		else
+			break;
+	}
+
+
+	for (int i=1; i<maxDegree+1; i++)					// count the number of 1's but skip uncolored
+		if (colors[i] == 1)
+			saturation++;
+
+	return saturation;
+}
+
+
+
+// colors the vertex with the min possible color
+int __device__ color(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int numColored){
+	int colors[100];
+	
+	if (graphColors[vertex] == 0)
+		numColored++;
+	
+	for (int i=0; i<maxDegree; i++)						// set the index of the color to 1
+		if (adjacencyList[vertex*maxDegree + i] != -1)
+			colors[  graphColors[  adjacencyList[vertex*maxDegree + i]  ]  ] = 1;
+		else {
+			break;
+		}
+
+	
+
+	for (int i=1; i<maxDegree+1; i++)					// nodes still equal to 0 are unassigned
+		if (colors[i] != 1){
+			graphColors[vertex] = i;
+			break;
+		}
+	
+	return numColored;
+}
+
+__global__ void colorGraphAdjL_complex(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, int maxDegree)
+{
+	int i, j, start, end;
+	int subGraphSize, numColored = 0;
+	int satDegree, max, index;
+	
+	subGraphSize = sizeGraph/(gridDim.x * blockDim.x);
+	start = (sizeGraph/gridDim.x * blockIdx.x) + (subGraphSize * threadIdx.x);
+	end = start + subGraphSize;
+
+	while (numColored < subGraphSize){
+		max = -1;
+		
+		for (int i=start; i<end; i++){
+			if (graphColors[i] == 0)			// not colored
+			{
+				satDegree = saturation(i,adjacencyList,graphColors, maxDegree);
+
+				if (satDegree > max){
+					max = satDegree;
+					index = i;				
+				}
+
+				if (satDegree == max){
+					if (degree(i,degreeList) > degree(index,degreeList))
+						index = i;
+				}
+			}
+
+			numColored = color(index,adjacencyList,graphColors, maxDegree, numColored);
+			//iterations++;
+		}
+	}
+
+
+}
+
+
 //Author: Pascal
 __global__ void colorGraphAdjL(int *adjacencyListD, int *colors, int size, int maxDegree){
 	int i, j, start, end;
