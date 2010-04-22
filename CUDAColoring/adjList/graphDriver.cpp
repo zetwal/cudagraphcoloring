@@ -61,6 +61,7 @@ void getAdjacentList(int *adjacencyMatrix, int *adjacentList, int size, int maxD
 		//cout<<"number of neighbor count="<<nbCount<<endl;
 	}
 
+	/*
 	// Adj list display
 	for (int i=0; i<10; i++){
 		for (int j=0; j<maxDegree; j++){
@@ -68,6 +69,7 @@ void getAdjacentList(int *adjacencyMatrix, int *adjacentList, int size, int maxD
 		}
 		cout << endl;
 	}
+	*/
 }
 
 // Author: Pascal 
@@ -90,6 +92,25 @@ int getMaxDegree(int *adjacencyMatrix, int size){
 	return maxDegree;  
 }  
 
+
+
+
+// Author: Pascal
+// get the degree of each element in the graph and returns the maximum degree
+void getDegreeList(int *adjacencyList, int *degreeList, int sizeGraph, int maxDegree){
+        for (int i=0; i<sizeGraph; i++){
+                int count = 0;
+                
+                for (int j=0; j<maxDegree; j++){
+                        if (adjacencyList[i*maxDegree + j] != -1)
+                           count++;
+                        else
+                           break;  
+                }
+
+                degreeList[i] = count;
+        }
+}
 
 
 // Author :Peihong
@@ -148,7 +169,7 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
 
 // Author: Pascal 
 // colors a graph: First Fit algo used 
-int colorGraph(int *matrix, int *colors, int size, int maxDegree){  
+int colorGraphFF(int *matrix, int *colors, int size, int maxDegree){  
 	int numColors = 0;  
 	int i, j;  
 	
@@ -190,7 +211,7 @@ int colorGraph(int *matrix, int *colors, int size, int maxDegree){
 
 // Author: Pascal & Shusen
 // GraphColor Adjacency list
-int colorGraph_adj(int *list, int *colors, int size, int maxDegree){  
+int colorGraph_adj_FF(int *list, int *colors, int size, int maxDegree){  
 	int numColors = 0;  
 	int i, j;  
 	
@@ -229,6 +250,105 @@ int colorGraph_adj(int *list, int *colors, int size, int maxDegree){
 	
 	return numColors;  
 }  
+
+
+
+
+
+// Author: Pascal
+// returns the degree of that node
+int degree(int vertex, int *degreeList){
+        return degreeList[vertex];
+}
+
+
+
+// Author: Pascal
+// return the saturation of that node
+int saturation(int vertex, int *adjacencyList, int *graphColors, int maxDegree){
+        int saturation = 0;
+        int *colors = new int[maxDegree+1];
+
+        memset(colors, 0, (maxDegree+1)*sizeof(int));           // initialize array
+
+
+        for (int i=0; i<maxDegree; i++){
+                if (adjacencyList[vertex*maxDegree + i] != -1)
+                        colors[ graphColors[vertex] ] = 1;                      // at each colored set the array to 1
+                else
+                        break;
+        }
+
+
+        for (int i=1; i<maxDegree+1; i++)                                       // count the number of 1's but skip uncolored
+                if (colors[i] == 1)
+                        saturation++;
+
+        return saturation;
+}
+
+
+// Author: Pascal
+// colors the vertex with the min possible color
+int color(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int numColored){
+        int *colors = new int[maxDegree + 1];
+        memset(colors, 0, (maxDegree+1)*sizeof(int));   
+        
+        if (graphColors[vertex] == 0)
+                numColored++;
+        
+        for (int i=0; i<maxDegree; i++)                                         // set the index of the color to 1
+                if (adjacencyList[vertex*maxDegree + i] != -1)
+                        colors[  graphColors[  adjacencyList[vertex*maxDegree + i]  ]  ] = 1;
+                else {
+                        break;
+                }
+
+        
+
+        for (int i=1; i<maxDegree+1; i++)                                       // nodes still equal to 0 are unassigned
+                if (colors[i] != 1){
+                        graphColors[vertex] = i;
+                        break;
+                }
+        
+        return numColored;
+}
+
+// Author: Pascal
+int sdoIm(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, int maxDegree){
+        int satDegree, numColored, max, index;
+        numColored = 0;
+        int iterations = 0;
+        
+
+        while (numColored < sizeGraph){
+                max = -1;
+                
+                for (int i=0; i<sizeGraph; i++){
+                        if (graphColors[i] == 0)                        // not colored
+                        {
+                                satDegree = saturation(i,adjacencyList,graphColors, maxDegree);
+
+                                if (satDegree > max){
+                                        max = satDegree;
+                                        index = i;                              
+                                }
+
+                                if (satDegree == max){
+                                        if (degree(i,degreeList) > degree(index,degreeList))
+                                                index = i;
+                                }
+                        }
+
+                        numColored = color(index,adjacencyList,graphColors, maxDegree, numColored);
+                        iterations++;
+                }
+        }
+        
+        return iterations;
+}
+
 
 
 
@@ -291,7 +411,6 @@ int getConflicts(int *adjacencyMatrix, int *graphColors, int *conflict)
 
 
 // Author: Pascal
-
 // Solves conflicts 
 int conflictSolve_old(int *Adjlist, int size, int *conflict, int conflictSize, int *graphColors, int maxDegree){
 	int i, j, vertex, *colorList, *setColors;
@@ -509,12 +628,18 @@ int main(){
 	maxDegree = getBoundaryList(adjacencyMatrix, boundaryList, GRAPHSIZE, boundaryCount);
 	cout << "Max degree: " << maxDegree << endl;  
 	
+
+	// Get adjacency list
 	int *adjacentList = new int[GRAPHSIZE*maxDegree*sizeof(int)];
 	memset(adjacentList, -1, GRAPHSIZE*maxDegree*sizeof(int)); 
 	getAdjacentList(adjacencyMatrix, adjacentList, GRAPHSIZE, maxDegree);
 	
 	
-	
+	// Get degree List
+	int *degreeList = new int[GRAPHSIZE*sizeof(int)];
+	memset(degreeList, 0, GRAPHSIZE*sizeof(int)); 
+	getDegreeList(adjacentList, degreeList, GRAPHSIZE, maxDegree);
+
 	
 	//------------- Sequential Graph Coloring --------------// 
 	
@@ -525,12 +650,22 @@ int main(){
 	cudaEventRecord(start, 0);  
 	
 	//numColorsSeq = colorGraph(adjacencyMatrix, graphColors, GRAPHSIZE, maxDegree);   
-        numColorsSeq = colorGraph_adj(adjacentList, graphColors, GRAPHSIZE, maxDegree);   
+    //numColorsSeq = colorGraph_adj_FF(adjacentList, graphColors, GRAPHSIZE, maxDegree);  
+	sdoIm(adjacentList, graphColors, degreeList, GRAPHSIZE, maxDegree);
 	
 	cudaEventRecord(stop, 0); 
 	cudaEventSynchronize(stop); 
 	cudaEventElapsedTime(&elapsedTimeCPU, start, stop); 
 	
+
+// Get colors
+	numColorsSeq = 0;
+	for (int i=0; i<GRAPHSIZE; i++){
+		if ( numColorsSeq < graphColors[i] )
+			numColorsSeq = graphColors[i];
+	}
+
+
 /*	
 	cout<<"global graph coloring results:"<<endl; 
 	for (int k=0; k<GRAPHSIZE; k++)  
@@ -618,12 +753,12 @@ int main(){
 	cudaEventRecord(stop_3, 0); 
 	cudaEventSynchronize(stop_3); 
 	
-
+/**
 	cout<<"GPU raph coloring results:"<<endl; 
 	for (int k=0; k<GRAPHSIZE; k++)  
 		cout << graphColors[k] << "  ";  
 	cout << endl;  
-	
+/**/	
 	/**/
 	
 	
