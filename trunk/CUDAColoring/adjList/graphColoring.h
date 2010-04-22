@@ -11,7 +11,7 @@
 
 
 const int GRAPHSIZE = 2048;    // number of nodes
-const int NUMEDGES = 15000;    // number of edges 
+const int NUMEDGES = 1500;    // number of edges 
 
 #define GRIDSIZE 4                      // number of blocks 
 #define BLOCKSIZE 512                  // number of threads in a block 
@@ -31,5 +31,6 @@ CHECK_EXT __host__ void subGraphColoring(int *adjacencyMatrix, int *graphColors,
 CHECK_EXT void colorConfilctDetection(int *adjacencyMatrix, int *boundaryList, int *graphColors, int *conflict, int boundarySize); 
 CHECK_EXT void colorAndConflict(int *adjacencyMatrix, int *boundaryList, int *graphColors, int *conflict, int boundarySize, int maxDegree);
 CHECK_EXT void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, int *conflict, int boundarySize, int maxDegree);
+CHECK_EXT void cudaGraphColoring_complex(int *adjacentList, int *boundaryList, int *graphColors, int *degreeList, int *conflict, int boundarySize, int maxDegree);
 #endif // _GRAPHCOLORING_H_ 
 

@@ -478,7 +478,99 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	
 	//colorGraph<<<dimGrid_col, dimBlock_col>>>(adjacentListD, colorsD, GRAPHSIZE, maxDegree);
 	colorGraphAdjL<<<dimGrid_col, dimBlock_col>>>(adjacentListD, colorsD, GRAPHSIZE, maxDegree);
+	
+	
+	cudaEventRecord(stop_col, 0); 
+        cudaEventSynchronize(stop_col); 
 
+	
+	// Conflict resolution
+	cudaEventCreate(&start_confl); 
+        cudaEventCreate(&stop_confl); 
+        cudaEventRecord(start_confl, 0); 
+	
+	conflictsDetection<<<dimGrid_confl, dimBlock_confl>>>(adjacentListD, boundaryListD, colorsD, conflictD, GRAPHSIZE, boundarySize, maxDegree);
+	
+	cudaEventRecord(stop_confl, 0); 
+    cudaEventSynchronize(stop_confl); 
+	
+	cudaEventElapsedTime(&elapsedTime_memory, start_mem, stop_mem); 
+	cudaEventElapsedTime(&elapsedTime_col, start_col, stop_col); 
+	cudaEventElapsedTime(&elapsedTime_confl, start_confl, stop_confl); 
+	cout << "GPU time ~ Memory: " << elapsedTime_memory  << "  Color: " << elapsedTime_col << "  Conflict: " << elapsedTime_confl << endl; 
+	
+	
+	cudaMemcpy(graphColors, colorsD, GRAPHSIZE*sizeof(int), cudaMemcpyDeviceToHost);
+	cudaMemcpy(conflict, conflictD, boundarySize*sizeof(int), cudaMemcpyDeviceToHost);
+
+	
+
+	cudaFree(adjacentListD);
+	cudaFree(colorsD);
+	cudaFree(conflictD);
+	cudaFree(boundaryListD);
+}
+
+
+extern "C"
+void cudaGraphColoring_complex(int *adjacentList, int *boundaryList, int *graphColors, int *degreeList, int *conflict, int boundarySize, int maxDegree)
+{
+	int *adjacentListD, *colorsD, *conflictD, *boundaryListD, *degreeListD;     
+	int gridsize = ceil((float)boundarySize/(float)SUBSIZE_BOUNDARY);
+	int blocksize = SUBSIZE_BOUNDARY;
+	
+	cudaEvent_t start_col, start_confl, stop_col, stop_confl, start_mem, stop_mem;         
+    float elapsedTime_memory, elapsedTime_col, elapsedTime_confl; 
+	
+/*
+	// Adj list display
+	for (int i=0; i<10; i++){
+		for (int j=0; j<maxDegree; j++){
+			cout << adjacentList[i*maxDegree + j] << " ";
+		}
+		cout << endl;
+	}
+*/
+
+	cout << "Max deg: " << maxDegree << endl;
+
+
+	// memory transfer
+	cudaEventCreate(&start_mem); 
+    cudaEventCreate(&stop_mem); 
+    cudaEventRecord(start_mem, 0); 
+	
+	cudaMalloc((void**)&adjacentListD, GRAPHSIZE*maxDegree*sizeof(int));
+	cudaMalloc((void**)&colorsD, GRAPHSIZE*sizeof(int));
+	cudaMalloc((void**)&conflictD, boundarySize*sizeof(int));
+	cudaMalloc((void**)&boundaryListD, boundarySize*sizeof(int));
+	cudaMalloc((void**)&degreeListD, GRAPHSIZE*sizeof(int));
+	
+	cudaMemcpy(adjacentListD, adjacentList, GRAPHSIZE*maxDegree*sizeof(int), cudaMemcpyHostToDevice);
+    	cudaMemcpy(colorsD, graphColors, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
+	cudaMemcpy(boundaryListD, boundaryList, boundarySize*sizeof(int), cudaMemcpyHostToDevice);
+    	cudaMemcpy(degreeListD, degreeList, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
+	
+	
+	cudaEventRecord(stop_mem, 0); 
+    cudaEventSynchronize(stop_mem); 
+	
+	
+	dim3 dimGrid_col(GRIDSIZE);
+	dim3 dimBlock_col(BLOCKSIZE);
+	
+	dim3 dimGrid_confl(gridsize);
+	dim3 dimBlock_confl(blocksize);
+	
+	
+	// Graph coloring
+	cudaEventCreate(&start_col); 
+        cudaEventCreate(&stop_col); 
+        cudaEventRecord(start_col, 0); 
+	
+	//colorGraph<<<dimGrid_col, dimBlock_col>>>(adjacentListD, colorsD, GRAPHSIZE, maxDegree);
+	//colorGraphAdjL<<<dimGrid_col, dimBlock_col>>>(adjacentListD, colorsD, GRAPHSIZE, maxDegree);
+	colorGraphAdjL_complex<<<dimGrid_col, dimBlock_col>>>(adjacentListD, colorsD, degreeListD,GRAPHSIZE, maxDegree);
 	
 	
 	cudaEventRecord(stop_col, 0); 
