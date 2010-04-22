@@ -8,7 +8,10 @@ int __device__ degree(int vertex, int *degreeList){
 	return degreeList[vertex];
 }
 
-int __device__ saturation(int vertex, int *adjacencyList, int *graphColors, int maxDegree){
+
+
+
+int __device__ saturation(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int start, int end){
 	int saturation = 0;
 	int colors[100];
 
@@ -16,6 +19,12 @@ int __device__ saturation(int vertex, int *adjacencyList, int *graphColors, int 
 
 
 	for (int i=0; i<maxDegree; i++){
+		if (adjacencyList[vertex*maxDegree + i] < start)
+			continue;
+
+		if (adjacencyList[vertex*maxDegree + i] > end)
+			break;
+
 		if (adjacencyList[vertex*maxDegree + i] != -1)
 			colors[ graphColors[vertex] ] = 1;			// at each colored set the array to 1
 		else
@@ -32,19 +41,31 @@ int __device__ saturation(int vertex, int *adjacencyList, int *graphColors, int 
 
 
 
+
+
 // colors the vertex with the min possible color
-int __device__ color(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int numColored){
+int __device__ color(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int numColored, int start, int end){
 	int colors[100];
+	for (int j=0; j<100; j++)
+		colors[j] = 0;
+
 	
 	if (graphColors[vertex] == 0)
 		numColored++;
 	
-	for (int i=0; i<maxDegree; i++)						// set the index of the color to 1
+	for (int i=0; i<maxDegree; i++){						// set the index of the color to 1
+		if (adjacencyList[vertex*maxDegree + i] < start)
+			continue;
+
+		if (adjacencyList[vertex*maxDegree + i] > end)
+			break;
+
 		if (adjacencyList[vertex*maxDegree + i] != -1)
 			colors[  graphColors[  adjacencyList[vertex*maxDegree + i]  ]  ] = 1;
 		else {
 			break;
 		}
+	}
 
 	
 
@@ -56,6 +77,9 @@ int __device__ color(int vertex, int *adjacencyList, int *graphColors, int maxDe
 	
 	return numColored;
 }
+
+
+
 
 __global__ void colorGraphAdjL_complex(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, int maxDegree)
 {
@@ -73,7 +97,7 @@ __global__ void colorGraphAdjL_complex(int *adjacencyList, int *graphColors, int
 		for (int i=start; i<end; i++){
 			if (graphColors[i] == 0)			// not colored
 			{
-				satDegree = saturation(i,adjacencyList,graphColors, maxDegree);
+				satDegree = saturation(i,adjacencyList,graphColors, maxDegree, start, end);
 
 				if (satDegree > max){
 					max = satDegree;
@@ -86,13 +110,16 @@ __global__ void colorGraphAdjL_complex(int *adjacencyList, int *graphColors, int
 				}
 			}
 
-			numColored = color(index,adjacencyList,graphColors, maxDegree, numColored);
+			numColored = color(index,adjacencyList,graphColors, maxDegree, numColored, start, end);
 			//iterations++;
 		}
 	}
 
 
 }
+
+
+
 
 
 //Author: Pascal
@@ -138,7 +165,7 @@ __global__ void colorGraphAdjL(int *adjacencyListD, int *colors, int size, int m
 
 
 //Author: Pascal
-__global__ void colorGraph(int *adjacencyMatrixD, int *colors, int size, int maxDegree){
+__global__ void colorGraph(int *adjacencyMatrixD, int *colors, long size, int maxDegree){
 	int i, j, start, end;
 	int subGraphSize, numColors = 0;
 	
@@ -199,7 +226,7 @@ __host__ void subGraphColoring(int *adjacencyMatrix, int *graphColors, int maxDe
 
 
 // Author :Peihong
-__global__ void detectConflicts(int *adjacencyMatrixD, int *colors, int *conflictD, int size){
+__global__ void detectConflicts(int *adjacencyMatrixD, int *colors, int *conflictD, long size){
 	int i, j, start, end;
 	int subGraphSize, numColors = 0;
 	
@@ -223,7 +250,7 @@ __global__ void detectConflicts(int *adjacencyMatrixD, int *colors, int *conflic
 }
 
 //Author: Peihong
-__global__ void detectConflicts(int *adjacencyMatrixD, int *boundaryListD, int *colors, int *conflictD, int size, int boundarySize){
+__global__ void detectConflicts(int *adjacencyMatrixD, int *boundaryListD, int *colors, int *conflictD, long size, int boundarySize){
 	int idx = blockIdx.x*blockDim.x + threadIdx.x;
 	int i;
 	if(idx < boundarySize){
@@ -401,7 +428,7 @@ void colorAndConflict(int *adjacencyMatrix, int *boundaryList, int *graphColors,
 
 
 //Author: Peihong
-__global__ void conflictsDetection(int *adjacentListD, int *boundaryListD, int *colors, int *conflictD, int size, int boundarySize, int maxDegree){
+__global__ void conflictsDetection(int *adjacentListD, int *boundaryListD, int *colors, int *conflictD, long size, int boundarySize, int maxDegree){
 	int idx = blockIdx.x*blockDim.x + threadIdx.x;
 	int i, j;
 	if(idx < boundarySize){
@@ -410,7 +437,7 @@ __global__ void conflictsDetection(int *adjacentListD, int *boundaryListD, int *
 		for(int k= 0; k < maxDegree; k++)
 		{
 			j = adjacentListD[i*maxDegree + k];
-			if(j>=0 && (colors[i] == colors[j]))
+			if(j>i && (colors[i] == colors[j]))
 			{
 				//conflictD[idx] = min(i,j)+1;	
 				conflictD[idx] = i+1;	
@@ -547,9 +574,9 @@ void cudaGraphColoring_complex(int *adjacentList, int *boundaryList, int *graphC
 	cudaMalloc((void**)&degreeListD, GRAPHSIZE*sizeof(int));
 	
 	cudaMemcpy(adjacentListD, adjacentList, GRAPHSIZE*maxDegree*sizeof(int), cudaMemcpyHostToDevice);
-    	cudaMemcpy(colorsD, graphColors, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(colorsD, graphColors, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemcpy(boundaryListD, boundaryList, boundarySize*sizeof(int), cudaMemcpyHostToDevice);
-    	cudaMemcpy(degreeListD, degreeList, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(degreeListD, degreeList, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
 	
 	
 	cudaEventRecord(stop_mem, 0); 
