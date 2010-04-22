@@ -1,0 +1,72 @@
+TSDOTest
+v7
+r0
+t293650804.837677
+cCheck dependencies
+cCompileC build/SDOTest.build/Debug/SDOTest.build/Objects-normal/x86_64/sdo.o "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/sdo.cpp" normal x86_64 c++ com.apple.compilers.gcc.4_2
+cLd "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/Debug/SDOTest" normal x86_64
+
+N/Developer/SDKs/MacOSX10.6.sdk
+c000000004ABBF0FD00000000000000EE
+t1253830909
+s238
+
+N/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/Debug/SDOTest
+t1271958004
+s42800
+
+N/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/SDOTest.build/Debug/SDOTest.build/Objects-normal/x86_64/SDOTest.LinkFileList
+c000000004BD06B5800000000000000C5
+t1271950168
+s197
+
+N/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/SDOTest.build/Debug/SDOTest.build/Objects-normal/x86_64/main.o
+t2
+s0
+
+N/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/SDOTest.build/Debug/SDOTest.build/Objects-normal/x86_64/sdo.o
+t1271958004
+s121768
+
+N/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/main.cpp
+c000000004BD06B0C000000000000008F
+t1271950092
+s143
+i<iostream>
+
+N/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/sdo.cpp
+c000000004BD089F00000000000002030
+t1271958000
+s8240
+i<iostream>
+
+CCheck dependencies
+r0
+lSLF07#2@18"Check dependencies293650804#293650804#0(0"0(0#1#0"4300885448#0"0#
+
+CCompileC build/SDOTest.build/Debug/SDOTest.build/Objects-normal/x86_64/main.o "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/main.cpp" normal x86_64 c++ com.apple.compilers.gcc.4_2
+r0
+
+CCompileC build/SDOTest.build/Debug/SDOTest.build/Objects-normal/x86_64/sdo.o "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/sdo.cpp" normal x86_64 c++ com.apple.compilers.gcc.4_2
+s293650804.449930
+e293650804.821487
+r1
+xCompileC
+xbuild/SDOTest.build/Debug/SDOTest.build/Objects-normal/x86_64/sdo.o
+x/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/sdo.cpp
+xnormal
+xx86_64
+xc++
+xcom.apple.compilers.gcc.4_2
+lSLF07#2@144"Compile /Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/sdo.cpp293650804#293650804#0(0"0(0#0#136"/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/sdo.cpp4300885448#2348"    cd "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest"    setenv LANG en_US.US-ASCII    /Developer/usr/bin/gcc-4.2 -x c++ -arch x86_64 -fmessage-length=0 -pipe -Wno-trigraphs -fpascal-strings -fasm-blocks -O0 -Wreturn-type -Wunused-variable -D_GLIBCXX_DEBUG=1 -D_GLIBCXX_DEBUG_PEDANTIC=1 -isysroot /Developer/SDKs/MacOSX10.6.sdk -mfix-and-continue -fvisibility-inlines-hidden -mmacosx-version-min=10.6 -gdwarf-2 -iquote "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/SDOTest.build/Debug/SDOTest.build/SDOTest-generated-files.hmap" "-I/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/SDOTest.build/Debug/SDOTest.build/SDOTest-own-target-headers.hmap" "-I/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/SDOTest.build/Debug/SDOTest.build/SDOTest-all-target-headers.hmap" -iquote "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/SDOTest.build/Debug/SDOTest.build/SDOTest-project-headers.hmap" "-F/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/Debug" "-I/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/Debug/include" "-I/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/SDOTest.build/Debug/SDOTest.build/DerivedSources/x86_64" "-I/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/SDOTest.build/Debug/SDOTest.build/DerivedSources" -c "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/sdo.cpp" -o "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/SDOTest.build/Debug/SDOTest.build/Objects-normal/x86_64/sdo.o"0#
+
+CLd "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/Debug/SDOTest" normal x86_64
+s293650804.821572
+e293650804.837631
+r1
+xLd
+x/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/Debug/SDOTest
+xnormal
+xx86_64
+lSLF07#2@153"Link /Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/Debug/SDOTest293650804#293650804#0(0"0(0#0#0"4300885448#958"    cd "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest"    setenv MACOSX_DEPLOYMENT_TARGET 10.6    /Developer/usr/bin/g++-4.2 -arch x86_64 -isysroot /Developer/SDKs/MacOSX10.6.sdk "-L/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/Debug" "-F/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/Debug" -filelist "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/SDOTest.build/Debug/SDOTest.build/Objects-normal/x86_64/SDOTest.LinkFileList" -mmacosx-version-min=10.6 -o "/Users/pascalgrosset/Utah/cs6963 - Parallel Prog for GPUs/Assignments/Final/CUDAGraphColoring/trunk/CUDAColoring/sdoLike/SDOTest/build/Debug/SDOTest"0#
+
