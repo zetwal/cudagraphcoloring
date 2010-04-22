@@ -188,6 +188,48 @@ int colorGraph(int *matrix, int *colors, int size, int maxDegree){
 	return numColors;  
 }  
 
+// Author: Pascal & Shusen
+// GraphColor Adjacency list
+int colorGraph_adj(int *list, int *colors, int size, int maxDegree){  
+	int numColors = 0;  
+	int i, j;  
+	
+	int * degreeArray;  
+	degreeArray = new int[maxDegree+1];  
+	
+	
+	for (i=0; i<size; i++)  
+	{                 
+		// initialize degree array  
+		for (j=0; j<=maxDegree; j++)  
+			degreeArray[j] = j+1;  
+		
+		
+		// check the colors  
+		for (j=0; j<maxDegree; j++){  
+			if (i == j)  
+				continue;  
+			
+			// check connected  
+			if (    list[i*maxDegree + j] != -1)  
+				if (colors[list[i*maxDegree + j]] != 0)  
+					degreeArray[colors[list[i*maxDegree + j]]-1] = 0;   // set connected spots to 0  
+		}  
+		
+		for (j=0; j<=maxDegree; j++)  
+			if (degreeArray[j] != 0){  
+				colors[i] = degreeArray[j];  
+				break;  
+			}  
+		
+		if (colors[i] > numColors)  
+			numColors=colors[i];  
+	}  
+	delete[] degreeArray; 
+	
+	return numColors;  
+}  
+
 
 
 // Author: Peihong & Shusen 
@@ -287,8 +329,8 @@ int conflictSolve_old(int *Adjlist, int size, int *conflict, int conflictSize, i
 
 }
 
-
-
+// Solves conflicts
+// modified by Shusen
 int conflictSolve(int *Adjlist, int size, int *conflict, int conflictSize, int *graphColors, int maxDegree){
         int i, j, vertex, *colorList, *setColors;
         colorList = new int[maxDegree];
@@ -304,22 +346,16 @@ int conflictSolve(int *Adjlist, int size, int *conflict, int conflictSize, int *
 
         for (i=0; i<conflictSize; i++){
                 memcpy(colorList, setColors, maxDegree*sizeof(int));                    // set the colors in colorList to be same as setColors
-		////DEBUG
-
 
                 vertex = conflict[i]-1;
                 
 
                 for (j=0; j<maxDegree; j++){                                            // cycle through the graph
                         if ( Adjlist[vertex*maxDegree + j] != -1 )                      //      check if node is connected
-                        {      
 				colorList[ graphColors[Adjlist[vertex*maxDegree + j]]-1 ] = 0;
 
-                        }
-			else {
+			else 
                               break;    
-
-			}              
                 }
 
 
@@ -488,7 +524,8 @@ int main(){
 	cudaEventCreate(&stop); 
 	cudaEventRecord(start, 0);  
 	
-	numColorsSeq = colorGraph(adjacencyMatrix, graphColors, GRAPHSIZE, maxDegree);      
+	//numColorsSeq = colorGraph(adjacencyMatrix, graphColors, GRAPHSIZE, maxDegree);   
+        numColorsSeq = colorGraph_adj(adjacentList, graphColors, GRAPHSIZE, maxDegree);   
 	
 	cudaEventRecord(stop, 0); 
 	cudaEventSynchronize(stop); 
