@@ -11,14 +11,15 @@
 
 
 const long GRAPHSIZE = 10240;    // number of nodes
-const long NUMEDGES = 75000;    // number of edges 
+const long NUMEDGES = 150000;    // number of edges 
 
-#define GRIDSIZE  4              // number of blocks 
-#define BLOCKSIZE 256            // number of threads in a block 
+const int GRIDSIZE = 2;          // number of blocks 
+const int BLOCKSIZE = 512;       // number of threads in a block 
 
 const int SUBSIZE = GRAPHSIZE/(GRIDSIZE*BLOCKSIZE); 
 
 const int SUBSIZE_BOUNDARY = 256;
+
 
 #ifdef __cplusplus 
 	#define CHECK_EXT extern "C" 

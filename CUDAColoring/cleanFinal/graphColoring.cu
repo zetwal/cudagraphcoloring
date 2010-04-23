@@ -85,6 +85,8 @@ int __device__ color(int vertex, int *adjacencyList, int *graphColors, int maxDe
 
 
 
+
+
 // Author: Shusen & Pascal
 // does the coloring
 __global__ void colorGraph_SDO(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, int maxDegree)
@@ -280,7 +282,7 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	cudaEventElapsedTime(&elapsedTime_col, start_col, stop_col); 
 	cudaEventElapsedTime(&elapsedTime_confl, start_confl, stop_confl); 
 
-	cout << "GPU timings ~ Memory: " << elapsedTime_memory  << " ms     Coloring: " 
+	cout << "GPU timings ~ Memory transfer: " << elapsedTime_memory  << " ms     Coloring: " 
 		 << elapsedTime_col << " ms    Conflict: " << elapsedTime_confl << " ms" << endl; 
 
 
@@ -289,13 +291,4 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	cudaFree(conflictD);
 	cudaFree(boundaryListD);
 }
-
-
-
-
-
-
-
-
-
 
