@@ -10,11 +10,11 @@
 #include <iostream>
 
 
-const int GRAPHSIZE = 2048;    // number of nodes
-const int NUMEDGES = 1500;    // number of edges 
+const long GRAPHSIZE = 10240;    // number of nodes
+const long NUMEDGES = 150000;    // number of edges 
 
 #define GRIDSIZE 4                      // number of blocks 
-#define BLOCKSIZE 512                  // number of threads in a block 
+#define BLOCKSIZE 256                  // number of threads in a block 
 
 const int SUBSIZE = GRAPHSIZE/(GRIDSIZE*BLOCKSIZE); 
 
