@@ -114,6 +114,58 @@ void getDegreeList(int *adjacencyList, int *degreeList, int sizeGraph, int maxDe
 
 
 // Author :Peihong
+int getBoundaryList2(int *adjacencyMatrix, int *boundaryList, int size, int &boundaryCount){  
+	int maxDegree = 0;   
+	int degree;  
+	
+	set<int> boundarySet; 
+	boundarySet.clear(); 
+
+
+	
+	for (int i=0; i<size; i++){  
+		degree = 0;  
+
+		int subIdx = i/(float)SUBSIZE;
+		int start = subIdx * SUBSIZE;
+		int end = min( (subIdx + 1)*SUBSIZE, size );
+
+
+		for (int j=0; j<size; j++){           
+			if ( adjacencyMatrix[i*size + j] == 1)  
+				degree++;  
+			if ( adjacencyMatrix[i*size + j] == 1 && (j < start || j >= end))
+			{
+				boundarySet.insert(i);
+			}
+			
+		}
+		
+		if (degree > maxDegree)  
+			maxDegree = degree;  
+
+		
+	} 
+	
+	boundaryCount = boundarySet.size();
+
+	
+	
+	set<int>::iterator it = boundarySet.begin(); 
+	for (int i=0; it != boundarySet.end(); it++)  
+	{ 
+		boundaryList[i] = *it;
+		i++; 
+	}  
+	
+	return maxDegree;  
+} 
+
+
+
+
+
+// Author :Peihong
 int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boundaryCount){  
 	int maxDegree = 0;   
 	int degree;  
@@ -157,9 +209,6 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
 	for (int i=0; it != boundarySet.end(); it++)  
 	{ 
 		boundaryList[i] = *it;
-		//cout<<"boundaryList["<<i<<"]="<<boundaryList[i]<<endl;  
-		//if(boundaryList[i] == 7105) cout<<"find boundary node 7105"<<endl;
-		//if(boundaryList[i] == 7104) cout<<"find boundary node 7104"<<endl;
 		i++; 
 	}  
 	
@@ -650,8 +699,8 @@ int main(){
 	cudaEventRecord(start, 0);  
 	
 	//numColorsSeq = colorGraph(adjacencyMatrix, graphColors, GRAPHSIZE, maxDegree);   
-    //numColorsSeq = colorGraph_adj_FF(adjacentList, graphColors, GRAPHSIZE, maxDegree);  
-	sdoIm(adjacentList, graphColors, degreeList, GRAPHSIZE, maxDegree);
+    numColorsSeq = colorGraph_adj_FF(adjacentList, graphColors, GRAPHSIZE, maxDegree);  
+	//sdoIm(adjacentList, graphColors, degreeList, GRAPHSIZE, maxDegree);
 	
 	cudaEventRecord(stop, 0); 
 	cudaEventSynchronize(stop); 
@@ -764,7 +813,14 @@ int main(){
 /**/	
 	/**/
 	
-	
+	numColorsParallel = 0;
+	for (int i=0; i<GRAPHSIZE; i++){
+		if ( numColorsParallel < graphColors[i] )
+			numColorsParallel = graphColors[i];
+	}
+	cout << "!!!!!!!!!!!!!!!!!!!!!!!!!!Parallel colors: "<< numColorsParallel <<endl;	
+
+
 	
 	/*for(int i=0; i< GRAPHSIZE; i++)
 	 {
@@ -820,7 +876,6 @@ int main(){
 
 	numColorsParallel = 0;
 	for (int i=0; i<GRAPHSIZE; i++){
-		//cout << graphColors[i] << " ";
 		if ( numColorsParallel < graphColors[i] )
 			numColorsParallel = graphColors[i];
 	}

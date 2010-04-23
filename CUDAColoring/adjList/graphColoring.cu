@@ -54,12 +54,13 @@ int __device__ color(int vertex, int *adjacencyList, int *graphColors, int maxDe
 		numColored++;
 	
 	for (int i=0; i<maxDegree; i++){						// set the index of the color to 1
+/*
 		if (adjacencyList[vertex*maxDegree + i] < start)
 			continue;
 
 		if (adjacencyList[vertex*maxDegree + i] > end)
 			break;
-
+*/
 		if (adjacencyList[vertex*maxDegree + i] != -1)
 			colors[  graphColors[  adjacencyList[vertex*maxDegree + i]  ]  ] = 1;
 		else {
