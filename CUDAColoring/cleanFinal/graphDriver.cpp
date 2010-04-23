@@ -14,19 +14,6 @@ using namespace std;
 #define UNIQUE_CONFLICT 
 
 
-
-
-
-int min(int n1, int n2) 
-{ 
-	if(n1>=n2) 
-		return n2; 
-	else 
-		return n1; 
-} 
-
-
-
 //----------------------- Graph initializations -----------------------//
 
 // Author: Pascal 
@@ -124,7 +111,13 @@ void getDegreeList(int *adjacencyList, int *degreeList, int sizeGraph, int maxDe
 
 
 
-
+int inline min(int n1, int n2) 
+{ 
+	if (n1>=n2) 
+		return n2; 
+	else 
+		return n1; 
+} 
 
 // Author :Peihong
 int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boundaryCount){  
@@ -139,12 +132,9 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
 	for (int i=0; i<size; i++){  
 		degree = 0;  
 
-	
-		
 		int subIdx = i/(float)SUBSIZE;
 		int start = subIdx * SUBSIZE;
 		int end = min( (subIdx + 1)*SUBSIZE, size );
-
 
 		for (int j=0; j<size; j++){           
 			if ( adjacencyMatrix[i*size + j] == 1)  
@@ -157,15 +147,11 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
 		}
 		
 		if (degree > maxDegree)  
-			maxDegree = degree;  
-
-		
+			maxDegree = degree;  	
 	} 
 	
 	boundaryCount = boundarySet.size();
 
-	
-	
 	set<int>::iterator it = boundarySet.begin(); 
 	for (int i=0; it != boundarySet.end(); it++)  
 	{ 
@@ -619,11 +605,14 @@ int main(){
 //--------------------- Parallel Graph Coloring ---------------------!	
 	
 	
-	cout << endl << endl << "Graph Data" << endl;
-	cout << "Vertices: " << GRAPHSIZE << "   Edges: " << NUMEDGES << "   Density: " << (2*NUMEDGES)/((float)GRAPHSIZE*(GRAPHSIZE-1))<< "   Degree: " << maxDegree << endl;
-	cout << endl << "Random sed used: " << randSeed << endl;
+	cout << endl << endl << "Graph Summary" << endl;
+	cout << "Vertices: " << GRAPHSIZE << "   Edges: " << NUMEDGES << "   Density: " << (2*NUMEDGES)/((float)GRAPHSIZE*(GRAPHSIZE-1)) << "   Degree: " << maxDegree << endl;
+	cout << "Random sed used: " << randSeed << endl;
 
-	cout << endl << "CPU time: " << elapsedTimeCPU << " ms    - GPU Time: " << elapsedTimeGPU << " ms" << endl; 
+	cout << endl << "Grid Size: " << GRIDSIZE << "    Block Size: " << BLOCKSIZE << "     Total number of threads: " << GRIDSIZE*BLOCKSIZE << endl;
+	cout << "Graph Subsize: " << SUBSIZE << endl;
+
+	cout << endl << "CPU time (Fast Fit): " << elapsedTimeCPU << " ms    -  GPU Time: " << elapsedTimeGPU << " ms" << endl; 
 	cout << "ALGO step 1, 2 & 3: " 	<< elapsedTimeGPU_1 << " ms" << endl;  
 	cout << "Boundary count: " 		<< elapsedTimeGPU_4 - elapsedTimeGPU_1 << " ms" << endl; 
 	cout << "ALGO step 4: " 			<< elapsedTimeGPU - elapsedTimeGPU_4 << " ms" << endl; 
