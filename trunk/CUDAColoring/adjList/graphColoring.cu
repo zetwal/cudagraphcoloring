@@ -13,7 +13,7 @@ int __device__ degree(int vertex, int *degreeList){
 
 int __device__ saturation(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int start, int end){
 	int saturation = 0;
-	int colors[100];
+	int colors[200];
 
 	//memset(colors, 0, (maxDegree+1)*sizeof(int));		// initialize array
 
@@ -45,7 +45,7 @@ int __device__ saturation(int vertex, int *adjacencyList, int *graphColors, int 
 
 // colors the vertex with the min possible color
 int __device__ color(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int numColored, int start, int end){
-	int colors[100];
+	int colors[200];
 	for (int j=0; j<100; j++)
 		colors[j] = 0;
 
