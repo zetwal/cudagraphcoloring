@@ -14,49 +14,62 @@ using namespace std;
 
 //----------------------- Read Sparse Graph from Matrix Market format --------------//
 // Author: Shusen
-
-int* getAdjacentListFromSparseMartix_mtx(char* filename) //return the adjacent list in matrix form
+void inline swap(int &a, int &b) {int temp = a; a=b; b=temp; }
+int inline findmax(int *a, int n){
+	int max=0;
+	for(int i=0; i<n; i++)
+		if(a[i]>max)
+			max = a[i];
+	return max;	}
+int getAdjacentListFromSparseMartix_mtx(int *&adjacencyList, long &graphsize, const char* filename) //return the maxDegree
 {
 	int maxDegree=0;
 	long row=0, col=0, entries=0;
-	FILE * pFile;
 
 	ifstream mtxf;
 	mtxf.open(filename);
+	cout << string(filename) << endl;
 
 	mtxf >> row >> col >> entries ;
 	cout<< row <<" " << col <<" " << entries << endl;
+	graphsize = col>row? col:row;
 
-	//col will the length of the adjacency list
 	//calculate maxDegree in the following loop
-	int node = 0, nodeOld = 1;
 	int donotcare = 0;
-	int degreeCount = 0;
-	while(!mtxf.eof())
-	{
-		mtxf >> donotcare >> node >> donotcare;
-		//cout << node << endl;
-		if(nodeOld != node)
-			degreeCount = 0;
-		else
-			degreeCount++;
-		//find the maxDegree
-		if(degreeCount > maxDegree)
-			maxDegree = degreeCount;
-	}
-	cout << "maxDegree: "<< maxDegree << endl;
+	int nodecol = 0;
+	int noderow = 0;
 
+	int *graphsizeArray = new int[graphsize];
+	memset(graphsizeArray, 0 , sizeof(int)*graphsize);
+	int j=0;
+	for(int i=0; i<entries; i++)
+	{
+		j++;
+		mtxf >> noderow >> nodecol >> donotcare;
+		//cout << noderow << " " << nodecol << " " << donotcare << endl;
+		//assert(noderow!=nodecol);
+		if(noderow == nodecol)
+			continue;
+		graphsizeArray[noderow-1]++;
+		graphsizeArray[nodecol-1]++;
+	}
+	maxDegree = findmax(graphsizeArray,graphsize);
+
+
+
+	cout << j <<" maxDegree: "<< maxDegree << endl;
+	mtxf.close();
 
 	//create the adjacency list matrix
 	
-	int *adjacencyList = new int[maxDegree*col];
-	int *adjacencyListLength = new int[col];
-	memset(adjacencyList, -1, sizeof(int)*maxDegree*col);
-	memset(adjacencyListLength, 0, sizeof(int)*col); //indicate how many element has been stored in the list of each node
+	adjacencyList = new int[maxDegree*graphsize];
+	int *adjacencyListLength = new int[graphsize];
+	memset(adjacencyList, -1, sizeof(int)*maxDegree*graphsize);
+	memset(adjacencyListLength, 0, sizeof(int)*graphsize); //indicate how many element has been stored in the list of each node
 	//for(int i=0; i<maxDegree; i++)
 	//	cout<<adjacencyList[i]<<endl;
 	
-	mtxf.close();
+
 
 	//update the adjacency list matrix from the file
 	mtxf.open(filename);
@@ -68,19 +81,22 @@ int* getAdjacentListFromSparseMartix_mtx(char* filename) //return the adjacent l
 	for(int i=0; i<entries; i++)
 	{
 		mtxf >> connection >> nodeindex >> donotcare;
+		if(noderow == nodecol)
+			continue;
 		//because node in mtx file begin with 1 but in the program begin with 0
 		adjacencyList[(nodeindex-1)*maxDegree + adjacencyListLength[nodeindex-1] ]=connection-1; 
 		adjacencyListLength[nodeindex-1]++;
+
+		swap(connection, nodeindex);
+		adjacencyList[(nodeindex-1)*maxDegree + adjacencyListLength[nodeindex-1] ]=connection-1; 
+		adjacencyListLength[nodeindex-1]++;		
 	}
-	//for(int i=0; i<maxDegree; i++)
-	//{
-	//	cout << " " << adjacencyList[(col-1)*maxDegree+i];
-	//}
+
 	delete [] adjacencyListLength;
 
+	return maxDegree;
 
 }
-
 //----------------------- Graph initializations -----------------------//
 
 // Author: Pascal 
@@ -229,6 +245,49 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
 	return maxDegree;  
 }  
 
+// Author: Peihong & Shusen
+// getBoundaryList from adjacency list representation
+void getBoundaryList_adjList(int *adjacencyList, int *boundaryList, long size, int maxDegree, int &boundaryCount){  
+ 
+	
+	set<int> boundarySet; 
+	boundarySet.clear(); 
+
+assert(adjacencyList);
+	
+	for (int i=0; i<size; i++){  
+
+
+		int subIdx = i/(float)SUBSIZE;
+		int start = subIdx * SUBSIZE;
+		int end = min( (subIdx + 1)*SUBSIZE, size );
+
+		for (int j=0; j<maxDegree; j++){   
+			assert(i*maxDegree+j <= (size-1)*maxDegree+maxDegree-1);        
+
+			if ( adjacencyList[i*maxDegree + j] < start || adjacencyList[i*maxDegree + j] >= end)
+			{
+				boundarySet.insert(i);
+			}
+			
+		}
+
+	} 
+
+	
+	boundaryCount = boundarySet.size();
+	boundaryList = new int[boundaryCount];
+
+
+ 
+	set<int>::iterator it = boundarySet.begin(); 
+	for (int i=0; it != boundarySet.end(); it++)  
+	{ 
+		boundaryList[i] = *it;
+		i++; 
+	}  
+//cout << "Debug:" <<endl;  
+}  
 
 
 
