@@ -8,6 +8,7 @@
 #include <math.h>  
 #include <set> 
 #include "graphColoring.h" 
+#include <assert.h>
 
 #include <fstream>
 using namespace std;  
@@ -623,7 +624,7 @@ int main(){
 	getAdjacentList(adjacencyMatrix, adjacentList, GRAPHSIZE, maxDegree);
 	
 	//reading the matrix market format sparse matrix
-	getAdjacentListFromSparseMartix_mtx("ch7-8-b4.mtx"); //return the adjacencyList array!!!!!!
+	//getAdjacentListFromSparseMartix_mtx("ch7-8-b4.mtx");
 
 	// Get degree List
 	int *degreeList = new int[GRAPHSIZE*sizeof(int)];
