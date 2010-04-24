@@ -9,9 +9,77 @@
 #include <set> 
 #include "graphColoring.h" 
 
+#include <fstream>
 using namespace std;  
 
+//----------------------- Read Sparse Graph from Matrix Market format --------------//
+// Author: Shusen
 
+int* getAdjacentListFromSparseMartix_mtx(char* filename) //return the adjacent list in matrix form
+{
+	int maxDegree=0;
+	long row=0, col=0, entries=0;
+	FILE * pFile;
+
+	ifstream mtxf;
+	mtxf.open(filename);
+
+	mtxf >> row >> col >> entries ;
+	cout<< row <<" " << col <<" " << entries << endl;
+
+	//col will the length of the adjacency list
+	//calculate maxDegree in the following loop
+	int node = 0, nodeOld = 1;
+	int donotcare = 0;
+	int degreeCount = 0;
+	while(!mtxf.eof())
+	{
+		mtxf >> donotcare >> node >> donotcare;
+		//cout << node << endl;
+		if(nodeOld != node)
+			degreeCount = 0;
+		else
+			degreeCount++;
+		//find the maxDegree
+		if(degreeCount > maxDegree)
+			maxDegree = degreeCount;
+	}
+	cout << "maxDegree: "<< maxDegree << endl;
+
+
+	//create the adjacency list matrix
+	
+	int *adjacencyList = new int[maxDegree*col];
+	int *adjacencyListLength = new int[col];
+	memset(adjacencyList, -1, sizeof(int)*maxDegree*col);
+	memset(adjacencyListLength, 0, sizeof(int)*col); //indicate how many element has been stored in the list of each node
+	//for(int i=0; i<maxDegree; i++)
+	//	cout<<adjacencyList[i]<<endl;
+	
+	mtxf.close();
+
+	//update the adjacency list matrix from the file
+	mtxf.open(filename);
+	int nodeindex=0, connection=0;
+	
+	mtxf >> donotcare >> donotcare >> donotcare;
+	//cout << donotcare << endl;
+
+	for(int i=0; i<entries; i++)
+	{
+		mtxf >> connection >> nodeindex >> donotcare;
+		//because node in mtx file begin with 1 but in the program begin with 0
+		adjacencyList[(nodeindex-1)*maxDegree + adjacencyListLength[nodeindex-1] ]=connection-1; 
+		adjacencyListLength[nodeindex-1]++;
+	}
+	//for(int i=0; i<maxDegree; i++)
+	//{
+	//	cout << " " << adjacencyList[(col-1)*maxDegree+i];
+	//}
+	delete [] adjacencyListLength;
+
+
+}
 
 //----------------------- Graph initializations -----------------------//
 
@@ -495,7 +563,8 @@ int main(){
 
 	getAdjacentList(adjacencyMatrix, adjacentList, GRAPHSIZE, maxDegree);
 	
-	
+	//reading the matrix market format sparse matrix
+	getAdjacentListFromSparseMartix_mtx("ch7-8-b4.mtx"); //return the adjacencyList array!!!!!!
 
 	// Get degree List
 	int *degreeList = new int[GRAPHSIZE*sizeof(int)];
