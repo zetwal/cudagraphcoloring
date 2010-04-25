@@ -559,7 +559,7 @@ int saturation(int vertex, int *compactAdjacencyList, int *vertexStartList, int 
 
 
 	for (int i=vertexStartList[vertex]; i<vertexStartList[vertex+1]; i++){
-		colors[ graphColors[i] ] = 1;
+		colors[ graphColors[ compactAdjacencyList[i] ] ] = 1;
 	}  
 
 
@@ -1049,7 +1049,7 @@ int main(){
 //--------------------- Checking for color conflict ---------------------!
 
 	cout << endl <<  "Parallel Conflict check:";	
-	checkCorrectColoring(adjacencyMatrix, graphColors); 	
+	//checkCorrectColoring(adjacencyMatrix, graphColors); 	
 
 
 
