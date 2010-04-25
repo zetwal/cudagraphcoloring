@@ -649,8 +649,8 @@ cout << boundaryCount << endl;
 	cudaEventRecord(start, 0);  
 	
 //cout << "Debug:" <<endl; 
-	//numColorsSeq = colorGraph_FF(adjacentList, graphColors, graphsize, maxDegree);  
-	sdoIm(adjacentList, graphColors, degreeList, GRAPHSIZE, maxDegree);
+	numColorsSeq = colorGraph_FF(adjacentList, graphColors, graphsize, maxDegree);  
+	//sdoIm(adjacentList, graphColors, degreeList, GRAPHSIZE, maxDegree);
 //cout << "Debug:" <<endl;  	
 
 	cudaEventRecord(stop, 0); 
@@ -740,8 +740,8 @@ cout << boundaryCount << endl;
 
 //--------------- Step 4: solve conflicts 
 	cout <<"Checkpoint " << endl;
-	//conflictSolveFF(adjacentList,  graphsize, conflict, conflictCount, graphColors, maxDegree); 
-	conflictSolveSDO(adjacentList, conflict, conflictCount, graphColors,degreeList, graphsize, maxDegree);
+	conflictSolveFF(adjacentList,  graphsize, conflict, conflictCount, graphColors, maxDegree); 
+	//conflictSolveSDO(adjacentList, conflict, conflictCount, graphColors,degreeList, graphsize, maxDegree);
 
 	
 	
@@ -822,7 +822,7 @@ cout << boundaryCount << endl;
 	delete[] conflict; 
 	//delete[] boundaryList;
 	delete[] adjacentList;
-	
+
 	return 0;  
 }  
 

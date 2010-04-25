@@ -9,10 +9,12 @@
 #include <cuda.h> 
 #include <iostream>
 
-long graphsize;
+long graphsize, gridsize;
+int blocksize;
+int subsize, subsize_boundary;
 
 const long GRAPHSIZE = 141120;    // number of nodes
-const long NUMEDGES = 705600;    // number of edges 
+const long NUMEDGES = 705600;    // number of edges
 
 const int GRIDSIZE = 8;          // number of blocks 
 const int BLOCKSIZE = 512;       // number of threads in a block 
