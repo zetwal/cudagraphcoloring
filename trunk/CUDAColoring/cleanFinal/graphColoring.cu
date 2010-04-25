@@ -29,7 +29,7 @@ int __device__ saturation(int vertex, int *adjacencyList, int *graphColors, int 
 			break;
 
 		if (adjacencyList[vertex*maxDegree + i] != -1)
-			colors[ graphColors[vertex] ] = 1;			// at each colored set the array to 1
+			colors[ graphColors[i] ] = 1;			// at each colored set the array to 1
 		else
 			break;
 	}
@@ -124,8 +124,102 @@ __global__ void colorGraph_SDO(int *adjacencyList, int *graphColors, int *degree
 }
 
 
+//------------------------------------------------------
 
 
+// Author: Shusen & Pascal
+// saturation of a vertex
+int __device__ saturation(int vertex, int *compactAdjacencyListD, int *vertexStartListD, int *graphColors, int maxDegree, int start, int end){
+	int saturation = 0;	
+	int colors[MAXDEGREE];
+	for (int j=0; j<MAXDEGREE; j++)
+		colors[j] = 0;
+
+
+	
+
+
+	for (int i=vertexStartListD[vertex]; i<vertexStartListD[vertex+1]; i++){
+		if (compactAdjacencyListD[i] < start)
+			continue;
+
+		if (compactAdjacencyListD[i] >= end)
+			break;
+
+		colors[ graphColors[i] ] = 1;
+	}
+
+
+	for (int i=1; i<maxDegree+1; i++)					// count the number of 1's but skip uncolored
+		if (colors[i] == 1)
+			saturation++;
+
+	return saturation;
+}
+
+
+// Author: Shusen & Pascal
+// colors the vertex with the min possible color
+int __device__ color(int vertex, int *compactAdjacencyListD, int *vertexStartListD, int *graphColors, int maxDegree, int numColored, int start, int end){
+	int colors[MAXDEGREE];
+	for (int j=0; j<MAXDEGREE; j++)
+		colors[j] = 0;
+
+	
+	if (graphColors[vertex] == 0)
+		numColored++;
+	
+
+	for (int i=vertexStartListD[vertex]; i<vertexStartListD[vertex+1]; i++){
+		colors[ graphColors[ compactAdjacencyListD[i] ] ] = 1;
+	}
+
+	
+	for (int i=1; i<maxDegree+1; i++)					// nodes still equal to 0 are unassigned
+		if (colors[i] != 1){
+			graphColors[vertex] = i;
+			break;
+		}
+	
+	return numColored;
+}
+
+
+// Author: Shusen & Pascal
+// does the coloring
+__global__ void colorGraph_SDO(int *compactAdjacencyListD, int *vertexStartListD, int *graphColors, int *degreeList, int sizeGraph, int maxDegree)
+{
+	int start, end;
+	int subGraphSize, numColored = 0;
+	int satDegree, max, index;
+	
+	subGraphSize = sizeGraph/(gridDim.x * blockDim.x);
+	start = (sizeGraph/gridDim.x * blockIdx.x) + (subGraphSize * threadIdx.x);
+	end = start + subGraphSize;
+
+	while (numColored < subGraphSize){
+		max = -1;
+		
+		for (int i=start; i<end; i++){
+			if (graphColors[i] == 0)			// not colored
+			{
+				satDegree = saturation(i, compactAdjacencyListD, vertexStartListD, graphColors, maxDegree, start, end);
+
+				if (satDegree > max){
+					max = satDegree;
+					index = i;				
+				}
+
+				if (satDegree == max){
+					if (degree(i,degreeList) > degree(index,degreeList))
+						index = i;
+				}
+			}
+
+			numColored = color(index, compactAdjacencyListD, vertexStartListD, graphColors, maxDegree, numColored, start, end);
+		}
+	}
+}
 
 //----------------------- First Fit Adjacency List -----------------------//
 //
@@ -165,11 +259,50 @@ __global__ void colorGraph_FF(int *adjacencyListD, int *colors, int size, int ma
 				break;
 			}
 		
-		if(colors[i] > numColors)
+		if (colors[i] > numColors)
 			numColors = colors[i];		
 	}
 }
 
+
+
+__global__ void colorGraph_FF(int *compactAdjacencyListD, int *vertexStartListD, int *colors, int size, int maxDegree){
+	int i, j, start, end;
+	int subGraphSize, numColors = 0;
+	
+	subGraphSize = size/(gridDim.x * blockDim.x);
+	start = (size/gridDim.x * blockIdx.x) + (subGraphSize * threadIdx.x);
+	end = start + subGraphSize;
+	
+
+	int degreeArray[100];
+	for(i=start; i<end; i++)
+	{
+		for(j=0; j<maxDegree; j++)
+			degreeArray[j] = j+1;
+
+
+		// check the colors  
+		for (j=vertexStartListD[i]; j<vertexStartListD[i+1]; j++){
+			if (i == j)  
+				continue;  
+			
+			if (colors[ compactAdjacencyListD[j] ] != 0)  
+				degreeArray[colors[   compactAdjacencyListD[j]   ]-1] = 0;   // set connected spots to 0  
+		}  
+
+		
+
+		for(j=0; j<maxDegree; j++)
+			if(degreeArray[j] != 0){
+				colors[i] = degreeArray[j];
+				break;
+			}
+		
+		if (colors[i] > numColors)
+			numColors = colors[i];		
+	}
+}
 
 
 //----------------------- Detects conflicts -----------------------//
@@ -197,9 +330,9 @@ __global__ void conflictsDetection(int *adjacentListD, int *boundaryListD, int *
 //----------------------- Main -----------------------//
 
 extern "C"
-void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, int *degreeList, int *conflict, int boundarySize, int maxDegree)
+void cudaGraphColoring(int *adjacentList, int *compactAdjacencyList, int *vertexStartList, int *boundaryList, int *graphColors, int *degreeList, int *conflict, int boundarySize, int maxDegree)
 {
-	int *adjacentListD, *colorsD, *conflictD, *boundaryListD, *degreeListD;     
+	int *adjacentListD, *colorsD, *conflictD, *boundaryListD, *degreeListD, *vertexStartListD, *compactAdjacencyListD;     
 	int gridsize = ceil((float)boundarySize/(float)SUBSIZE_BOUNDARY);
 	int blocksize = SUBSIZE_BOUNDARY;
 	
@@ -219,11 +352,18 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	cudaMalloc((void**)&conflictD, boundarySize*sizeof(int));
 	cudaMalloc((void**)&boundaryListD, boundarySize*sizeof(int));
 	cudaMalloc((void**)&degreeListD, GRAPHSIZE*sizeof(int));
+
+	cudaMalloc((void**)&compactAdjacencyListD, (NUMEDGES*2)*sizeof(int));
+	cudaMalloc((void**)&vertexStartListD, GRAPHSIZE*sizeof(int));
 	
+
 	cudaMemcpy(adjacentListD, adjacentList, GRAPHSIZE*maxDegree*sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(colorsD, graphColors, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemcpy(boundaryListD, boundaryList, boundarySize*sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(degreeListD, degreeList, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
+
+	cudaMemcpy(vertexStartListD, vertexStartList, GRAPHSIZE*sizeof(int), cudaMemcpyHostToDevice);
+	cudaMemcpy(compactAdjacencyListD, compactAdjacencyList, (NUMEDGES*2)*sizeof(int), cudaMemcpyHostToDevice);
 	
 	
 	cudaEventRecord(stop_mem, 0); 
@@ -248,7 +388,10 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	
 	
 	//colorGraph_FF<<<dimGrid_col, dimBlock_col>>>(adjacentListD, colorsD, GRAPHSIZE, maxDegree);				// First Fit
-	colorGraph_SDO<<<dimGrid_col, dimBlock_col>>>(adjacentListD, colorsD, degreeListD,GRAPHSIZE, maxDegree);		// SDO improved
+	//colorGraph_FF<<<dimGrid_col, dimBlock_col>>>(compactAdjacencyListD, vertexStartListD, colorsD, GRAPHSIZE, maxDegree);				// First Fit
+
+	//colorGraph_SDO<<<dimGrid_col, dimBlock_col>>>(adjacentListD, colorsD, degreeListD,GRAPHSIZE, maxDegree);		// SDO improved
+	colorGraph_SDO<<<dimGrid_col, dimBlock_col>>>(compactAdjacencyListD, vertexStartListD, colorsD, degreeListD,GRAPHSIZE, maxDegree);		// SDO improved
 	
 	
 	cudaEventRecord(stop_col, 0); 
