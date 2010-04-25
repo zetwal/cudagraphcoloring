@@ -1049,7 +1049,7 @@ int main(){
 //--------------------- Checking for color conflict ---------------------!
 
 	cout << endl <<  "Parallel Conflict check:";	
-	//checkCorrectColoring(adjacencyMatrix, graphColors); 	
+	checkCorrectColoring(adjacencyMatrix, graphColors); 	
 
 
 
