@@ -1,2 +1,0 @@
-/home/forrest/GraphColoring/CUDAColoring/realData/DirCMake/CMakeFiles/CUDAGraphColoring.dir
-/home/forrest/GraphColoring/CUDAColoring/realData/DirCMake/CMakeFiles/cudaGraphColoring.dir
