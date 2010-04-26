@@ -14,7 +14,7 @@ const long GRAPHSIZE = 2048;    // number of nodes
 const long NUMEDGES = 15000;    // number of edges 
 
 const long GRIDSIZE = 2;          // number of blocks 
-const long BLOCKSIZE = 256;       // number of threads in a block 
+const long BLOCKSIZE = 128;       // number of threads in a block 
 
 const long SUBSIZE = GRAPHSIZE/(GRIDSIZE*BLOCKSIZE); 
 
