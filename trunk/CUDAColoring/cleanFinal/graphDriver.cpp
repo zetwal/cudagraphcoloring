@@ -974,7 +974,11 @@ void checkCorrectColoring(long *compactAdjacencyList, long *vertexStartList, lon
 
 
 //----------------------- The meat -----------------------//
-int main(){  
+int main(int argc, char *argv[])
+{
+	const char* filename = argv[1];
+	cout << filename << endl;
+
 	long maxDegree, numColorsSeq, numColorsParallel, boundaryCount, conflictCount;
 	long graphSize, numEdges, subSize;
 
