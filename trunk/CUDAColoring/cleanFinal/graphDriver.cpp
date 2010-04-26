@@ -23,12 +23,12 @@ void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, long *&com
 	int nodecol = 0;
 	int noderow = 0;
 
-
+	cout << "Opening" << endl;
 
 ///////////////////////////////////Read file for the first time ////////////////////////////////////
 	ifstream mtxf;	
 	mtxf.open(filename);
-	//cout << string(filename) << endl;
+	cout << string(filename) << endl;
 	while(mtxf.peek()=='%')
 		mtxf.ignore(512, '\n');//
 	
@@ -90,6 +90,7 @@ void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, long *&com
 	set<long>** setArray = new set<long>* [graphsize];
 	assert(setArray);
 	memset(setArray, 0 , sizeof(set<long>*)*graphsize);
+	
 	long x, y;
 	cout<< "finished allocate memory" << endl;
 
@@ -118,8 +119,9 @@ void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, long *&com
 
 	compactAdjacencyList = new long[listSize];
 	memset(compactAdjacencyList, 0, sizeof(long)*listSize);
-	vertexStartList = new long[graphsize];
-	memset(vertexStartList, 0, sizeof(long)*graphsize);
+	vertexStartList = new long[graphsize+1];
+	memset(vertexStartList, 0, sizeof(long)*(graphsize+1));
+	vertexStartList[graphsize] = graphsize;
 	long currentPos = 0;
 	
 	for(long i=0; i<graphsize; i++)
@@ -181,24 +183,39 @@ void generateCompactAdjacencyList(long *compactAdjacencyList, long *vertexStartL
 	set<long>** setArray = new set<long>* [nodesize];
 	memset(setArray, 0 , sizeof(set<long>*)*nodesize);
 
-	for(long i=0; i<edgesize; i++)
+	long i = 0;
+	long j=0;
+	//for(long i=0; i<edgesize; i++)
+	while (i<2*edgesize)
 	{
+		
 		x = rand()%nodesize;  
 		y = rand()%nodesize; 
-		cout << x << " "<<y << endl;
+		//cout << x << " "<<y << endl;
 		if(x==y)
 		{
-			i--;
 			continue;
 		}	
 		if (setArray[x] == NULL)
 			setArray[x] = new set<long>();
 		if (setArray[y] == NULL)
 			setArray[y] = new set<long>();
-	
+
+		//cout << i << " ";
+		
+		long oldsize = setArray[x]->size();
 		setArray[x]->insert(y);
+		if(oldsize == setArray[x]->size())
+			continue;
+
+		oldsize = setArray[y]->size();
 		setArray[y]->insert(x);
+		if(oldsize == setArray[y]->size())
+			continue;
+
+		i+=2;
 	}
+	cout <<"loop: "<< j << endl;
 
 	for(long i=0; i<nodesize; i++)
 	{
@@ -207,6 +224,13 @@ void generateCompactAdjacencyList(long *compactAdjacencyList, long *vertexStartL
 			maxDegree = size;
 
 	}
+	cout << "XXXXXXXXXXX MaxDegree: "<<maxDegree << endl;
+
+	long totalsize = 0;
+	for(long i=0; i<nodesize; i++)
+		totalsize += setArray[i]->size();
+
+	cout << "Compare size: totalsize:"<< totalsize << "edgesize: "<< edgesize << endl;
 
 
 	long currentPos = 0;
@@ -221,6 +245,8 @@ void generateCompactAdjacencyList(long *compactAdjacencyList, long *vertexStartL
 			{
 				compactAdjacencyList[currentPos] = *it;
 				currentPos++;
+				if(i==2047)
+					cout<<"set: " << *it << " ";
 				
 			}
 		}
@@ -228,8 +254,13 @@ void generateCompactAdjacencyList(long *compactAdjacencyList, long *vertexStartL
 			vertexStartList[i] = currentPos;
 	}
 
-	for(long i=0; i<nodesize; i++)
-		cout<< vertexStartList[i] << " ";
+	cout << endl;
+
+	cout << "pos: " << vertexStartList[2047];
+	cout << "    pos: " << vertexStartList[2048];
+	cout << "Values: " << endl;
+	for(long i=vertexStartList[2047]; i<vertexStartList[2048]; i++)
+		cout<< compactAdjacencyList[i] << " ";
 	cout << "inside function"<< endl;
 }
 
@@ -804,6 +835,10 @@ void conflictSolveSDO(long *compactAdjacencyList, long *vertexStartList, long *c
         
         for (long i=0; i<conflictSize; i++){
 			long vertex = conflict[i]-1;
+
+			if (vertex == 2047)
+				cout << "werrwer" << endl;
+
             if (graphColors[vertex] == 0)                        // not colored
             {
                 satDegree = saturation(vertex, compactAdjacencyList, vertexStartList, graphColors, maxDegree);
@@ -959,6 +994,7 @@ void checkCorrectColoring(long *compactAdjacencyList, long *vertexStartList, lon
 				cout << "Color collision from: " << i << " @ " << nodeColor << "  to: " << compactAdjacencyList[j] << " @ " << graphColors[compactAdjacencyList[j]] << endl; 
 				numErrors++; 
 				numErrorsOnRow++; 
+				cout << "j:" <<j<<" vertexStart i+1:"<<vertexStartList[i]<<" vertexStart i+1:"<<vertexStartList[i+1]<< endl;
 			}
 
 		}
@@ -976,8 +1012,14 @@ void checkCorrectColoring(long *compactAdjacencyList, long *vertexStartList, lon
 //----------------------- The meat -----------------------//
 int main(int argc, char *argv[])
 {
-	const char* filename = argv[1];
-	cout << filename << endl;
+	cout << "Check1 " << endl;
+	
+//	if (argc > 0){
+//	const char* filename = argv[1];
+//	cout << filename << endl;
+//	}
+
+	cout << "Check1 " << endl;	
 
 	long maxDegree, numColorsSeq, numColorsParallel, boundaryCount, conflictCount;
 	long graphSize, numEdges, subSize;
@@ -991,10 +1033,10 @@ int main(int argc, char *argv[])
 	long *graphColors = new long[graphSize*sizeof(long)];          
 	long *boundaryList = new long[graphSize*sizeof(long)]; 
 
-	long *compactAdjacencyList = new long[(numEdges*2) * sizeof(long)];
-	long *vertexStartList = new long[(graphSize+1)*sizeof(long)];
+	long *compactAdjacencyList ;//= new long[(numEdges*2) * sizeof(long)];
+	long *vertexStartList ;// = new long[(graphSize+1)*sizeof(long)];
 
-
+		
 
 	memset(adjacencyMatrix, 0, graphSize*graphSize*sizeof(long)); 
 	memset(graphColors, 0, graphSize*sizeof(long)); 
@@ -1004,8 +1046,8 @@ int main(int argc, char *argv[])
 	
 	
     long randSeed = time(NULL);
-	srand ( randSeed );  // initialize random numbers  
-	//srand ( 1271876520 );  // initialize random numbers   
+	//srand ( randSeed );  // initialize random numbers  
+	srand ( 1272244484 );  // initialize random numbers   
 	
 	
 	cudaEvent_t start, stop, stop_1, stop_4;         
@@ -1015,9 +1057,16 @@ int main(int argc, char *argv[])
 	
 //--------------------- Graph Creation ---------------------!
 	// initialize graph  
-	generateMatrix(adjacencyMatrix, numEdges, graphSize);  
-	//generateCompactAdjacencyList(compactAdjacencyList, vertexStartList, maxDegree, nodesize, edgesize);
+	//generateMatrix(adjacencyMatrix, numEdges, graphSize);  
 
+
+	//vertexStartList[graphSize] = numEdges*2;
+	//generateCompactAdjacencyList(compactAdjacencyList, vertexStartList, maxDegree, graphSize, numEdges);
+//	/home/pascal/Desktop/fxm4_6.mtx
+//void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, long *&compactAdjacencyList, long *&vertexStartList, long &graphsize, long &edgesize, long &maxDegree)
+	getAdjacentCompactListFromSparseMartix_mtx("1138_bus.mtx", compactAdjacencyList,  vertexStartList, graphSize, numEdges, maxDegree);
+
+	cout << "graphSize:" << graphSize <<"  numEdges:"<<numEdges;
 	// Display graph: Adjacency Matrix
 	/*
 	cout << "Adjacency Matrix:" << endl; 
@@ -1029,25 +1078,25 @@ int main(int argc, char *argv[])
 	*/ 
 	
 	// determining the maximum degree  
-	maxDegree = getMaxDegree(adjacencyMatrix, graphSize);  
+//	maxDegree = getMaxDegree(adjacencyMatrix, graphSize);  
 	
 
-
+cout << " Check2" << endl;
 	// Get adjacency list
-	long *adjacentList = new long[graphSize*maxDegree*sizeof(long)];
-	memset(adjacentList, -1, graphSize*maxDegree*sizeof(long)); 
+	long *adjacentList = new long[50*maxDegree*sizeof(long)];
+	//memset(adjacentList, -1, graphSize*maxDegree*sizeof(long)); 
 
-	getAdjacentList(adjacencyMatrix, adjacentList, graphSize, maxDegree);
+//	getAdjacentList(adjacencyMatrix, adjacentList, graphSize, maxDegree);
 
 
-
+	cout << " Check2" << endl;
 	// Get Compact adjacency List representation
-	getCompactAdjacencyList(adjacentList, compactAdjacencyList, vertexStartList, graphSize, maxDegree);
-	vertexStartList[graphSize] = numEdges*2;
+//	getCompactAdjacencyList(adjacentList, compactAdjacencyList, vertexStartList, graphSize, maxDegree);
+//	vertexStartList[graphSize] = numEdges*2;
 
 	//maxDegree = getBoundaryList(adjacencyMatrix, boundaryList, graphSize, boundaryCount);	// return maxDegree + boundaryCount (as ref param)
 	getBoundaryList(compactAdjacencyList, vertexStartList, boundaryList, graphSize, boundaryCount);	// return maxDegree + boundaryCount (as ref param)
-	
+	cout << " Check3" << endl;
 
 
 /*
