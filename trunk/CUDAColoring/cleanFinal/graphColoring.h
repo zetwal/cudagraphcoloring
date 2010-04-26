@@ -10,17 +10,17 @@
 #include <iostream>
 
 
-const long GRAPHSIZE = 1024;    // number of nodes
+const long GRAPHSIZE = 2048;    // number of nodes
 const long NUMEDGES = 15000;    // number of edges 
 
-const int GRIDSIZE = 2;          // number of blocks 
-const int BLOCKSIZE = 256;       // number of threads in a block 
+const long GRIDSIZE = 2;          // number of blocks 
+const long BLOCKSIZE = 256;       // number of threads in a block 
 
-const int SUBSIZE = GRAPHSIZE/(GRIDSIZE*BLOCKSIZE); 
+const long SUBSIZE = GRAPHSIZE/(GRIDSIZE*BLOCKSIZE); 
 
-const int SUBSIZE_BOUNDARY = 256;
+const long SUBSIZE_BOUNDARY = 256;
 
-const int MAXDEGREE = 100;		// this is assumed to be true
+const long MAXDEGREE = 100;		// this is assumed to be true
 
 
 #ifdef __cplusplus 
@@ -30,7 +30,7 @@ const int MAXDEGREE = 100;		// this is assumed to be true
 #endif 
 
 
-CHECK_EXT void cudaGraphColoring(int *adjacentList, int *compactAdjacencyList, int *vertexStartList, int *boundaryList, int *graphColors, int *degreeList, int *conflict, int boundarySize, int maxDegree);
+CHECK_EXT void cudaGraphColoring(long *adjacentList, long *compactAdjacencyList, long *vertexStartList, long *boundaryList, long *graphColors, long *degreeList, long *conflict, long boundarySize, long maxDegree, long graphSize, long numEdges);
 
 
 #endif // _GRAPHCOLORING_H_ 
