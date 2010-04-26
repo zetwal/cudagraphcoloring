@@ -130,8 +130,18 @@ void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, long *&com
 		{
 			vertexStartList[i] = currentPos;
 			set<long>::iterator it = setArray[i]->begin();
+
+			if (i == 1137){
+					cout << "testingggggggggggggggggggggggggggg " << endl;
+				}			
+
 			for(; it != setArray[i]->end(); it++)
 			{
+				
+				if (i == 1137){
+					cout << *it <<  " ";
+				}
+
 				compactAdjacencyList[currentPos] = *it;
 				currentPos++;
 				
@@ -139,6 +149,7 @@ void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, long *&com
 		}
 		else
 			vertexStartList[i] = currentPos;
+
 	}
 
 //	for(long i=0; i<graphsize; i++)
@@ -353,6 +364,18 @@ void getDegreeList(long *adjacencyList, long *degreeList, long sizeGraph, long m
             else
                 break;  
         }
+
+        degreeList[i] = count;
+    }
+}
+
+
+void getDegreeList(long *compactAdjacencyList, long *vertexStartList, long *degreeList, long sizeGraph, long maxDegree){
+    for (long i=0; i<sizeGraph; i++){
+        long count = 0;
+        
+		for (long j=vertexStartList[i]; j<vertexStartList[i+1]; j++)
+        		count++;
 
         degreeList[i] = count;
     }
@@ -1063,7 +1086,9 @@ int main(int argc, char *argv[])
 	//generateCompactAdjacencyList(compactAdjacencyList, vertexStartList, maxDegree, graphSize, numEdges);
 //	/home/pascal/Desktop/fxm4_6.mtx
 //void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, long *&compactAdjacencyList, long *&vertexStartList, long &graphsize, long &edgesize, long &maxDegree)
-	getAdjacentCompactListFromSparseMartix_mtx("1138_bus.mtx", compactAdjacencyList,  vertexStartList, graphSize, numEdges, maxDegree);
+	//getAdjacentCompactListFromSparseMartix_mtx("1138_bus.mtx", compactAdjacencyList,  vertexStartList, graphSize, numEdges, maxDegree);
+	getAdjacentCompactListFromSparseMartix_mtx("bcsstk13.mtx", compactAdjacencyList,  vertexStartList, graphSize, numEdges, maxDegree);
+
 
 	cout << "graphSize:" << graphSize <<"  numEdges:"<<numEdges << "  maxDegree:" << maxDegree << endl;;
 	// Display graph: Adjacency Matrix
@@ -1095,8 +1120,16 @@ int main(int argc, char *argv[])
 
 	//maxDegree = getBoundaryList(adjacencyMatrix, boundaryList, graphSize, boundaryCount);	// return maxDegree + boundaryCount (as ref param)
 	getBoundaryList(compactAdjacencyList, vertexStartList, boundaryList, graphSize, boundaryCount);	// return maxDegree + boundaryCount (as ref param)
+	vertexStartList[graphSize] = numEdges*2;
 	cout << " Check3" << endl;
 
+	cout << "Compact Adjacency Matrix 2:" << endl; 
+	for (long i=0; i<graphSize; i++){
+		cout << endl << i << " : ";
+		for (long j=vertexStartList[i]; j<vertexStartList[i+1]; j++){
+			cout << compactAdjacencyList[j] << " ";
+		}
+	}
 
 /*
 	cout << "Vertex Start List" << endl;
@@ -1140,7 +1173,10 @@ int main(int argc, char *argv[])
 	long *degreeList = new long[graphSize*sizeof(long)];
 	memset(degreeList, 0, graphSize*sizeof(long)); 
 
-	getDegreeList(adjacentList, degreeList, graphSize, maxDegree);
+	//getDegreeList(adjacentList, degreeList, graphSize, maxDegree);
+	getDegreeList(compactAdjacencyList, vertexStartList, degreeList, graphSize, maxDegree);
+
+	cout << " Check4" << endl;
 
 
 
@@ -1170,7 +1206,7 @@ int main(int argc, char *argv[])
 	}
 
 	
-
+	cout << " Check5" << endl;
 	
 //--------------------- Checking for color conflict ---------------------!
 
@@ -1246,10 +1282,10 @@ int main(int argc, char *argv[])
 //--------------- Step 4: solve conflicts 
 	cout <<"Checkpoint " << endl;
 	//conflictSolveFF(adjacentList,  graphSize, conflict, conflictCount, graphColors, maxDegree); 
-	//conflictSolveFF(compactAdjacencyList, vertexStartList,  graphSize, conflict, conflictCount, graphColors, maxDegree); 
+	conflictSolveFF(compactAdjacencyList, vertexStartList,  graphSize, conflict, conflictCount, graphColors, maxDegree); 
 	
 	//conflictSolveSDO(adjacentList, conflict, conflictCount, graphColors,degreeList, graphSize, maxDegree);
-	conflictSolveSDO(compactAdjacencyList, vertexStartList, conflict, conflictCount, graphColors,degreeList, graphSize, maxDegree);
+	//conflictSolveSDO(compactAdjacencyList, vertexStartList, conflict, conflictCount, graphColors,degreeList, graphSize, maxDegree);
 	
 	
 	cudaEventRecord(stop, 0); 
