@@ -19,16 +19,16 @@ void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, long *&com
 {
 	long row=0, col=0, entries=0;
 	//calculate maxDegree in the following loop
-	int donotcare = 0;
-	int nodecol = 0;
-	int noderow = 0;
+	float donotcare = 0;
+	float nodecol = 0;
+	float noderow = 0;
 
-	cout << "Opening" << endl;
+
 
 ///////////////////////////////////Read file for the first time ////////////////////////////////////
 	ifstream mtxf;	
 	mtxf.open(filename);
-	cout << string(filename) << endl;
+	//cout << string(filename) << endl;
 	while(mtxf.peek()=='%')
 		mtxf.ignore(512, '\n');//
 	
@@ -45,7 +45,7 @@ void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, long *&com
 	{
 
 		mtxf >> noderow >> nodecol >> donotcare;
-		//cout << noderow << " " << nodecol << " " << donotcare << endl;
+		cout << noderow << " " << nodecol << " " << donotcare << endl;
 		//assert(noderow!=nodecol);
 		
 		if(noderow == nodecol)
@@ -53,8 +53,8 @@ void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, long *&com
 		else
 			edgesize++;
 
-		graphsizeArray[noderow-1]++;
-		graphsizeArray[nodecol-1]++;
+		graphsizeArray[(int)noderow-1]++;
+		graphsizeArray[(int)nodecol-1]++;
 	}
 	cout << "edgesize: "<< edgesize << endl;
 //	for(int i=0; i<graphsize; i++)
@@ -65,6 +65,7 @@ void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, long *&com
 
 	long listSize = 0;
 	//calculate the size of the adjacency list
+	maxDegree = 0;
 	for(int i=0; i<graphsize; i++)
 	{
 		listSize += graphsizeArray[i];
@@ -90,7 +91,6 @@ void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, long *&com
 	set<long>** setArray = new set<long>* [graphsize];
 	assert(setArray);
 	memset(setArray, 0 , sizeof(set<long>*)*graphsize);
-	
 	long x, y;
 	cout<< "finished allocate memory" << endl;
 
@@ -119,9 +119,8 @@ void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, long *&com
 
 	compactAdjacencyList = new long[listSize];
 	memset(compactAdjacencyList, 0, sizeof(long)*listSize);
-	vertexStartList = new long[graphsize+1];
-	memset(vertexStartList, 0, sizeof(long)*(graphsize+1));
-	vertexStartList[graphsize] = graphsize;
+	vertexStartList = new long[graphsize];
+	memset(vertexStartList, 0, sizeof(long)*graphsize);
 	long currentPos = 0;
 	
 	for(long i=0; i<graphsize; i++)
@@ -1066,7 +1065,7 @@ int main(int argc, char *argv[])
 //void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, long *&compactAdjacencyList, long *&vertexStartList, long &graphsize, long &edgesize, long &maxDegree)
 	getAdjacentCompactListFromSparseMartix_mtx("1138_bus.mtx", compactAdjacencyList,  vertexStartList, graphSize, numEdges, maxDegree);
 
-	cout << "graphSize:" << graphSize <<"  numEdges:"<<numEdges;
+	cout << "graphSize:" << graphSize <<"  numEdges:"<<numEdges << "  maxDegree:" << maxDegree << endl;;
 	// Display graph: Adjacency Matrix
 	/*
 	cout << "Adjacency Matrix:" << endl; 
@@ -1081,7 +1080,7 @@ int main(int argc, char *argv[])
 //	maxDegree = getMaxDegree(adjacencyMatrix, graphSize);  
 	
 
-cout << " Check2" << endl;
+//cout << " Check2" << endl;
 	// Get adjacency list
 	long *adjacentList = new long[50*maxDegree*sizeof(long)];
 	//memset(adjacentList, -1, graphSize*maxDegree*sizeof(long)); 
