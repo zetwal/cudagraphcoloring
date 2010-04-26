@@ -633,12 +633,13 @@ int main(int argc, char *argv[])
 	
 //--------------------- Graph Creation ---------------------!
 	// initialize graph  
-	//generateMatrix(adjacencyMatrix, numEdges, graphSize);  
 
-
+// Artificial generation
 	//vertexStartList[graphSize] = numEdges*2;
-
 	//generateCompactAdjacencyList(compactAdjacencyList, vertexStartList, maxDegree, graphSize, numEdges);
+
+
+// File reading
 	//getAdjacentCompactListFromSparseMartix_mtx("1138_bus.mtx", compactAdjacencyList,  vertexStartList, graphSize, numEdges, maxDegree);
 	getAdjacentCompactListFromSparseMartix_mtx("bcsstk13.mtx", compactAdjacencyList,  vertexStartList, graphSize, numEdges, maxDegree);
 	vertexStartList[graphSize] = numEdges*2;
