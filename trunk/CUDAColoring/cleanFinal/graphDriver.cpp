@@ -15,92 +15,136 @@ using namespace std;
 
 //----------------------- Read Sparse Graph from Matrix Market format --------------//
 // Author: Shusen
-void inline swap(long &a, long &b) {long temp = a; a=b; b=temp; }
-long inline findmax(long *a, long n){
-	long max=0;
-	for(long i=0; i<n; i++)
-		if(a[i]>max)
-			max = a[i];
-	return max;	
-}
-
-long getAdjacentListFromSparseMartix_mtx(long *&adjacencyList, long &graphsize, const char* filename) //return the maxDegree
+void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, long *&compactAdjacencyList, long *&vertexStartList, long &graphsize, long &edgesize, long &maxDegree)
 {
-	long maxDegree=0;
 	long row=0, col=0, entries=0;
+	//calculate maxDegree in the following loop
+	int donotcare = 0;
+	int nodecol = 0;
+	int noderow = 0;
 
-	ifstream mtxf;
+
+
+///////////////////////////////////Read file for the first time ////////////////////////////////////
+	ifstream mtxf;	
 	mtxf.open(filename);
-	cout << string(filename) << endl;
+	//cout << string(filename) << endl;
+	while(mtxf.peek()=='%')
+		mtxf.ignore(512, '\n');//
+	
 
 	mtxf >> row >> col >> entries ;
 	cout<< row <<" " << col <<" " << entries << endl;
 	graphsize = col>row? col:row;
+	
+	int *graphsizeArray = new int[graphsize];
+	memset(graphsizeArray, 0 , sizeof(int)*graphsize);
+	edgesize = 0;
 
-	//calculate maxDegree in the following loop
-	long donotcare = 0;
-	long nodecol = 0;
-	long noderow = 0;
-
-	long *graphsizeArray = new long[graphsize];
-	memset(graphsizeArray, 0 , sizeof(long)*graphsize);
-	long j=0;
 	for(long i=0; i<entries; i++)
 	{
-		j++;
+
 		mtxf >> noderow >> nodecol >> donotcare;
 		//cout << noderow << " " << nodecol << " " << donotcare << endl;
 		//assert(noderow!=nodecol);
+		
 		if(noderow == nodecol)
 			continue;
+		else
+			edgesize++;
+
 		graphsizeArray[noderow-1]++;
 		graphsizeArray[nodecol-1]++;
 	}
-	maxDegree = findmax(graphsizeArray,graphsize);
-
-
-
-	cout << j <<" maxDegree: "<< maxDegree << endl;
+	cout << "edgesize: "<< edgesize << endl;
+//	for(int i=0; i<graphsize; i++)
+//		cout << graphsizeArray[i] <<endl;
+//exit(0);
 	mtxf.close();
+/////////////////////////////////////close the file/////////////////////////////////////////////
 
-	//create the adjacency list matrix
-	
-	adjacencyList = new long[maxDegree*graphsize];
-	long *adjacencyListLength = new long[graphsize];
-	memset(adjacencyList, -1, sizeof(long)*maxDegree*graphsize);
-	memset(adjacencyListLength, 0, sizeof(long)*graphsize); //indicate how many element has been stored in the list of each node
-	//for(long i=0; i<maxDegree; i++)
-	//	cout<<adjacencyList[i]<<endl;
-	
+	long listSize = 0;
+	//calculate the size of the adjacency list
+	for(int i=0; i<graphsize; i++)
+	{
+		listSize += graphsizeArray[i];
+		if(graphsizeArray[i] > maxDegree)
+			maxDegree = graphsizeArray[i];
+	}
+
+	cout <<"edge*2: "<<listSize<<endl;
+	cout <<"maxDegree: "<< maxDegree << endl;
 
 
-	//update the adjacency list matrix from the file
+///////////////////////////////////Read file for the second time ////////////////////////////////////
+
 	mtxf.open(filename);
-	long nodeindex=0, connection=0;
+	int nodeindex=0, connection=0;
+
+	while(mtxf.peek()=='%')
+		mtxf.ignore(512, '\n');//
 	
 	mtxf >> donotcare >> donotcare >> donotcare;
-	//cout << donotcare << endl;
+	//cout<<donotcare<<endl;
+
+	set<long>** setArray = new set<long>* [graphsize];
+	assert(setArray);
+	memset(setArray, 0 , sizeof(set<long>*)*graphsize);
+	long x, y;
+	cout<< "finished allocate memory" << endl;
 
 	for(long i=0; i<entries; i++)
 	{
-		mtxf >> connection >> nodeindex >> donotcare;
-		if(noderow == nodecol)
+		mtxf >> x >> y >> donotcare;
+		x--; y--; //node index start from 0
+		//cout << x << " " << y << endl;
+		if(x==y)
+		{
 			continue;
-		//because node in mtx file begin with 1 but in the program begin with 0
-		adjacencyList[(nodeindex-1)*maxDegree + adjacencyListLength[nodeindex-1] ]=connection-1; 
-		adjacencyListLength[nodeindex-1]++;
+		}	
+		if (setArray[x] == NULL)
+			setArray[x] = new set<long>();
+		if (setArray[y] == NULL)
+			setArray[y] = new set<long>();
+	
+		setArray[x]->insert(y);
+		setArray[y]->insert(x);
+	}
+	cout<< "finished assignment of all the entries" << endl;
+	mtxf.close();
 
-		swap(connection, nodeindex);
-		adjacencyList[(nodeindex-1)*maxDegree + adjacencyListLength[nodeindex-1] ]=connection-1; 
-		adjacencyListLength[nodeindex-1]++;		
+/////////////////////////////////////close the file/////////////////////////////////////////////
+
+
+	compactAdjacencyList = new long[listSize];
+	memset(compactAdjacencyList, 0, sizeof(long)*listSize);
+	vertexStartList = new long[graphsize];
+	memset(vertexStartList, 0, sizeof(long)*graphsize);
+	long currentPos = 0;
+	
+	for(long i=0; i<graphsize; i++)
+	{
+		//cout << "currentPos: " << currentPos << endl;
+		if(setArray[i] != NULL)
+		{
+			vertexStartList[i] = currentPos;
+			set<long>::iterator it = setArray[i]->begin();
+			for(; it != setArray[i]->end(); it++)
+			{
+				compactAdjacencyList[currentPos] = *it;
+				currentPos++;
+				
+			}
+		}
+		else
+			vertexStartList[i] = currentPos;
 	}
 
-	delete [] adjacencyListLength;
-
-	return maxDegree;
+//	for(long i=0; i<graphsize; i++)
+//		cout<< vertexStartList[i] << " ";
+	cout << "inside function"<< endl;
 
 }
-
 
 
 
@@ -126,6 +170,68 @@ void generateMatrix(long *matrix, long numEdges, long graphSize){
 	}  
 }  
 
+// Author: Shusen
+// generate a graph in adjacency list representation
+void generateCompactAdjacencyList(long *compactAdjacencyList, long *vertexStartList, long &maxDegree, long nodesize, long edgesize) //edgesize will decide the density
+{
+
+	long x, y;  	
+	maxDegree = 0;
+		
+	set<long>** setArray = new set<long>* [nodesize];
+	memset(setArray, 0 , sizeof(set<long>*)*nodesize);
+
+	for(long i=0; i<edgesize; i++)
+	{
+		x = rand()%nodesize;  
+		y = rand()%nodesize; 
+		cout << x << " "<<y << endl;
+		if(x==y)
+		{
+			i--;
+			continue;
+		}	
+		if (setArray[x] == NULL)
+			setArray[x] = new set<long>();
+		if (setArray[y] == NULL)
+			setArray[y] = new set<long>();
+	
+		setArray[x]->insert(y);
+		setArray[y]->insert(x);
+	}
+
+	for(long i=0; i<nodesize; i++)
+	{
+		long size = setArray[i]->size();
+		if(size > maxDegree)
+			maxDegree = size;
+
+	}
+
+
+	long currentPos = 0;
+	
+	for(long i=0; i<nodesize; i++)
+	{
+		if(setArray[i] != NULL)
+		{
+			vertexStartList[i] = currentPos;
+			set<long>::iterator it = setArray[i]->begin();
+			for(; it != setArray[i]->end(); it++)
+			{
+				compactAdjacencyList[currentPos] = *it;
+				currentPos++;
+				
+			}
+		}
+		else
+			vertexStartList[i] = currentPos;
+	}
+
+	for(long i=0; i<nodesize; i++)
+		cout<< vertexStartList[i] << " ";
+	cout << "inside function"<< endl;
+}
 
 
 
@@ -906,7 +1012,7 @@ int main(){
 //--------------------- Graph Creation ---------------------!
 	// initialize graph  
 	generateMatrix(adjacencyMatrix, numEdges, graphSize);  
-	
+	//generateCompactAdjacencyList(compactAdjacencyList, vertexStartList, maxDegree, nodesize, edgesize);
 
 	// Display graph: Adjacency Matrix
 	/*
