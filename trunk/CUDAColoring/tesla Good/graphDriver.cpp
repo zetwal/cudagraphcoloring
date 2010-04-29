@@ -13,282 +13,149 @@
 using namespace std;  
 
 //----------------------- Graph initializations -----------------------//
-// Author: Shusen
-
-void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, unsigned int *&compactAdjacencyList, unsigned int *&vertexStartList, int &graphsize, long &edgesize, int &maxDegree)
-
-{
-	
-	unsigned int row=0, col=0;
-	
-	long entries=0;
-	
-	//calculate maxDegree in the following loop
-	
-	float donotcare = 0;
-	
-	float nodecol = 0;
-	
-	float noderow = 0;
-	
-	
-	
-	
-	
-	
-	
-	///////////////////////////////////Read file for the first time ////////////////////////////////////
-	
-	ifstream mtxf;	
-	
-	mtxf.open(filename);
-	
-	//cout << string(filename) << endl;
-	
-	while(mtxf.peek()=='%')
-		
-		mtxf.ignore(512, '\n');//
-	
-	
-	
-	
-	
-	mtxf >> row >> col >> entries ;
-	
-	cout<< row <<" " << col <<" " << entries << endl;
-	
-	graphsize = col>row? col:row;
-	
-	
-	
-	int *graphsizeArray = new int[graphsize];
-	
-	memset(graphsizeArray, 0 , sizeof(int)*graphsize);
-	
-	edgesize = 0;
-	
-	
-	
-	for (long i=0; i<entries; i++)
-		
-	{
-		
-		
-		
-		mtxf >> noderow >> nodecol >> donotcare;
-		
-		//	cout << noderow << " " << nodecol << " " << donotcare << endl;
-		
-		//assert(noderow!=nodecol);
-		
-		
-		
-		if(noderow == nodecol)
-			
-			continue;
-		
-		else
-			
-			edgesize++;
-		
-		
-		
-		graphsizeArray[(int)noderow-1]++;
-		
-		graphsizeArray[(int)nodecol-1]++;
-		
-	}
-	
-	cout << "edgesize: "<< edgesize << endl;
-	
-	//	for(int i=0; i<graphsize; i++)
-	
-	//		cout << graphsizeArray[i] <<endl;
-	
-	//exit(0);
-	
-	mtxf.close();
-	
-	/////////////////////////////////////close the file/////////////////////////////////////////////
-	
-	
-	
-	long listSize = 0;
-	
-	//calculate the size of the adjacency list
-	
-	maxDegree = 0;
-	
-	for(unsigned int i=0; i<graphsize; i++)
-		
-	{
-		
-		listSize += graphsizeArray[i];
-		
-		if(graphsizeArray[i] > maxDegree)
-			
-			maxDegree = graphsizeArray[i];
-		
-	}
-	
-	
-	
-	cout <<"edge*2: "<<listSize<<endl;
-	
-	cout <<"maxDegree: "<< maxDegree << endl;
-	
-	
-	
-	
-	
-	///////////////////////////////////Read file for the second time ////////////////////////////////////
-	
-	
-	
-	mtxf.open(filename);
-	
-	int nodeindex=0, connection=0;
-	
-	
-	
-	while(mtxf.peek()=='%')
-		
-		mtxf.ignore(512, '\n');//
-	
-	
-	
-	mtxf >> donotcare >> donotcare >> donotcare;
-	
-	//cout<<donotcare<<endl;
-	
-	
-	
-	set<unsigned int>** setArray = new set<unsigned int>* [graphsize];
-	
-	assert(setArray);
-	
-	memset(setArray, 0 , sizeof(set<unsigned int>*)*graphsize);
-	
-	unsigned int x, y;
-	
-	cout<< "finished allocate memory" << endl;
-	
-	
-	
-	for(unsigned int i=0; i<entries; i++)
-		
-	{
-		
-		mtxf >> x >> y >> donotcare;
-		
-		x--; y--; //node index start from 0
-		
-		//cout << x << " " << y << endl;
-		
-		if(x==y)
-			
-		{
-			
-			continue;
-			
-		}	
-		
-		if (setArray[x] == NULL)
-			
-			setArray[x] = new set<unsigned int>();
-		
-		if (setArray[y] == NULL)
-			
-			setArray[y] = new set<unsigned int>();
-		
-		
-		
-		setArray[x]->insert(y);
-		
-		setArray[y]->insert(x);
-		
-	}
-	
-	cout<< "finished assignment of all the entries" << endl;
-	
-	mtxf.close();
-	
-	
-	
-	/////////////////////////////////////close the file/////////////////////////////////////////////
-	
-	
-	
-	
-	
-	compactAdjacencyList = new unsigned int[listSize];
-	
-	memset(compactAdjacencyList, 0, sizeof(unsigned int)*listSize);
-	
-	vertexStartList = new unsigned int[graphsize];
-	
-	memset(vertexStartList, 0, sizeof(unsigned int)*graphsize);
-	
-	unsigned int currentPos = 0;
-	
-	
-	
-	for(unsigned int i=0; i<graphsize; i++)
-		
-	{
-		
-		//cout << "currentPos: " << currentPos << endl;
-		
-		if(setArray[i] != NULL)
-			
-		{
-			
-			vertexStartList[i] = currentPos;
-			
-			set<unsigned int>::iterator it = setArray[i]->begin();
-			
-			
-			
-			
-			
-			
-			for(; it != setArray[i]->end(); it++)
-				
-			{
-				
-				
-				
-				
-				
-				
-				compactAdjacencyList[currentPos] = *it;
-				
-				currentPos++;
-				
-				
-				
-			}
-			
-		}
-		
-		else
-			
-			vertexStartList[i] = currentPos;
-		
-		
-		
-	}
-	
-	
-	
-	//	for(unsigned int i=0; i<graphsize; i++)
-	
-	//		cout<< vertexStartList[i] << " ";
-	
-	cout << "inside function"<< endl;
-	
-	
-	
+// Author: Shusen
+void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, unsigned int *&compactAdjacencyList, unsigned int *&vertexStartList, int &graphsize, long &edgesize, int &maxDegree)
+{
+	unsigned int row=0, col=0;
+	long entries=0;
+	//calculate maxDegree in the following loop
+	float donotcare = 0;
+	float nodecol = 0;
+	float noderow = 0;
+
+
+
+///////////////////////////////////Read file for the first time ////////////////////////////////////
+	ifstream mtxf;	
+	mtxf.open(filename);
+	//cout << string(filename) << endl;
+	while(mtxf.peek()=='%')
+		mtxf.ignore(512, '\n');//
+	
+
+	mtxf >> row >> col >> entries ;
+	cout<< row <<" " << col <<" " << entries << endl;
+	graphsize = col>row? col:row;
+	
+	int *graphsizeArray = new int[graphsize];
+	memset(graphsizeArray, 0 , sizeof(int)*graphsize);
+	edgesize = 0;
+
+	for (long i=0; i<entries; i++)
+	{
+
+		mtxf >> noderow >> nodecol >> donotcare;
+		cout << noderow << " " << nodecol << " " << donotcare << endl;
+		//assert(noderow!=nodecol);
+		
+		if(noderow == nodecol)
+			continue;
+		else
+			edgesize++;
+
+		graphsizeArray[(int)noderow-1]++;
+		graphsizeArray[(int)nodecol-1]++;
+	}
+	cout << "edgesize: "<< edgesize << endl;
+//	for(int i=0; i<graphsize; i++)
+//		cout << graphsizeArray[i] <<endl;
+//exit(0);
+	mtxf.close();
+/////////////////////////////////////close the file/////////////////////////////////////////////
+
+	long listSize = 0;
+	//calculate the size of the adjacency list
+	maxDegree = 0;
+	for(unsigned int i=0; i<graphsize; i++)
+	{
+		listSize += graphsizeArray[i];
+		if(graphsizeArray[i] > maxDegree)
+			maxDegree = graphsizeArray[i];
+	}
+
+	cout <<"edge*2: "<<listSize<<endl;
+	cout <<"maxDegree: "<< maxDegree << endl;
+
+
+///////////////////////////////////Read file for the second time ////////////////////////////////////
+
+	mtxf.open(filename);
+	int nodeindex=0, connection=0;
+
+	while(mtxf.peek()=='%')
+		mtxf.ignore(512, '\n');//
+	
+	mtxf >> donotcare >> donotcare >> donotcare;
+	//cout<<donotcare<<endl;
+
+	set<unsigned int>** setArray = new set<unsigned int>* [graphsize];
+	assert(setArray);
+	memset(setArray, 0 , sizeof(set<unsigned int>*)*graphsize);
+	unsigned int x, y;
+	cout<< "finished allocate memory" << endl;
+
+	for(unsigned int i=0; i<entries; i++)
+	{
+		mtxf >> x >> y >> donotcare;
+		x--; y--; //node index start from 0
+		//cout << x << " " << y << endl;
+		if(x==y)
+		{
+			continue;
+		}	
+		if (setArray[x] == NULL)
+			setArray[x] = new set<unsigned int>();
+		if (setArray[y] == NULL)
+			setArray[y] = new set<unsigned int>();
+	
+		setArray[x]->insert(y);
+		setArray[y]->insert(x);
+	}
+	cout<< "finished assignment of all the entries" << endl;
+	mtxf.close();
+
+/////////////////////////////////////close the file/////////////////////////////////////////////
+
+
+	compactAdjacencyList = new unsigned int[listSize];
+	memset(compactAdjacencyList, 0, sizeof(unsigned int)*listSize);
+	vertexStartList = new unsigned int[graphsize];
+	memset(vertexStartList, 0, sizeof(unsigned int)*graphsize);
+	unsigned int currentPos = 0;
+	
+	for(unsigned int i=0; i<graphsize; i++)
+	{
+		//cout << "currentPos: " << currentPos << endl;
+		if(setArray[i] != NULL)
+		{
+			vertexStartList[i] = currentPos;
+			set<unsigned int>::iterator it = setArray[i]->begin();
+
+			if (i == 1137){
+					cout << "testingggggggggggggggggggggggggggg " << endl;
+				}			
+
+			for(; it != setArray[i]->end(); it++)
+			{
+				
+				if (i == 1137){
+					cout << *it <<  " ";
+				}
+
+				compactAdjacencyList[currentPos] = *it;
+				currentPos++;
+				
+			}
+		}
+		else
+			vertexStartList[i] = currentPos;
+
+	}
+
+//	for(unsigned int i=0; i<graphsize; i++)
+//		cout<< vertexStartList[i] << " ";
+	cout << "inside function"<< endl;
+
 }
 
 
@@ -332,16 +199,16 @@ void getAdjacentList(int *adjacencyMatrix, int *adjacentList, int size, int maxD
 			}
 		}
 	}
-	
+
 	/*
-	 // Adj list display
-	 for (int i=0; i<10; i++){
-	 for (int j=0; j<maxDegree; j++){
-	 cout << adjacentList[i*maxDegree + j] << " ";
-	 }
-	 cout << endl;
-	 }
-	 */
+	// Adj list display
+	for (int i=0; i<10; i++){
+		for (int j=0; j<maxDegree; j++){
+			cout << adjacentList[i*maxDegree + j] << " ";
+		}
+		cout << endl;
+	}
+	*/
 }
 
 
@@ -382,7 +249,7 @@ void getDegreeList(int *adjacencyList, int *degreeList, int sizeGraph, int maxDe
             else
                 break;  
         }
-		
+
         degreeList[i] = count;
     }
 }
@@ -405,16 +272,16 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
 	
 	set<int> boundarySet; 
 	boundarySet.clear(); 
-	
+
 	int subSize = graphSize/(GRIDSIZE*BLOCKSIZE);
 	
 	for (int i=0; i<size; i++){  
 		degree = 0;  
-		
+
 		int subIdx = i/(float)subSize;
 		int start = subIdx * subSize;
 		int end = min( (subIdx + 1)*subSize, size );
-		
+
 		for (int j=0; j<size; j++){           
 			if ( adjacencyMatrix[i*size + j] == 1)  
 				degree++;  
@@ -430,7 +297,7 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
 	} 
 	
 	boundaryCount = boundarySet.size();
-	
+
 	set<int>::iterator it = boundarySet.begin(); 
 	for (int i=0; it != boundarySet.end(); it++)  
 	{ 
@@ -485,7 +352,7 @@ int colorGraph_FF(int *list, int *colors, int size, int maxDegree){
 		if (colors[i] > numColors)  
 			numColors=colors[i];  
 	}  
-	
+
 	delete[] degreeArray; 
 	
 	return numColors;  
@@ -499,7 +366,7 @@ int colorGraph_FF(int *list, int *colors, int size, int maxDegree){
 // Author: Pascal
 // returns the degree of that node
 int degree(int vertex, int *degreeList){
-	return degreeList[vertex];
+        return degreeList[vertex];
 }
 
 
@@ -509,24 +376,25 @@ int degree(int vertex, int *degreeList){
 int saturation(int vertex, int *adjacencyList, int *graphColors, int maxDegree){
     int saturation = 0;
     int *colors = new int[maxDegree+1];
-	
+
     memset(colors, 0, (maxDegree+1)*sizeof(int));           // initialize array
-	
-	
+
+
     for (int i=0; i<maxDegree; i++){
         if (adjacencyList[vertex*maxDegree + i] != -1)
-            colors[ graphColors[vertex] ] = 1;                      // at each colored set the array to 1
+          //  colors[ graphColors[vertex] ] = 1;                      // at each colored set the array to 1
+			colors[ graphColors[adjacencyList[vertex*maxDegree + i]] ] = 1;                      // at each colored set the array to 1
         else
             break;
     }
-	
-	
+
+
     for (int i=1; i<maxDegree+1; i++)                                       // count the number of 1's but skip uncolored
         if (colors[i] == 1)
             saturation++;
-	
+
 	delete[] colors; 	
-	
+
     return saturation;
 }
 
@@ -540,7 +408,7 @@ int color(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int n
     memset(colors, 0, (maxDegree+1)*sizeof(int));   
     
     if (graphColors[vertex] == 0)
-		numColored++;
+            numColored++;
     
     for (int i=0; i<maxDegree; i++)                                         // set the index of the color to 1
         if (adjacencyList[vertex*maxDegree + i] != -1)
@@ -548,9 +416,9 @@ int color(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int n
         else {
             break;
         }
-	
+
     
-	
+
     for (int i=1; i<maxDegree+1; i++)                                       // nodes still equal to 0 are unassigned
         if (colors[i] != 1){
             graphColors[vertex] = i;
@@ -558,7 +426,7 @@ int color(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int n
         }
     
 	delete[] colors; 
-	
+
     return numColored;
 }
 
@@ -571,7 +439,7 @@ int sdoIm(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, 
     numColored = 0;
     int iterations = 0;
     
-	
+
     while (numColored < sizeGraph){
         max = -1;
         
@@ -579,18 +447,18 @@ int sdoIm(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, 
             if (graphColors[i] == 0)                        // not colored
             {
                 satDegree = saturation(i,adjacencyList,graphColors, maxDegree);
-				
+
                 if (satDegree > max){
                     max = satDegree;
                     index = i;                              
                 }
-				
+
                 if (satDegree == max){
                     if (degree(i,degreeList) > degree(index,degreeList))
                         index = i;
                 }
             }
-			
+
             numColored = color(index,adjacencyList,graphColors, maxDegree, numColored);
             iterations++;
         }
@@ -609,12 +477,12 @@ int sdoIm(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, 
 void conflictSolveSDO(int *adjacencyList, int *conflict, int conflictSize, int *graphColors, int *degreeList, int sizeGraph, int maxDegree){
     int satDegree, numColored, max, index;
     numColored = 0;
-	
+   
 	// Set their color to 0
 	for (int i=0; i<conflictSize; i++)
 		graphColors[conflict[i]-1] = 0;
     
-	
+
     while (numColored < conflictSize){
         max = -1;
         
@@ -623,18 +491,18 @@ void conflictSolveSDO(int *adjacencyList, int *conflict, int conflictSize, int *
             if (graphColors[vertex] == 0)                        // not colored
             {
                 satDegree = saturation(vertex, adjacencyList, graphColors, maxDegree);
-				
+
                 if (satDegree > max){
                     max = satDegree;
                     index = vertex;                              
                 }
-				
+
                 if (satDegree == max){
                     if (degree(vertex,degreeList) > degree(index,degreeList))
                         index = vertex;
                 }
             }
-			
+
             numColored = color(index,adjacencyList,graphColors, maxDegree, numColored);
         }
     }
@@ -648,35 +516,35 @@ void conflictSolveFF(int *Adjlist, int size, int *conflict, int conflictSize, in
 	int i, j, vertex, *colorList, *setColors;
 	colorList = new int[maxDegree];
 	setColors = new int[maxDegree];
-	
-	
+
+
 	// assign colors up to maxDegree in setColors
 	for (i=0; i<maxDegree; i++){
-		setColors[i] = i+1;
+	        setColors[i] = i+1;
 	}
-	
-	
+
+
 	for (i=0; i<conflictSize; i++){
         memcpy(colorList, setColors, maxDegree*sizeof(int));                    // set the colors in colorList to be same as setColors
-		
+
         vertex = conflict[i]-1;
         
-		
+
         for (j=0; j<maxDegree; j++){                                            // cycle through the graph
-			if ( Adjlist[vertex*maxDegree + j] != -1 )                      		//      check if node is connected
+        		if ( Adjlist[vertex*maxDegree + j] != -1 )                      		//      check if node is connected
 				colorList[ graphColors[Adjlist[vertex*maxDegree + j]]-1 ] = 0;
 			else 
                 break;    
         }
-		
-		
+
+
         for (j=0; j<maxDegree; j++){                                       	// check the colorList array
-			if (colorList[j] != 0){                                         //    at the first spot where we have a color not assigned
-				graphColors[vertex] = colorList[j];                         //       we assign that color to the node and
+        		if (colorList[j] != 0){                                         //    at the first spot where we have a color not assigned
+            		graphColors[vertex] = colorList[j];                         //       we assign that color to the node and
                 break;                                                      //   	 exit to the next
             }
         }
-		
+
 	}
 }
 
@@ -720,90 +588,77 @@ void checkCorrectColoring(int *adjacencyMatrix, int *graphColors, int graphSize)
 
 void convert(int *adjacencyMatrix, unsigned int *compactAdjacencyList, unsigned int *vertexStartList, int size, int graphSizeRead, int maxDegree){
 	int count;
-	for (int i=0; i<graphSizeRead; i++)  
-		
-	{                 
-		
+	for (int i=0; i<graphSizeRead; i++)  
+	{                 
 		count = 0;
-		for (int j=vertexStartList[i]; j<vertexStartList[i+1]; j++){
-			
-			adjacencyMatrix[i*size + compactAdjacencyList[j]] = 1;
-			count++;
+		for (int j=vertexStartList[i]; j<vertexStartList[i+1]; j++){
+		  adjacencyMatrix[i*size + compactAdjacencyList[j]] = 1;
+		  count++;
 		}
 		//cout<< i << endl;
-	}  
-	
+	}  
 }
 
 
 
 int findPower(int x){
-	int num = 2;
-	int powerIndex = 1;
-	while (num <= x){
-		powerIndex++;
-		num = pow(2,powerIndex);
-		
-	}
-	cout << "Closest power: " << num << endl;
-	return num;
+  int num = 2;
+  int powerIndex = 1;
+  while (num <= x){
+    powerIndex++;
+    num = pow(2,powerIndex);
+   
+  }
+  cout << "Closest power: " << num << endl;
+  return num;
 }
 //----------------------- The meat -----------------------//
 
 int main(){  
 	int maxDegree, numColorsSeq, numColorsParallel, boundaryCount, conflictCount;
 	
-	unsigned int *compactAdjacencyList;
-	
+	unsigned int *compactAdjacencyList;
 	unsigned int *vertexStartList;
 	
-	bool artificial = false;
+	bool artificial = true;
 	bool sdo = true;
 	bool sdoConflictSolver = true;
-	bool realSize = true;
 	
-	//	const long GRAPHSIZE = 2048;    // number of nodes
-	//const float DENSITY = 0.01;
-	//const long numEdges = 150000;    // number of edges 
-	//const long NUMEDGES = DENSITY*GRAPHSIZE*(GRAPHSIZE-1)/2;
-	
-	int graphSize = GRAPHSIZE;
-	float density = DENSITY;
-	long numEdges = density*graphSize*(graphSize-1)/2;
-	
+//	const long GRAPHSIZE = 2048;    // number of nodes
+//const float DENSITY = 0.01;
+//const long numEdges = 150000;    // number of edges 
+//const long NUMEDGES = DENSITY*GRAPHSIZE*(GRAPHSIZE-1)/2;
+
+      int graphSize = GRAPHSIZE;
+      float density = DENSITY;
+       long numEdges = density*graphSize*(graphSize-1)/2;
+      
 	
 	int graphSizeRead;
-	if (artificial == false)
-	{
-		//getAdjacentCompactListFromSparseMartix_mtx("c-28.mtx", compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
-		
-		//getAdjacentCompactListFromSparseMartix_mtx("fs_183_6.mtx", compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
-		
-		//getAdjacentCompactListFromSparseMartix_mtx("bcsstk13.mtx", compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
-		
-		getAdjacentCompactListFromSparseMartix_mtx("1138_bus.mtx", compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
-		
-		
-		vertexStartList[graphSizeRead] = numEdges*2;
-		if (realSize == true)
-	  		graphSize = graphSizeRead;
-		else
-			graphSize = findPower(graphSizeRead);
-	}
+       if (artificial == false)
+       {
+	  //getAdjacentCompactListFromSparseMartix_mtx("c-28.mtx", compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
+	 //getAdjacentCompactListFromSparseMartix_mtx("fs_183_6.mtx", compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
+	  getAdjacentCompactListFromSparseMartix_mtx("bcsstk13.mtx", compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
+	  //getAdjacentCompactListFromSparseMartix_mtx("1138_bus.mtx", compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
 	
+	  vertexStartList[graphSizeRead] = numEdges*2;
+	  graphSize = findPower(graphSizeRead);
+       }
+       
 	//graphSize = graphSizeRead;
-	
+
 	int *adjacencyMatrix = new int[graphSize*graphSize*sizeof(int)];  
 	int *graphColors = new int[graphSize*sizeof(int)];          
 	int *boundaryList = new int[graphSize*sizeof(int)]; 
-	
+
 	memset(adjacencyMatrix, 0, graphSize*graphSize*sizeof(int)); 
 	memset(graphColors, 0, graphSize*sizeof(int)); 
 	memset(boundaryList, 0, graphSize*sizeof(int)); 
 	
 	conflictCount = boundaryCount = numColorsSeq = numColorsParallel = 0; 
 	
-	
+
 	
 	
     long randSeed = time(NULL);
@@ -816,24 +671,24 @@ int main(){
 	
 	cout << "All allocation succeeded!" << endl;
 	
-	//--------------------- Graph Creation ---------------------!
-	// initialize graph 
-	if (artificial == false)
-		convert(adjacencyMatrix, compactAdjacencyList, vertexStartList, graphSize, graphSizeRead, maxDegree);
-	else	 
-		generateMatrix(adjacencyMatrix, graphSize, numEdges);  
+//--------------------- Graph Creation ---------------------!
+// initialize graph 
+  if (artificial == false)
+      convert(adjacencyMatrix, compactAdjacencyList, vertexStartList, graphSize, graphSizeRead, maxDegree);
+  else	 
+	generateMatrix(adjacencyMatrix, graphSize, numEdges);  
 	
-	cout << "Graph Created!" << endl;
-	
+ cout << "Graph Created!" << endl;
+
 	// Display graph: Adjacency Matrix
 	/*
-	 cout << "Adjacency Matrix:" << endl; 
-	 for (int i=0; i<graphSize; i++){  
-	 for (int j=0; j<graphSize; j++)  
-	 cout << adjacencyMatrix[i*graphSize + j] << "  ";  
-	 cout << endl;  
-	 }  
-	 */     
+	cout << "Adjacency Matrix:" << endl; 
+	for (int i=0; i<graphSize; i++){  
+		for (int j=0; j<graphSize; j++)  
+	 		cout << adjacencyMatrix[i*graphSize + j] << "  ";  
+	 	cout << endl;  
+	}  
+	*/     
 	
 	// determining the maximum degree  
 	//maxDegree = getMaxDegree(adjacencyMatrix, graphSize);  
@@ -842,7 +697,7 @@ int main(){
 	cudaEventCreate(&start_b); 
 	cudaEventCreate(&stop_b); 
 	cudaEventRecord(start_b, 0); 
-	
+ 
 	maxDegree = getBoundaryList(adjacencyMatrix, boundaryList, graphSize, boundaryCount, graphSize);	// return maxDegree + boundaryCount (as ref param)
 	
 	cudaEventRecord(stop_b, 0); 
@@ -850,54 +705,54 @@ int main(){
 	cudaEventElapsedTime(&elapsedTimeBoundary, start_b, stop_b); 
 	cout<<"Get boundaryList :"<<elapsedTimeBoundary<<" ms"<<endl;
 	cout<<"maxDegree="<<maxDegree<<endl;
-	
+
 	// Get adjacency list
 	int *adjacentList = new int[graphSize*maxDegree*sizeof(int)];
 	memset(adjacentList, -1, graphSize*maxDegree*sizeof(int)); 
-	
+
 	getAdjacentList(adjacencyMatrix, adjacentList, graphSize, maxDegree);
 	
 	
-	
+
 	// Get degree List
 	int *degreeList = new int[graphSize*sizeof(int)];
 	memset(degreeList, 0, graphSize*sizeof(int)); 
-	
+
 	getDegreeList(adjacentList, degreeList, graphSize, maxDegree);
+
+
+
 	
-	
-	
-	
-	//--------------------- Sequential Graph Coloring ---------------------!
+//--------------------- Sequential Graph Coloring ---------------------!
 	cudaEventCreate(&start); 
 	cudaEventCreate(&stop); 
 	cudaEventRecord(start, 0);  
 	
-	
+
 	if (sdo == true)
-		sdoIm(adjacentList, graphColors, degreeList, graphSize, maxDegree);
+	   sdoIm(adjacentList, graphColors, degreeList, graphSize, maxDegree);
 	else
-		colorGraph_FF(adjacentList, graphColors, graphSize, maxDegree);  
+	  colorGraph_FF(adjacentList, graphColors, graphSize, maxDegree);  
 	
 	
-	
+
 	cudaEventRecord(stop, 0); 
 	cudaEventSynchronize(stop); 
 	cudaEventElapsedTime(&elapsedTimeCPU, start, stop); 
 	
-	
-	// Get colors
+
+// Get colors
 	numColorsSeq = 0;
 	for (int i=0; i<graphSize; i++){
 		if ( numColorsSeq < graphColors[i] )
 			numColorsSeq = graphColors[i];
 	}
+
+
+
 	
-	
-	
-	
-	//--------------------- Checking for color conflict ---------------------!
-	
+//--------------------- Checking for color conflict ---------------------!
+
 	cout << "Sequential Conflict check:";
 	checkCorrectColoring(adjacencyMatrix, graphColors, graphSize); 
 	cout << endl;  
@@ -905,17 +760,17 @@ int main(){
 	
 	
 	
-	//--------------------- Parallel Graph Coloring ---------------------!	
+//--------------------- Parallel Graph Coloring ---------------------!	
 	
 	int *conflict = new int[boundaryCount*sizeof(int)];                    // conflict array 
 	memset(conflict, 0, boundaryCount*sizeof(int));                        // conflict array initialized to 0  
 	
 	memset(graphColors, 0, graphSize*sizeof(int));                         // reset colors to 0 
 	
-	
-	
-	
-	//--------------- Steps 1, 2 & 3: Parallel Partitioning + Graph coloring + Conflict Detection
+
+
+
+//--------------- Steps 1, 2 & 3: Parallel Partitioning + Graph coloring + Conflict Detection
 	
 	cudaEventCreate(&start); 
 	cudaEventCreate(&stop); 
@@ -923,11 +778,11 @@ int main(){
 	cudaEventCreate(&stop_4); 
 	cudaEventRecord(start, 0); 
 	
-	
+		
 	int *conflictTmp = new int[boundaryCount*sizeof(int)];
 	memset(conflictTmp, 0, boundaryCount*sizeof(int));  
-	
-	
+      
+
 	//cudaGraphColoring(adjacentList, boundaryList, graphColors, conflictTmp, boundaryCount, maxDegree);
 	cudaGraphColoring(adjacentList, boundaryList, graphColors, degreeList, conflictTmp, boundaryCount, maxDegree, graphSize);
 	
@@ -935,18 +790,18 @@ int main(){
 	
 	cudaEventRecord(stop_1, 0); 
 	cudaEventSynchronize(stop_1); 
-	
-	
+
+
 	int interColorsParallel = 0;
 	for (int i=0; i<graphSize; i++){
 		if ( interColorsParallel < graphColors[i] )
 			interColorsParallel = graphColors[i];
 	}
-	
-	
-	
-	
-	//----- Conflict Count
+
+
+
+
+//----- Conflict Count
 	for(int i=0; i< boundaryCount; i++)
 	{
 		int node = conflictTmp[i];
@@ -958,50 +813,50 @@ int main(){
 		}
 	}
   	delete[] conflictTmp;
-	
-	
+
+   
 	cudaEventRecord(stop_4, 0); 
     cudaEventSynchronize(stop_4); 
 	
-	
-	
-	
-	//--------------- Step 4: solve conflicts 
+
+
+
+//--------------- Step 4: solve conflicts 
 	cout <<"Checkpoint " << endl;
 	
-	
+
 	if (sdoConflictSolver == true)
-		conflictSolveSDO(adjacentList, conflict, conflictCount, graphColors,degreeList, graphSize, maxDegree);
+	  conflictSolveSDO(adjacentList, conflict, conflictCount, graphColors,degreeList, graphSize, maxDegree);
 	else
-		conflictSolveFF(adjacentList,  graphSize, conflict, conflictCount, graphColors, maxDegree); 
+	  conflictSolveFF(adjacentList,  graphSize, conflict, conflictCount, graphColors, maxDegree); 
 	
-	
+
 	
 	
 	cudaEventRecord(stop, 0); 
 	cudaEventSynchronize(stop); 
-	
+
 	cudaEventElapsedTime(&elapsedTimeGPU, start, stop); 
 	cudaEventElapsedTime(&elapsedTimeGPU_1, start, stop_1); 
 	cudaEventElapsedTime(&elapsedTimeGPU_4, start, stop_4); 
-	
-	
+
+
 	numColorsParallel = 0;
 	for (int i=0; i<graphSize; i++){
 		if ( numColorsParallel < graphColors[i] )
 			numColorsParallel = graphColors[i];
 	}
-	
-	
+
+
 	//conflicts
 	/*
-	 cout << "Conclicts: ";
-	 for (int i=0; i<conflictCount; i++)
-	 cout << conflict[i] << " colored " <<  graphColors[conflict[i]] << "    ";
-	 cout << endl;
-	 */
-	
-	
+	cout << "Conclicts: ";
+	for (int i=0; i<conflictCount; i++)
+		cout << conflict[i] << " colored " <<  graphColors[conflict[i]] << "    ";
+	cout << endl;
+	*/
+
+
 	
 	// Display information 
 	/*cout << "List of conflicting nodes:"<<endl; 
@@ -1009,60 +864,60 @@ int main(){
 	 cout << conflict[k] << "  ";  
 	 cout << endl << endl;  */
 	
-	
-	
-	//--------------------- Checking for color conflict ---------------------!
-	
+
+
+//--------------------- Checking for color conflict ---------------------!
+
 	cout << endl <<  "Parallel Conflict check:";	
 	checkCorrectColoring(adjacencyMatrix, graphColors, graphSize); 	
-	
-	
-	
-	
-	
-	//--------------------- Parallel Graph Coloring ---------------------!	
+
+
+
+
+
+//--------------------- Parallel Graph Coloring ---------------------!	
 	
 	
 	cout << endl << endl << "Graph Summary" << endl;
 	cout << "Vertices: " << graphSize << "   Edges: " << numEdges << "   Density: " << (2*numEdges)/((float)graphSize*(graphSize-1)) << "   Degree: " << maxDegree << endl;
 	cout << "Random sed used: " << randSeed << endl;
-	
+
 	cout << endl;
 	cout << "Grid Size: " << GRIDSIZE << "    Block Size: " << BLOCKSIZE << "     Total number of threads: " << GRIDSIZE*BLOCKSIZE << endl;
 	cout << "Graph Subsize: " << graphSize/(GRIDSIZE*BLOCKSIZE) << endl;
-	
+
 	cout << endl;
-	
+
 	if (sdo == true)
-		if (sdoConflictSolver == true)
-			cout << "CPU time (SDO): " << elapsedTimeCPU << " ms    -  GPU Time (SDO Solver): " << elapsedTimeGPU << " ms" << endl; 
-		else
-			cout << "CPU time (SDO): " << elapsedTimeCPU << " ms    -  GPU Time (FF Solver): " << elapsedTimeGPU << " ms" << endl; 
+	  if (sdoConflictSolver == true)
+	    cout << "CPU time (SDO): " << elapsedTimeCPU << " ms    -  GPU Time (SDO Solver): " << elapsedTimeGPU << " ms" << endl; 
+	  else
+	     cout << "CPU time (SDO): " << elapsedTimeCPU << " ms    -  GPU Time (FF Solver): " << elapsedTimeGPU << " ms" << endl; 
         else
-			if (sdoConflictSolver == true)
-				cout << "CPU time (First Fit): " << elapsedTimeCPU << " ms    -  GPU Time (SDO Solver): " << elapsedTimeGPU << " ms" << endl; 
-			else
-				cout << "CPU time (First Fit): " << elapsedTimeCPU << " ms    -  GPU Time (FF Solver): " << elapsedTimeGPU << " ms" << endl; 
-	
+	  if (sdoConflictSolver == true)
+	    cout << "CPU time (First Fit): " << elapsedTimeCPU << " ms    -  GPU Time (SDO Solver): " << elapsedTimeGPU << " ms" << endl; 
+	  else
+	   cout << "CPU time (First Fit): " << elapsedTimeCPU << " ms    -  GPU Time (FF Solver): " << elapsedTimeGPU << " ms" << endl; 
+	  
 	cout << "ALGO step 1, 2 & 3: " 	<< elapsedTimeGPU_1 << " ms" << endl;  
 	cout << "Boundary count: " 		<< elapsedTimeGPU_4 - elapsedTimeGPU_1 << " ms" << endl; 
 	cout << "ALGO step 4: " 			<< elapsedTimeGPU - elapsedTimeGPU_4 << " ms" << endl; 
-	
+
 	cout << endl;
 	cout << "Boundary Count: " << boundaryCount << endl;
 	cout << "Conflict count: " << conflictCount << endl;
-	
+
 	cout << endl;
 	cout << "Colors before solving conflict: " << interColorsParallel << endl;
 	cout << "Sequential Colors: " << numColorsSeq << "      -       Parallel Colors: " << numColorsParallel << endl;     
 	
 	cout<<"GPU speed up : "<< elapsedTimeCPU/elapsedTimeGPU<<" x"<<endl;
+
+
 	
 	
-	
-	
-	//--------------------- Cleanup ---------------------!		
-	
+//--------------------- Cleanup ---------------------!		
+
 	delete[] adjacencyMatrix; 
 	delete[] graphColors; 
 	delete[] conflict; 
