@@ -314,17 +314,17 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
     cudaEventCreate(&stop_confl); 
     cudaEventRecord(start_confl, 0); 
 	
-	numConflicts[0]=0;
-	conflictsDetection<<<dimGrid_confl, dimBlock_confl>>>(adjacentListD, boundaryListD, colorsD, conflictD, graphSize, boundarySize, maxDegree, numConflicts);
+//	numConflicts[0]=0;
+	conflictsDetection<<<dimGrid_confl, dimBlock_confl>>>(adjacentListD, boundaryListD, colorsD, conflictD, graphSize, boundarySize, maxDegree);
 
 //conflictSolveSDO(int *adjacencyList, int *conflict, int conflictSize, int *graphColors, int *degreeList, int sizeGraph, int maxDegree){
-	int numOfConflicts = numConflicts[0];
-	conflictSolveSDO<<<dimGrid_col, dimBlock_col>>>(adjacentListD, conflictD, numOfConflicts, colorsD, degreeListD, graphSize, maxDegree);
-	cout << "Num conflicts (pass 1): " << numOfConflicts << endl;
+//	int numOfConflicts = numConflicts[0];
+//	conflictSolveSDO<<<dimGrid_col, dimBlock_col>>>(adjacentListD, conflictD, numOfConflicts, colorsD, degreeListD, graphSize, maxDegree);
+//	cout << "Num conflicts (pass 1): " << numOfConflicts << endl;
 
-	numConflicts[0]=0;
-	conflictsDetection<<<dimGrid_confl, dimBlock_confl>>>(adjacentListD, boundaryListD, colorsD, conflictD, graphSize, boundarySize, maxDegree, numConflicts);
-	cout << "Num conflicts (pass 2): " << numConflicts[0] << endl;
+//	numConflicts[0]=0;
+//	conflictsDetection<<<dimGrid_confl, dimBlock_confl>>>(adjacentListD, boundaryListD, colorsD, conflictD, graphSize, boundarySize, maxDegree, numConflicts);
+//	cout << "Num conflicts (pass 2): " << numConflicts[0] << endl;
  
 
 	

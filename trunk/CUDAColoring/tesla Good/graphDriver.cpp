@@ -805,6 +805,8 @@ int main(){
 	for(int i=0; i< boundaryCount; i++)
 	{
 		int node = conflictTmp[i];
+
+		//cout << "i: " << i << "   Node: " << node << endl;
 		
 		if(node >= 1)
 		{
