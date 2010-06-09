@@ -8,11 +8,12 @@
 #include <cuda_runtime_api.h> 
 #include <cuda.h> 
 #include <iostream>
+using namespace std;
 
 
 
 const long GRAPHSIZE = 4096;    // number of nodes
-const float DENSITY = 0.05;
+const float DENSITY = 0.01;
 //const long NUMEDGES = 150000;    // number of edges 
 const long NUMEDGES = DENSITY*GRAPHSIZE*(GRAPHSIZE-1)/2;
 
@@ -41,7 +42,7 @@ const int SUBSIZE_BOUNDARY = 256;
 #endif 
 
 
-CHECK_EXT void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, int *degreeList, int *conflict, int boundarySize, int maxDegree, int graphSize);
+CHECK_EXT void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, int *degreeList, int *conflict, int boundarySize, int maxDegree, int graphSize, int passes);
 
 
 #endif // _GRAPHCOLORING_H_ 
