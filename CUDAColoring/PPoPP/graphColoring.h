@@ -10,8 +10,9 @@
 #include <iostream>
 
 
+
 const long GRAPHSIZE = 4096;    // number of nodes
-const float DENSITY = 0.01;
+const float DENSITY = 0.05;
 //const long NUMEDGES = 150000;    // number of edges 
 const long NUMEDGES = DENSITY*GRAPHSIZE*(GRAPHSIZE-1)/2;
 

@@ -1,6 +1,7 @@
 #include "graphColoring.h"
 using namespace std;
 
+__device__ unsigned int numOfConflicts = 0;
 
 //----------------------- SDO improved -----------------------//
 //
@@ -117,8 +118,9 @@ __global__ void colorGraph_SDO(int *adjacencyList, int *graphColors, int *degree
 					if (degree(i,degreeList) > degree(index,degreeList))
 						index = i;
 				}
+				
+				
 			}
-
 			numColored = color(index,adjacencyList,graphColors, maxDegree, numColored, start, end);
 		}
 	}
@@ -126,7 +128,43 @@ __global__ void colorGraph_SDO(int *adjacencyList, int *graphColors, int *degree
 
 
 
-__global__ void conflictSolveSDO(int *adjacencyList, int *conflict, int conflictSize, int *graphColors, int *degreeList, int sizeGraph, int maxDegree){
+__global__ void colorGraphBis_SDO(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, int maxDegree)
+{
+	int start, end;
+	int subGraphSize, numColored = 0;
+	int satDegree, max, index;
+	
+	subGraphSize = sizeGraph/(gridDim.x * blockDim.x);
+	start = (sizeGraph/gridDim.x * blockIdx.x) + (subGraphSize * threadIdx.x);
+	end = start + subGraphSize;
+
+	while (numColored < subGraphSize){
+		max = -1;
+		
+		for (int i=start; i<end; i++){
+			if (graphColors[i] == 0)			// not colored
+			{
+				satDegree = saturation(i,adjacencyList,graphColors, maxDegree, start, end);
+
+				if (satDegree > max){
+					max = satDegree;
+					index = i;				
+				}
+
+				if (satDegree == max){
+					if (degree(i,degreeList) > degree(index,degreeList))
+						index = i;
+				}
+			}
+			
+			numColored = color(index, adjacencyList, graphColors, maxDegree, numColored, start, end);
+		}
+	}
+}
+
+
+
+__global__ void conflictSolveSDO(int *adjacencyList, int *conflict, int *graphColors, int *degreeList, int sizeGraph, int maxDegree){
 	int start, end, index;
 	int subGraphSize, numColored = 0;
 	int satDegree, max;
@@ -136,14 +174,14 @@ __global__ void conflictSolveSDO(int *adjacencyList, int *conflict, int conflict
 	end = start + subGraphSize;
    
 	// Set their color to 0
-	for (int i=0; i<conflictSize; i++)
+	for (int i=0; i<numOfConflicts; i++)
 		graphColors[conflict[i]-1] = 0;
     
 
-    while (numColored < conflictSize){
+    while (numColored < numOfConflicts){
         max = -1;
         
-        for (int i=0; i<conflictSize; i++){
+        for (int i=0; i<numOfConflicts; i++){
 			int vertex = conflict[i]-1;
             if (graphColors[vertex] == 0)                        // not colored
             {
@@ -158,9 +196,13 @@ __global__ void conflictSolveSDO(int *adjacencyList, int *conflict, int conflict
                     if (degree(vertex,degreeList) > degree(index,degreeList))
                         index = vertex;
                 }
-            }
 
-            numColored = color(index,adjacencyList,graphColors, maxDegree, numColored, start, end);
+				 numColored = color(index,adjacencyList,graphColors, maxDegree, numColored, start, end);
+            }else{
+				numColored++;
+			}
+
+           
         }
     }
 }
@@ -225,17 +267,20 @@ __global__ void colorGraph_FF(int *adjacencyListD, int *colors, int size, int ma
 __global__ void conflictsDetection(int *adjacentListD, int *boundaryListD, int *colors, int *conflictD, long size, int boundarySize, int maxDegree){
 	int idx = blockIdx.x*blockDim.x + threadIdx.x;
 	int i, j;
+
 	
-	if(idx < boundarySize){
+	if (idx < boundarySize){
 		i = boundaryListD[idx];
 		conflictD[idx] = 0;
-		for(int k= 0; k < maxDegree; k++)
+		for (int k=0; k < maxDegree; k++)
 		{
 			j = adjacentListD[i*maxDegree + k];
-			if(j>i && (colors[i] == colors[j]))
+			if (j>i && (colors[i] == colors[j]))
 			{
 				//conflictD[idx] = min(i,j)+1;	
 				conflictD[idx] = i+1;	
+
+				colors[i] = 0;				// added!!!!!!!!
 			}		
 		}
 	}
@@ -243,18 +288,36 @@ __global__ void conflictsDetection(int *adjacentListD, int *boundaryListD, int *
 
 
 
+// Temporary only: will have to be merged in conflictsDetection as a counting reduction operation!!!
+void conflictCount(int *conflictD, int *conflictListD, int boundaryCount){
+	int conflictCount = 0;
+
+	for (int i=0; i< boundaryCount; i++)
+	{
+		int node = conflictD[i];
+		
+		if (node >= 1)
+		{
+			conflictListD[conflictCount] = node;
+			conflictCount++;
+		}
+	}
+
+}
+
 //----------------------- Main -----------------------//
 
 extern "C"
 void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, int *degreeList, int *conflict, int boundarySize, int maxDegree, int graphSize)
 {
-	int *adjacentListD, *colorsD, *conflictD, *boundaryListD, *degreeListD;     
+	int *adjacentListD, *colorsD, *conflictD, *boundaryListD, *degreeListD, *conflictListD;     
 	int gridsize = ceil((float)boundarySize/(float)SUBSIZE_BOUNDARY);
 	int blocksize = SUBSIZE_BOUNDARY;
 	int *numConflicts;
 	
 	cudaEvent_t start_col, start_confl, stop_col, stop_confl, start_mem, stop_mem;         
     float elapsedTime_memory, elapsedTime_col, elapsedTime_confl; 
+
 
 
 
@@ -270,11 +333,14 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	cudaMalloc((void**)&boundaryListD, boundarySize*sizeof(int));
 	cudaMalloc((void**)&degreeListD, graphSize*sizeof(int));
 	cudaMalloc((void**)&numConflicts, 1*sizeof(int));
+	cudaMalloc((void**)&conflictListD, boundarySize*sizeof(int));
 	
 	cudaMemcpy(adjacentListD, adjacentList, graphSize*maxDegree*sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(colorsD, graphColors, graphSize*sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemcpy(boundaryListD, boundaryList, boundarySize*sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(degreeListD, degreeList, graphSize*sizeof(int), cudaMemcpyHostToDevice);
+
+	cudaMemset(conflictListD, 0, boundarySize*sizeof(int));
 	
 	
 	cudaEventRecord(stop_mem, 0); 
@@ -308,30 +374,38 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	
 
 
-
+	int Repeat = 0;
+	for (int times=0; times<Repeat; times++){
 //-------------- Conflict resolution -----------------!
 	cudaEventCreate(&start_confl); 
     cudaEventCreate(&stop_confl); 
     cudaEventRecord(start_confl, 0); 
-	
-	numConflicts[0]=0;
-	conflictsDetection<<<dimGrid_confl, dimBlock_confl>>>(adjacentListD, boundaryListD, colorsD, conflictD, graphSize, boundarySize, maxDegree, numConflicts);
 
-//conflictSolveSDO(int *adjacencyList, int *conflict, int conflictSize, int *graphColors, int *degreeList, int sizeGraph, int maxDegree){
-	int numOfConflicts = numConflicts[0];
-	conflictSolveSDO<<<dimGrid_col, dimBlock_col>>>(adjacentListD, conflictD, numOfConflicts, colorsD, degreeListD, graphSize, maxDegree);
-	cout << "Num conflicts (pass 1): " << numOfConflicts << endl;
-
-	numConflicts[0]=0;
-	conflictsDetection<<<dimGrid_confl, dimBlock_confl>>>(adjacentListD, boundaryListD, colorsD, conflictD, graphSize, boundarySize, maxDegree, numConflicts);
-	cout << "Num conflicts (pass 2): " << numConflicts[0] << endl;
- 
-
-	
+	conflictsDetection<<<dimGrid_confl, dimBlock_confl>>>(adjacentListD, boundaryListD, colorsD, conflictD, graphSize, boundarySize, maxDegree);
+ 	
 	cudaEventRecord(stop_confl, 0); 
     cudaEventSynchronize(stop_confl); 
-	
 
+
+	cudaEventCreate(&start_col); 
+    cudaEventCreate(&stop_col); 
+    cudaEventRecord(start_col, 0); 
+
+	conflictSolveSDO<<<dimGrid_col, dimBlock_col>>>(adjacentListD, conflictListD, colorsD, degreeListD, graphSize, maxDegree);
+
+	cudaEventRecord(stop_col, 0); 
+    cudaEventSynchronize(stop_col); 
+	}
+
+
+	cudaEventCreate(&start_confl); 
+    cudaEventCreate(&stop_confl); 
+    cudaEventRecord(start_confl, 0); 
+	
+	conflictsDetection<<<dimGrid_confl, dimBlock_confl>>>(adjacentListD, boundaryListD, colorsD, conflictD, graphSize, boundarySize, maxDegree);
+	
+		cudaEventRecord(stop_confl, 0); 
+    cudaEventSynchronize(stop_confl); 
 
 
 
