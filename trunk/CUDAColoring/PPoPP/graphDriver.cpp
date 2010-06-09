@@ -13,149 +13,292 @@
 using namespace std;  
 
 //----------------------- Graph initializations -----------------------//
-// Author: Shusen
-void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, unsigned int *&compactAdjacencyList, unsigned int *&vertexStartList, int &graphsize, long &edgesize, int &maxDegree)
-{
-	unsigned int row=0, col=0;
-	long entries=0;
-	//calculate maxDegree in the following loop
-	float donotcare = 0;
-	float nodecol = 0;
-	float noderow = 0;
-
-
-
-///////////////////////////////////Read file for the first time ////////////////////////////////////
-	ifstream mtxf;	
-	mtxf.open(filename);
-	//cout << string(filename) << endl;
-	while(mtxf.peek()=='%')
-		mtxf.ignore(512, '\n');//
-	
-
-	mtxf >> row >> col >> entries ;
-	cout<< row <<" " << col <<" " << entries << endl;
-	graphsize = col>row? col:row;
-	
-	int *graphsizeArray = new int[graphsize];
-	memset(graphsizeArray, 0 , sizeof(int)*graphsize);
-	edgesize = 0;
-
-	for (long i=0; i<entries; i++)
-	{
-
-		mtxf >> noderow >> nodecol >> donotcare;
-		cout << noderow << " " << nodecol << " " << donotcare << endl;
-		//assert(noderow!=nodecol);
-		
-		if(noderow == nodecol)
-			continue;
-		else
-			edgesize++;
-
-		graphsizeArray[(int)noderow-1]++;
-		graphsizeArray[(int)nodecol-1]++;
-	}
-	cout << "edgesize: "<< edgesize << endl;
-//	for(int i=0; i<graphsize; i++)
-//		cout << graphsizeArray[i] <<endl;
-//exit(0);
-	mtxf.close();
-/////////////////////////////////////close the file/////////////////////////////////////////////
-
-	long listSize = 0;
-	//calculate the size of the adjacency list
-	maxDegree = 0;
-	for(unsigned int i=0; i<graphsize; i++)
-	{
-		listSize += graphsizeArray[i];
-		if(graphsizeArray[i] > maxDegree)
-			maxDegree = graphsizeArray[i];
-	}
-
-	cout <<"edge*2: "<<listSize<<endl;
-	cout <<"maxDegree: "<< maxDegree << endl;
-
-
-///////////////////////////////////Read file for the second time ////////////////////////////////////
-
-	mtxf.open(filename);
-	int nodeindex=0, connection=0;
-
-	while(mtxf.peek()=='%')
-		mtxf.ignore(512, '\n');//
-	
-	mtxf >> donotcare >> donotcare >> donotcare;
-	//cout<<donotcare<<endl;
-
-	set<unsigned int>** setArray = new set<unsigned int>* [graphsize];
-	assert(setArray);
-	memset(setArray, 0 , sizeof(set<unsigned int>*)*graphsize);
-	unsigned int x, y;
-	cout<< "finished allocate memory" << endl;
-
-	for(unsigned int i=0; i<entries; i++)
-	{
-		mtxf >> x >> y >> donotcare;
-		x--; y--; //node index start from 0
-		//cout << x << " " << y << endl;
-		if(x==y)
-		{
-			continue;
-		}	
-		if (setArray[x] == NULL)
-			setArray[x] = new set<unsigned int>();
-		if (setArray[y] == NULL)
-			setArray[y] = new set<unsigned int>();
-	
-		setArray[x]->insert(y);
-		setArray[y]->insert(x);
-	}
-	cout<< "finished assignment of all the entries" << endl;
-	mtxf.close();
-
-/////////////////////////////////////close the file/////////////////////////////////////////////
-
-
-	compactAdjacencyList = new unsigned int[listSize];
-	memset(compactAdjacencyList, 0, sizeof(unsigned int)*listSize);
-	vertexStartList = new unsigned int[graphsize];
-	memset(vertexStartList, 0, sizeof(unsigned int)*graphsize);
-	unsigned int currentPos = 0;
-	
-	for(unsigned int i=0; i<graphsize; i++)
-	{
-		//cout << "currentPos: " << currentPos << endl;
-		if(setArray[i] != NULL)
-		{
-			vertexStartList[i] = currentPos;
-			set<unsigned int>::iterator it = setArray[i]->begin();
-
-			if (i == 1137){
-					cout << "testingggggggggggggggggggggggggggg " << endl;
-				}			
-
-			for(; it != setArray[i]->end(); it++)
-			{
-				
-				if (i == 1137){
-					cout << *it <<  " ";
-				}
-
-				compactAdjacencyList[currentPos] = *it;
-				currentPos++;
-				
-			}
-		}
-		else
-			vertexStartList[i] = currentPos;
-
-	}
-
-//	for(unsigned int i=0; i<graphsize; i++)
-//		cout<< vertexStartList[i] << " ";
-	cout << "inside function"<< endl;
-
+// Author: Shusen
+
+void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, unsigned int *&compactAdjacencyList, unsigned int *&vertexStartList, int &graphsize, long &edgesize, int &maxDegree)
+
+{
+
+	unsigned int row=0, col=0;
+
+	long entries=0;
+
+	//calculate maxDegree in the following loop
+
+	float donotcare = 0;
+
+	float nodecol = 0;
+
+	float noderow = 0;
+
+
+
+
+
+
+
+///////////////////////////////////Read file for the first time ////////////////////////////////////
+
+	ifstream mtxf;	
+
+	mtxf.open(filename);
+
+	//cout << string(filename) << endl;
+
+	while(mtxf.peek()=='%')
+
+		mtxf.ignore(512, '\n');//
+
+	
+
+
+
+	mtxf >> row >> col >> entries ;
+
+	cout<< row <<" " << col <<" " << entries << endl;
+
+	graphsize = col>row? col:row;
+
+	
+
+	int *graphsizeArray = new int[graphsize];
+
+	memset(graphsizeArray, 0 , sizeof(int)*graphsize);
+
+	edgesize = 0;
+
+
+
+	for (long i=0; i<entries; i++)
+
+	{
+
+
+
+		mtxf >> noderow >> nodecol >> donotcare;
+
+		cout << noderow << " " << nodecol << " " << donotcare << endl;
+
+		//assert(noderow!=nodecol);
+
+		
+
+		if(noderow == nodecol)
+
+			continue;
+
+		else
+
+			edgesize++;
+
+
+
+		graphsizeArray[(int)noderow-1]++;
+
+		graphsizeArray[(int)nodecol-1]++;
+
+	}
+
+	cout << "edgesize: "<< edgesize << endl;
+
+//	for(int i=0; i<graphsize; i++)
+
+//		cout << graphsizeArray[i] <<endl;
+
+//exit(0);
+
+	mtxf.close();
+
+/////////////////////////////////////close the file/////////////////////////////////////////////
+
+
+
+	long listSize = 0;
+
+	//calculate the size of the adjacency list
+
+	maxDegree = 0;
+
+	for(unsigned int i=0; i<graphsize; i++)
+
+	{
+
+		listSize += graphsizeArray[i];
+
+		if(graphsizeArray[i] > maxDegree)
+
+			maxDegree = graphsizeArray[i];
+
+	}
+
+
+
+	cout <<"edge*2: "<<listSize<<endl;
+
+	cout <<"maxDegree: "<< maxDegree << endl;
+
+
+
+
+
+///////////////////////////////////Read file for the second time ////////////////////////////////////
+
+
+
+	mtxf.open(filename);
+
+	int nodeindex=0, connection=0;
+
+
+
+	while(mtxf.peek()=='%')
+
+		mtxf.ignore(512, '\n');//
+
+	
+
+	mtxf >> donotcare >> donotcare >> donotcare;
+
+	//cout<<donotcare<<endl;
+
+
+
+	set<unsigned int>** setArray = new set<unsigned int>* [graphsize];
+
+	assert(setArray);
+
+	memset(setArray, 0 , sizeof(set<unsigned int>*)*graphsize);
+
+	unsigned int x, y;
+
+	cout<< "finished allocate memory" << endl;
+
+
+
+	for(unsigned int i=0; i<entries; i++)
+
+	{
+
+		mtxf >> x >> y >> donotcare;
+
+		x--; y--; //node index start from 0
+
+		//cout << x << " " << y << endl;
+
+		if(x==y)
+
+		{
+
+			continue;
+
+		}	
+
+		if (setArray[x] == NULL)
+
+			setArray[x] = new set<unsigned int>();
+
+		if (setArray[y] == NULL)
+
+			setArray[y] = new set<unsigned int>();
+
+	
+
+		setArray[x]->insert(y);
+
+		setArray[y]->insert(x);
+
+	}
+
+	cout<< "finished assignment of all the entries" << endl;
+
+	mtxf.close();
+
+
+
+/////////////////////////////////////close the file/////////////////////////////////////////////
+
+
+
+
+
+	compactAdjacencyList = new unsigned int[listSize];
+
+	memset(compactAdjacencyList, 0, sizeof(unsigned int)*listSize);
+
+	vertexStartList = new unsigned int[graphsize];
+
+	memset(vertexStartList, 0, sizeof(unsigned int)*graphsize);
+
+	unsigned int currentPos = 0;
+
+	
+
+	for(unsigned int i=0; i<graphsize; i++)
+
+	{
+
+		//cout << "currentPos: " << currentPos << endl;
+
+		if(setArray[i] != NULL)
+
+		{
+
+			vertexStartList[i] = currentPos;
+
+			set<unsigned int>::iterator it = setArray[i]->begin();
+
+
+
+			if (i == 1137){
+
+					cout << "testingggggggggggggggggggggggggggg " << endl;
+
+				}			
+
+
+
+			for(; it != setArray[i]->end(); it++)
+
+			{
+
+				
+
+				if (i == 1137){
+
+					cout << *it <<  " ";
+
+				}
+
+
+
+				compactAdjacencyList[currentPos] = *it;
+
+				currentPos++;
+
+				
+
+			}
+
+		}
+
+		else
+
+			vertexStartList[i] = currentPos;
+
+
+
+	}
+
+
+
+//	for(unsigned int i=0; i<graphsize; i++)
+
+//		cout<< vertexStartList[i] << " ";
+
+	cout << "inside function"<< endl;
+
+
+
 }
 
 
@@ -591,15 +734,19 @@ void checkCorrectColoring(int *adjacencyMatrix, int *graphColors, int graphSize)
 
 void convert(int *adjacencyMatrix, unsigned int *compactAdjacencyList, unsigned int *vertexStartList, int size, int graphSizeRead, int maxDegree){
 	int count;
-	for (int i=0; i<graphSizeRead; i++)  
-	{                 
+	for (int i=0; i<graphSizeRead; i++)  
+
+	{                 
+
 		count = 0;
-		for (int j=vertexStartList[i]; j<vertexStartList[i+1]; j++){
+		for (int j=vertexStartList[i]; j<vertexStartList[i+1]; j++){
+
 		  adjacencyMatrix[i*size + compactAdjacencyList[j]] = 1;
 		  count++;
 		}
 		//cout<< i << endl;
-	}  
+	}  
+
 }
 
 
@@ -617,10 +764,15 @@ int findPower(int x){
 }
 //----------------------- The meat -----------------------//
 
-int main(){  
-	int maxDegree, numColorsSeq, numColorsParallel, boundaryCount, conflictCount;
+int main(int argc, char *argv[]){  
+	if (argc != 4){
+		cout << argc << endl;
+		cout << "Arguments needed: cuExe passes graphSize density" << endl << "e.g. cuExe 1 4096 0.01" << endl;
+		return 0;
+	}
 	
-	unsigned int *compactAdjacencyList;
+	int maxDegree, numColorsSeq, numColorsParallel, boundaryCount, conflictCount, passes;
+	unsigned int *compactAdjacencyList;
 	unsigned int *vertexStartList;
 	
 	bool artificial = true;
@@ -632,18 +784,28 @@ int main(){
 //const long numEdges = 150000;    // number of edges 
 //const long NUMEDGES = DENSITY*GRAPHSIZE*(GRAPHSIZE-1)/2;
 
-      int graphSize = GRAPHSIZE;
-      float density = DENSITY;
-       long numEdges = density*graphSize*(graphSize-1)/2;
+     int graphSize = GRAPHSIZE;
+     float density = DENSITY;
+    
+     
+     passes = atoi(argv[1]);
+     graphSize = atoi(argv[2]);
+     density = atof(argv[3]);
+     
+     long numEdges = density*graphSize*(graphSize-1)/2;
       
 	
 	int graphSizeRead;
        if (artificial == false)
        {
-	  //getAdjacentCompactListFromSparseMartix_mtx("c-28.mtx", compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
-	 //getAdjacentCompactListFromSparseMartix_mtx("fs_183_6.mtx", compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
-	  getAdjacentCompactListFromSparseMartix_mtx("bcsstk13.mtx", compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
-	  //getAdjacentCompactListFromSparseMartix_mtx("1138_bus.mtx", compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
+	  //getAdjacentCompactListFromSparseMartix_mtx("c-28.mtx", compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
+
+	 //getAdjacentCompactListFromSparseMartix_mtx("fs_183_6.mtx", compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
+
+	  getAdjacentCompactListFromSparseMartix_mtx("bcsstk13.mtx", compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
+
+	  //getAdjacentCompactListFromSparseMartix_mtx("1138_bus.mtx", compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
+
 	
 	  vertexStartList[graphSizeRead] = numEdges*2;
 	  graphSize = findPower(graphSizeRead);
@@ -787,7 +949,7 @@ int main(){
       
 
 	//cudaGraphColoring(adjacentList, boundaryList, graphColors, conflictTmp, boundaryCount, maxDegree);
-	cudaGraphColoring(adjacentList, boundaryList, graphColors, degreeList, conflictTmp, boundaryCount, maxDegree, graphSize);
+	cudaGraphColoring(adjacentList, boundaryList, graphColors, degreeList, conflictTmp, boundaryCount, maxDegree, graphSize, passes);
 	
 	
 	
@@ -892,6 +1054,8 @@ int main(){
 	cout << "Graph Subsize: " << graphSize/(GRIDSIZE*BLOCKSIZE) << endl;
 
 	cout << endl;
+	
+	cout << "Passes: " << passes << endl;
 
 	if (sdo == true)
 	  if (sdoConflictSolver == true)

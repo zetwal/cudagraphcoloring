@@ -1,5 +1,5 @@
 #include "graphColoring.h"
-using namespace std;
+
 
 __device__ unsigned int numOfConflicts = 0;
 
@@ -308,7 +308,7 @@ void conflictCount(int *conflictD, int *conflictListD, int boundaryCount){
 //----------------------- Main -----------------------//
 
 extern "C"
-void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, int *degreeList, int *conflict, int boundarySize, int maxDegree, int graphSize)
+void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, int *degreeList, int *conflict, int boundarySize, int maxDegree, int graphSize, int passes)
 {
 	int *adjacentListD, *colorsD, *conflictD, *boundaryListD, *degreeListD, *conflictListD;     
 	int gridsize = ceil((float)boundarySize/(float)SUBSIZE_BOUNDARY);
@@ -374,8 +374,8 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	
 
 
-	int Repeat = 0;
-	for (int times=0; times<Repeat; times++){
+
+	for (int times=1; times<passes; times++){
 //-------------- Conflict resolution -----------------!
 	cudaEventCreate(&start_confl); 
     cudaEventCreate(&stop_confl); 
