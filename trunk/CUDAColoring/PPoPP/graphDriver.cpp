@@ -408,7 +408,9 @@ int color(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int n
     memset(colors, 0, (maxDegree+1)*sizeof(int));   
     
     if (graphColors[vertex] == 0)
-            numColored++;
+        numColored++;
+//	else
+//		cout << "Old color: " << graphColors[vertex] << "   ";
     
     for (int i=0; i<maxDegree; i++)                                         // set the index of the color to 1
         if (adjacencyList[vertex*maxDegree + i] != -1)
@@ -422,6 +424,7 @@ int color(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int n
     for (int i=1; i<maxDegree+1; i++)                                       // nodes still equal to 0 are unassigned
         if (colors[i] != 1){
             graphColors[vertex] = i;
+//			cout << " New color:" << i << endl;
             break;
         }
     
@@ -457,10 +460,10 @@ int sdoIm(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, 
                     if (degree(i,degreeList) > degree(index,degreeList))
                         index = i;
                 }
-            }
 
-            numColored = color(index,adjacencyList,graphColors, maxDegree, numColored);
-            iterations++;
+				numColored = color(index,adjacencyList,graphColors, maxDegree, numColored);
+            		iterations++;
+            } 
         }
     }
     
@@ -802,7 +805,7 @@ int main(){
 
 
 //----- Conflict Count
-	for(int i=0; i< boundaryCount; i++)
+	for (int i=0; i< boundaryCount; i++)
 	{
 		int node = conflictTmp[i];
 		
@@ -811,6 +814,8 @@ int main(){
 			conflict[conflictCount] = node;
 			conflictCount++;
 		}
+
+	//	cout << "i: " << i << "   Node: " << node << endl;
 	}
   	delete[] conflictTmp;
 
