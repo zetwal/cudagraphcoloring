@@ -15,6 +15,50 @@ using namespace std;
 //----------------------- Graph initializations -----------------------//
 // Author: Shusen
 
+void generateMetisFormatFromAdjacencyList(unsigned int*AdjacencyList, int graphsize, int edgesize, int maxDegree, char* filename)
+{
+	ofstream metisFile;
+	metisFile.open(filename);
+	
+	metisFile << graphsize <<" "<< edgesize << endl;
+	for(int i=0; i<graphsize; i++)
+	{
+		for(int j=0; j<maxDegree; j++)
+		{
+			if (AdjacencyList[i*maxDegree+j] != -1)
+				metisFile << AdjacencyList[i*maxDegree+j]<<" ";
+			else
+			{
+				metisFile << endl;
+				continue;
+			}					
+		}
+	}
+	
+	metisFile.close();
+}
+
+void generateMetisFormatFromCompactAdjacencyList(unsigned int* compactAdjacencyList, unsigned int* vertexStartList, int graphsize, int edgesize, int maxDegree, char* filename)
+{
+	ofstream metisFile;
+	metisFile.open(filename);
+	
+	metisFile << graphsize <<" "<< edgesize << endl;
+	for(int i=0; i<graphsize; i++)
+	{
+		int idegree = vertexStartList[i+1] - vertexStartList[i];
+		for(int j=0; j<idegree; j++)
+		{
+			metisFile << compactAdjacencyList[ vertexStartList[i] + j]<<" ";
+		}
+		metisFile << endl;
+	}
+	
+	metisFile.close();
+	cout << "Write to Metis Format in:" << filename << endl;
+
+}
+
 void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, unsigned int *&compactAdjacencyList, unsigned int *&vertexStartList, int &graphsize, long &edgesize, int &maxDegree)
 
 {
@@ -775,7 +819,7 @@ int main(int argc, char *argv[]){
 	unsigned int *compactAdjacencyList;
 	unsigned int *vertexStartList;
 	
-	bool artificial = true;
+	bool artificial = false;
 	bool sdo = true;
 	bool sdoConflictSolver = true;
 	
@@ -810,6 +854,11 @@ int main(int argc, char *argv[]){
 	  vertexStartList[graphSizeRead] = numEdges*2;
 	  graphSize = findPower(graphSizeRead);
        }
+//generateMetisFormatFromCompactAdjacencyList(unsigned int* compactAdjacencyList, unsigned int* vertexStartList, int graphsize, int edgesize, int maxDegree, char* filename)
+	cout << "XXXXXXXX"<< endl;	
+	generateMetisFormatFromCompactAdjacencyList(compactAdjacencyList, vertexStartList, graphSizeRead, numEdges, maxDegree, "metisTest.txt");
+
+	
        
 	//graphSize = graphSizeRead;
 
