@@ -308,11 +308,11 @@ void conflictCount(int *conflictD, int *conflictListD, int boundaryCount){
 //----------------------- Main -----------------------//
 
 extern "C"
-void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, int *degreeList, int *conflict, int boundarySize, int maxDegree, int graphSize, int passes)
+void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, int *degreeList, int *conflict, int boundarySize, int maxDegree, int graphSize, int passes, int subsizeBoundary, int _gridSize, int _blockSize)
 {
 	int *adjacentListD, *colorsD, *conflictD, *boundaryListD, *degreeListD, *conflictListD;     
-	int gridsize = ceil((float)boundarySize/(float)SUBSIZE_BOUNDARY);
-	int blocksize = SUBSIZE_BOUNDARY;
+	int gridsize = ceil((float)boundarySize/(float)subsizeBoundary);
+	int blocksize = subsizeBoundary;
 	int *numConflicts;
 	
 	cudaEvent_t start_col, start_confl, stop_col, stop_confl, start_mem, stop_mem;         
@@ -349,8 +349,8 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	
 	
 	
-	dim3 dimGrid_col(GRIDSIZE);
-	dim3 dimBlock_col(BLOCKSIZE);
+	dim3 dimGrid_col(_gridSize);
+	dim3 dimBlock_col(_blockSize);
 	
 	dim3 dimGrid_confl(gridsize);
 	dim3 dimBlock_confl(blocksize);

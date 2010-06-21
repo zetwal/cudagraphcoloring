@@ -12,37 +12,28 @@ using namespace std;
 
 
 
-const long GRAPHSIZE = 4096;    // number of nodes
-const float DENSITY = 0.01;
-//const long NUMEDGES = 150000;    // number of edges 
-const long NUMEDGES = DENSITY*GRAPHSIZE*(GRAPHSIZE-1)/2;
+//const long GRAPHSIZE = 4096;    // number of nodes
+//const float DENSITY = 0.01;
+//const long NUMEDGES = DENSITY*GRAPHSIZE*(GRAPHSIZE-1)/2;
 
 
-/*
- const long GRAPHSIZE = 2003;    // number of nodes
- const long NUMEDGES = 40940;
- */
 
-/*
- const long GRAPHSIZE = 1138;    // number of nodes
- const long NUMEDGES = 1458;
- */
-const int GRIDSIZE = 4;          // number of blocks 
-const int BLOCKSIZE = 64;       // number of threads in a block 
+const int GRIDSIZE = 4;				// number of blocks 
+const int BLOCKSIZE = 64;			// number of threads in a block 
 
-const int SUBSIZE = GRAPHSIZE/(GRIDSIZE*BLOCKSIZE); 
+//const int SUBSIZE = GRAPHSIZE/(GRIDSIZE*BLOCKSIZE); 
 
-const int SUBSIZE_BOUNDARY = 256;
+//const int SUBSIZE_BOUNDARY = 256;
 
 
 #ifdef __cplusplus 
-#define CHECK_EXT extern "C" 
+	#define CHECK_EXT extern "C" 
 #else 
-#define CHECK_EXT 
+	#define CHECK_EXT 
 #endif 
 
 
-CHECK_EXT void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, int *degreeList, int *conflict, int boundarySize, int maxDegree, int graphSize, int passes);
+CHECK_EXT void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, int *degreeList, int *conflict, int boundarySize, int maxDegree, int graphSize, int passes, int subsizeBoundary, int _gridSize, int _blockSize);
 
 
 #endif // _GRAPHCOLORING_H_ 
