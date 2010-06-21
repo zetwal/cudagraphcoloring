@@ -49,7 +49,7 @@ int __device__ saturation(int vertex, int *adjacencyList, int *graphColors, int 
 
 // Author: Shusen & Pascal
 // colors the vertex with the min possible color
-int __device__ color(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int numColored, int start, int end){
+int __device__ color(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int numColored, int start, int end, int disp){
 	int colors[256];
 	for (int j=0; j<246; j++)
 		colors[j] = 0;
@@ -78,8 +78,12 @@ int __device__ color(int vertex, int *adjacencyList, int *graphColors, int maxDe
 	
 	for (int i=1; i<maxDegree+1; i++)					// nodes still equal to 0 are unassigned
 		if (colors[i] != 1){
-			graphColors[vertex] = i;
-			break;
+			if (disp == 0){
+				graphColors[vertex] = i;
+				break;
+			}
+			else
+				disp--;
 		}
 	
 	return numColored;
@@ -91,11 +95,13 @@ int __device__ color(int vertex, int *adjacencyList, int *graphColors, int maxDe
 
 // Author: Shusen & Pascal
 // does the coloring
-__global__ void colorGraph_SDO(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, int maxDegree, int *startPartitionListD, int *endPartitionListD)
+__global__ void colorGraph_SDO(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, int maxDegree, 
+								int *startPartitionListD, int *endPartitionListD, int *randomListD)
 {
 	int start, end, partitionIndex;
 	int subGraphSize, numColored = 0;
 	int satDegree, max, index;
+	int randomCount = 0;
 	
 	//subGraphSize = sizeGraph/(gridDim.x * blockDim.x);
 	//start = (sizeGraph/gridDim.x * blockIdx.x) + (subGraphSize * threadIdx.x);
@@ -107,6 +113,9 @@ __global__ void colorGraph_SDO(int *adjacencyList, int *graphColors, int *degree
 	subGraphSize = end - start;
 	
 	while (numColored < subGraphSize){
+		randomCount++;
+		randomCount = randomCount%10;
+		
 		max = -1;
 		
 		for (int i=start; i<end; i++){
@@ -126,18 +135,20 @@ __global__ void colorGraph_SDO(int *adjacencyList, int *graphColors, int *degree
 				
 				
 			}
-			numColored = color(index,adjacencyList,graphColors, maxDegree, numColored, start, end);
+			numColored = color(index,adjacencyList,graphColors, maxDegree, numColored, start, end, randomListD[partitionIndex*10 + randomCount]);
 		}
 	}
 }
 
 
 
-__global__ void colorGraphBis_SDO(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, int maxDegree, int *startPartitionListD, int *endPartitionListD)
+__global__ void colorGraphBis_SDO(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, int maxDegree, 
+									int *startPartitionListD, int *endPartitionListD, int *randomListD)
 {
 	int start, end, partitionIndex;
 	int subGraphSize, numColored = 0;
 	int satDegree, max, index;
+	int randomCount = 0;
 	
 	//subGraphSize = sizeGraph/(gridDim.x * blockDim.x);
 	//start = (sizeGraph/gridDim.x * blockIdx.x) + (subGraphSize * threadIdx.x);
@@ -147,8 +158,13 @@ __global__ void colorGraphBis_SDO(int *adjacencyList, int *graphColors, int *deg
 	end = endPartitionListD[partitionIndex];
 	subGraphSize = end - start;
 	
+	
+	
+	
 	while (numColored < subGraphSize){
 		max = -1;
+		randomCount++;
+		randomCount = randomCount%10;
 		
 		for (int i=start; i<end; i++){
 			if (graphColors[i] == 0)			// not colored
@@ -166,7 +182,7 @@ __global__ void colorGraphBis_SDO(int *adjacencyList, int *graphColors, int *deg
 				}
 			}
 			
-			numColored = color(index, adjacencyList, graphColors, maxDegree, numColored, start, end);
+			numColored = color(index, adjacencyList, graphColors, maxDegree, numColored, start, end, randomListD[partitionIndex*10 + randomCount]);
 		}
 	}
 }
@@ -174,10 +190,11 @@ __global__ void colorGraphBis_SDO(int *adjacencyList, int *graphColors, int *deg
 
 
 __global__ void conflictSolveSDO(int *adjacencyList, int *conflict, int *graphColors, int *degreeList, 
-								int sizeGraph, int maxDegree, int *startPartitionListD, int *endPartitionListD){
+								int sizeGraph, int maxDegree, int *startPartitionListD, int *endPartitionListD, int *randomListD){
 	int start, end, index, partitionIndex;
 	int subGraphSize, numColored = 0;
 	int satDegree, max;
+	int randomCount = 0;
 	
 	//subGraphSize = sizeGraph/(gridDim.x * blockDim.x);
 	//start = (sizeGraph/gridDim.x * blockIdx.x) + (subGraphSize * threadIdx.x);
@@ -196,6 +213,8 @@ __global__ void conflictSolveSDO(int *adjacencyList, int *conflict, int *graphCo
 	
     while (numColored < numOfConflicts){
         max = -1;
+        randomCount++;
+		randomCount = randomCount%10;
         
         for (int i=0; i<numOfConflicts; i++){
 			int vertex = conflict[i]-1;
@@ -213,7 +232,7 @@ __global__ void conflictSolveSDO(int *adjacencyList, int *conflict, int *graphCo
                         index = vertex;
                 }
 				
-				numColored = color(index,adjacencyList,graphColors, maxDegree, numColored, start, end);
+				numColored = color(index,adjacencyList,graphColors, maxDegree, numColored, start, end, randomListD[partitionIndex*10 + randomCount]);
             }else{
 				numColored++;
 			}
@@ -328,9 +347,11 @@ void conflictCount(int *conflictD, int *conflictListD, int boundaryCount){
 //----------------------- Main -----------------------//
 
 extern "C"
-void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, int *degreeList, int *conflict, int boundarySize, int maxDegree, int graphSize, int passes, int subsizeBoundary, int _gridSize, int _blockSize, int *startPartitionList, int *endPartitionList)
+void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, int *degreeList, int *conflict, int boundarySize, 
+						int maxDegree, int graphSize, int passes, int subsizeBoundary, int _gridSize, int _blockSize, 
+						int *startPartitionList, int *endPartitionList, int *randomList, int numRand)
 {
-	int *adjacentListD, *colorsD, *conflictD, *boundaryListD, *degreeListD, *conflictListD, *startPartitionListD, *endPartitionListD;     
+	int *adjacentListD, *colorsD, *conflictD, *boundaryListD, *degreeListD, *conflictListD, *startPartitionListD, *endPartitionListD, *randomListD;     
 	int gridsize = ceil((float)boundarySize/(float)subsizeBoundary);
 	int blocksize = subsizeBoundary;
 	int *numConflicts;
@@ -356,6 +377,8 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	cudaMalloc((void**)&conflictListD, boundarySize*sizeof(int));
 	cudaMalloc((void**)&startPartitionListD, _gridSize*_blockSize*sizeof(int));
 	cudaMalloc((void**)&endPartitionListD, _gridSize*_blockSize*sizeof(int));
+	cudaMalloc((void**)&randomListD, numRand*sizeof(int));
+	
 	
 	
 	cudaMemcpy(adjacentListD, adjacentList, graphSize*maxDegree*sizeof(int), cudaMemcpyHostToDevice);
@@ -364,6 +387,7 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
     cudaMemcpy(degreeListD, degreeList, graphSize*sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(startPartitionListD, startPartitionList, _gridSize*_blockSize*sizeof(int), cudaMemcpyHostToDevice);
     cudaMemcpy(endPartitionListD, endPartitionList, _gridSize*_blockSize*sizeof(int), cudaMemcpyHostToDevice);
+	cudaMemcpy(randomListD, randomList, numRand*sizeof(int), cudaMemcpyHostToDevice);
 	
 	cudaMemset(conflictListD, 0, boundarySize*sizeof(int));
 	
@@ -391,7 +415,7 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	
 	//colorGraph_FF<<<dimGrid_col, dimBlock_col>>>(adjacentListD, colorsD, graphSize, maxDegree);				// First Fit
 	colorGraph_SDO<<<dimGrid_col, dimBlock_col>>>(adjacentListD, colorsD, degreeListD, 
-											graphSize, maxDegree, startPartitionListD, endPartitionListD);		// SDO improved
+											graphSize, maxDegree, startPartitionListD, endPartitionListD, randomListD);		// SDO improved
 	
 	
 	cudaEventRecord(stop_col, 0); 
@@ -417,7 +441,8 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 		cudaEventCreate(&stop_col); 
 		cudaEventRecord(start_col, 0); 
 		
-		conflictSolveSDO<<<dimGrid_col, dimBlock_col>>>(adjacentListD, conflictListD, colorsD, degreeListD, graphSize, maxDegree, startPartitionListD, endPartitionListD);
+		conflictSolveSDO<<<dimGrid_col, dimBlock_col>>>(adjacentListD, conflictListD, colorsD, degreeListD, graphSize, 
+														maxDegree, startPartitionListD, endPartitionListD, randomListD);
 		
 		cudaEventRecord(stop_col, 0); 
 		cudaEventSynchronize(stop_col); 
@@ -455,5 +480,6 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	cudaFree(boundaryListD);
 	cudaFree(startPartitionListD);
 	cudaFree(endPartitionListD);
+	cudaFree(randomListD);
 }
 
