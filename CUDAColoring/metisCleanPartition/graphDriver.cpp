@@ -1061,14 +1061,8 @@ int metis(int *adjacencyList, int *newAdjacencyList, int graphSize, int numEdges
 
 
 
-
-
 //----------------------- Other -----------------------//
 // Any additional stuff needed ....
-
-
-
-
 
 
 
@@ -1105,6 +1099,7 @@ int main(int argc, char *argv[]){
 	bool sdo = true;
 	bool sdoConflictSolver = true;
 	
+	
 	long randSeed = time(NULL);	
 	randSeed = 1272167817;			// to set to a specific random seed for replicability
 	
@@ -1140,6 +1135,8 @@ int main(int argc, char *argv[]){
 	int *endPartitionList = new int[_gridSize*_blockSize];		
 	memset(startPartitionList, -1, _gridSize*_blockSize*sizeof(int));
 	memset(endPartitionList, -1, _gridSize*_blockSize*sizeof(int));
+	
+	int numRandoms = _gridSize*_blockSize*10;
 
 	
 	// Artificial or real 
@@ -1213,9 +1210,9 @@ int main(int argc, char *argv[]){
 	
 	
 	// Some further intializations
-	int *graphColors = new int[graphSize*sizeof(int)];          
-	int *boundaryList = new int[graphSize*sizeof(int)]; 
-	int *degreeList = new int[graphSize*sizeof(int)];
+	int *graphColors = new int[graphSize];          
+	int *boundaryList = new int[graphSize]; 
+	int *degreeList = new int[graphSize];
 	
 	memset(graphColors, 0, graphSize*sizeof(int)); 
 	memset(boundaryList, 0, graphSize*sizeof(int)); 
@@ -1226,6 +1223,10 @@ int main(int argc, char *argv[]){
 	getDegreeList(adjacentList, degreeList, graphSize, maxDegree);
 	
 	
+	
+	int *randomList = new int[numRandoms];
+	for (int i=0; i<numRandoms; i++)		// stores random numbers in the range of 0 to 2
+		randomList[i] = rand()%2;
 	
 	
 	
@@ -1268,14 +1269,15 @@ int main(int argc, char *argv[]){
 	cudaEventRecord(start_b, 0); 
 	
 	//maxDegree = getBoundaryList(adjacencyMatrix, boundaryList, graphSize, boundaryCount, graphSize, _gridSize, _blockSize);	// return maxDegree + boundaryCount (as ref param)
-	boundaryCount = getBoundaryList(adjacentList, boundaryList, graphSize, maxDegree, _gridSize, _blockSize, startPartitionList, endPartitionList);	// get boundaryCount and get boundary list
+	boundaryCount = getBoundaryList(adjacentList, boundaryList, graphSize, maxDegree, _gridSize, _blockSize, 
+									startPartitionList, endPartitionList);	// get boundaryCount and get boundary list
 	
 	
 	cudaEventRecord(stop_b, 0); 
 	cudaEventSynchronize(stop_b); 
 	cudaEventElapsedTime(&elapsedTimeBoundary, start_b, stop_b); 
-	cout<<"Get boundaryList :"<<elapsedTimeBoundary<<" ms"<<endl;
-	cout<<"maxDegree= "<<maxDegree<<endl;
+	cout << "Get boundaryList :"<< elapsedTimeBoundary << " ms" << endl;
+	cout << "maxDegree = "<< maxDegree << endl;
 	
 	
 	
@@ -1350,7 +1352,9 @@ int main(int argc, char *argv[]){
 	int *conflictTmp = new int[boundaryCount];
 	memset(conflictTmp, 0, boundaryCount*sizeof(int));  
 	
-	cudaGraphColoring(adjacentList, boundaryList, graphColors, degreeList, conflictTmp, boundaryCount, maxDegree, graphSize, passes, _gridSize*_blockSize, _gridSize, _blockSize, startPartitionList, endPartitionList);
+	cudaGraphColoring(adjacentList, boundaryList, graphColors, degreeList, conflictTmp, boundaryCount, 
+					  maxDegree, graphSize, passes, _gridSize*_blockSize, _gridSize, _blockSize,
+					  startPartitionList, endPartitionList, randomList, numRandoms);
 	
 	
 	cudaEventRecord(stop_1, 0); 
@@ -1499,18 +1503,16 @@ int main(int argc, char *argv[]){
 
 	
 	
-	
-	
 	//--------------------- Cleanup ---------------------!		
 	
-	delete[] adjacencyMatrix; 
-	delete[] graphColors; 
-	delete[] conflict; 
-	delete[] boundaryList;
-	delete[] adjacentList;
-	delete[] degreeList;
+	delete []adjacencyMatrix; 
+	delete []graphColors; 
+	delete []conflict; 
+	delete []boundaryList;
+	delete []adjacentList;
+	delete []degreeList;
+	delete []randomList;
 
-	
 	return 0;  
 }  
 

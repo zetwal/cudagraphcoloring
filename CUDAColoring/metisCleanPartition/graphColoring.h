@@ -18,8 +18,8 @@ using namespace std;
 
 
 
-const int GRIDSIZE = 4;				// number of blocks 
-const int BLOCKSIZE = 64;			// number of threads in a block 
+//const int GRIDSIZE = 4;				// number of blocks 
+//const int BLOCKSIZE = 64;			// number of threads in a block 
 
 //const int SUBSIZE = GRAPHSIZE/(GRIDSIZE*BLOCKSIZE); 
 
@@ -33,7 +33,10 @@ const int BLOCKSIZE = 64;			// number of threads in a block
 #endif 
 
 
-CHECK_EXT void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, int *degreeList, int *conflict, int boundarySize, int maxDegree, int graphSize, int passes, int subsizeBoundary, int _gridSize, int _blockSize, int *startPartitionList, int *endPartitionList);
+CHECK_EXT void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, int *degreeList, 
+								 int *conflict, int boundarySize, int maxDegree, int graphSize, 
+								 int passes, int subsizeBoundary, int _gridSize, int _blockSize, 
+								 int *startPartitionList, int *endPartitionList, int *randomList, int numRand);
 
 
 #endif // _GRAPHCOLORING_H_ 
