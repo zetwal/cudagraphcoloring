@@ -1,0 +1,10 @@
+Graphname	-	number of nodes
+1138_bus		-	 1 138		ok
+bcsstk13		-	 2 003		ok
+c-23			-	 3 969		fails
+c-27			-	 4 563
+c-28			-	 4 598
+ex12			-	 3 973		ok
+TSOPF_FS_b9_c1	 2 454
+
+
