@@ -14,6 +14,47 @@
 using namespace std;  
 
 
+//----------------------- Utilities -----------------------//
+int findPower(int x){
+	int num = 2;
+	int powerIndex = 1;
+	
+	while (num <= x){
+		powerIndex++;
+		num = pow(2,powerIndex);
+	}
+	
+	cout << "Closest power: " << num << endl;
+	return num;
+}
+
+
+int findMultiple(int multipleOf, int x){
+	int base = multipleOf;
+	int powerIndex = 0;
+	int num = 0;
+	
+	while (num <= x){
+		powerIndex++;
+		num = base * powerIndex;	
+	}
+	
+	cout << "Closest multiple of " << base << ": " << num << endl;
+	return num;
+}
+
+
+int inline min(int n1, int n2) 
+{ 
+	if (n1>=n2) 
+		return n2; 
+	else 
+		return n1; 
+} 
+
+
+
+
 //----------------------- Graph initializations -----------------------//
 // Author: Shusen
 void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, unsigned int *&compactAdjacencyList, unsigned int *&vertexStartList, int &graphsize, long &edgesize, int &maxDegree)
@@ -258,6 +299,66 @@ void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, unsigned i
 	//	for(unsigned int i=0; i<graphsize; i++)
 	//		cout<< vertexStartList[i] << " ";
 	//cout << "inside function"<< endl;
+	
+	delete [] graphsizeArray;
+	graphsizeArray = NULL;
+	delete [] setArray;
+	setArray = NULL;
+	
+}
+
+
+
+void readGraph(int *&adjacencyMatrix, const char *filename, int _gridSize, int _blockSize, int &graphSizeRead, int &graphSize, long &edgeSize){
+	char comments[512];
+	int graphSizeX, graphSizeY, from, to;
+	float weight;
+	
+	ifstream graphFile(filename);
+	
+	
+	if (graphFile.is_open())
+	{
+		while (graphFile.peek() == '%'){
+			graphFile.getline(comments,512);
+		}
+		
+		graphFile >> graphSizeX >> graphSizeY >> edgeSize;
+		cout << "Rows: " << graphSizeX << "  ,  Columns: " <<  graphSizeY << "   - Number of edges: " << edgeSize << endl;
+		
+		if (graphSizeX != graphSizeY){
+			cout << "Non Symmetric graph!" << endl;
+			exit(1);
+		}
+		else 
+		{
+			graphSizeRead = graphSizeX;
+			graphSize = findMultiple(_gridSize*_blockSize, graphSizeRead);
+			
+			adjacencyMatrix = new int[graphSize * graphSize];
+			memset(adjacencyMatrix, 0, graphSize * graphSize *sizeof(int));
+			
+			for (int i=0; i<edgeSize; i++){
+				graphFile >> from >> to >> weight;	
+				
+				if (!(from == to)){
+					adjacencyMatrix[(from-1)*graphSize + (to-1)] = 1;
+					adjacencyMatrix[(to-1)*graphSize + (from-1)] = 1;
+				
+				//	cout << from << " , " << to << " : " << weight << endl; 
+				}
+			}
+		}
+	}
+	else {
+		cout << "Reading " << filename << " failed!" << endl;
+		exit(1);
+	}
+	
+	cout << graphSizeRead << " - " <<  graphSize << " - " <<  edgeSize << endl;
+	cout << "File " << filename << " was successfully read!" << endl;
+	
+	
 }
 
 
@@ -303,43 +404,7 @@ void displayAdjacencyList(int *adjacencyList, int graphSize, int maxDegree){
 
 
 
-//----------------------- Utilities -----------------------//
-int findPower(int x){
-	int num = 2;
-	int powerIndex = 1;
 
-	while (num <= x){
-		powerIndex++;
-		num = pow(2,powerIndex);
-	}
-
-	cout << "Closest power: " << num << endl;
-	return num;
-}
-
-
-int findMultiple(int multipleOf, int x){
-	int base = multipleOf;
-	int powerIndex = 0;
-	int num = 0;
-
-	while (num <= x){
-		powerIndex++;
-		num = base * powerIndex;	
-	}
-
-	cout << "Closest multiple of " << base << ": " << num << endl;
-	return num;
-}
-
-
-int inline min(int n1, int n2) 
-{ 
-	if (n1>=n2) 
-		return n2; 
-	else 
-		return n1; 
-} 
 
 
 
@@ -391,15 +456,20 @@ void getAdjacentList(int *adjacencyMatrix, int *adjacentList, int size, int maxD
 // Author: Pascal 
 // get the degree information for a graph 
 int getMaxDegree(int *adjacencyMatrix, int size){  
+	cout << "size : " <<  size << endl;
 	int maxDegree = 0;   
 	int degree;  
 	
 	for (int i=0; i<size; i++){  
 		degree = 0;  
 		
-		for (int j=0; j<size; j++)           
-			if (    adjacencyMatrix[i*size + j] == 1)  
-				degree++;  
+		for (int j=0; j<size; j++){         
+			if (adjacencyMatrix[i*size + j] == 1){
+				degree++; 
+			//	cout << i << " , " << j << endl;
+			}
+			
+		}
 		
 		if (degree > maxDegree)  
 			maxDegree = degree;  
@@ -1084,6 +1154,7 @@ int main(int argc, char *argv[]){
 	int _gridSize, _blockSize, numMetisPartitions;
 	float density;
 	long numEdges;
+	string inputFilename;
 	
 	
 	unsigned int *compactAdjacencyList;
@@ -1142,37 +1213,45 @@ int main(int argc, char *argv[]){
 	// Artificial or real 
 	if (artificial == false){	// input file required - returns an adjacency list of the graph, graph size and max degree
 		ifstream testFile;	
-		string inputFilename;
 	
 		cout << "Enter graph input filename (e.g. 1138_bus.mtx): ";
 		cin >> inputFilename;
 		
 		// gets a compact adjacency list from the file input
-		getAdjacentCompactListFromSparseMartix_mtx(inputFilename.c_str(), compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
+		//getAdjacentCompactListFromSparseMartix_mtx(inputFilename.c_str(), compactAdjacencyList,  vertexStartList, graphSizeRead, numEdges, maxDegree);
+			readGraph(adjacencyMatrix, inputFilename.c_str(), _gridSize, _blockSize, graphSizeRead, graphSize, numEdges);
 		
-		
+		//cout << "back to main" << endl;
 		// pads the graph to the new size by addind 0 - always padded to next power of 2 number
-		vertexStartList[graphSizeRead] = numEdges*2;
+		//vertexStartList[graphSizeRead] = numEdges*2;
 		//graphSize = findPower(graphSizeRead);
-		graphSize = findMultiple(_gridSize*_blockSize, graphSizeRead);
+		//graphSize = findMultiple(_gridSize*_blockSize, graphSizeRead);
 		
 		
-		adjacencyMatrix = new int[graphSize*graphSize];  
-		memset(adjacencyMatrix, 0, graphSize*graphSize*sizeof(int)); 
+		//adjacencyMatrix = new int[graphSize*graphSize];  
+		//memset(adjacencyMatrix, 0, graphSize*graphSize*sizeof(int)); 
 		
 		
 		// converts the compact adjacency list to an adjacency matrix
-		convert(adjacencyMatrix, compactAdjacencyList, vertexStartList, graphSize, graphSizeRead, maxDegree);
+		//convert(adjacencyMatrix, compactAdjacencyList, vertexStartList, graphSize, graphSizeRead, maxDegree);
 		
 		// gets the max degree
+		cout << graphSizeRead << " - " << graphSize << " - " << numEdges << endl; 
+		
 		maxDegree = getMaxDegree(adjacencyMatrix, graphSize);
 		
+		cout << "Got degree: " << maxDegree << endl;
 		
 		// Get adjacency list
 		adjacentList = new int[graphSize*maxDegree];
 		memset(adjacentList, -1, graphSize*maxDegree*sizeof(int)); 
 		
+		cout <<" test 1" << endl;
+		
 		getAdjacentList(adjacencyMatrix, adjacentList, graphSize, maxDegree);
+		
+		cout << "Adjacency list ok" << endl;
+	//	exit(0);
 	}
 	else
 	{
@@ -1207,6 +1286,15 @@ int main(int argc, char *argv[]){
 		
 		getAdjacentList(adjacencyMatrix, adjacentList, graphSize, maxDegree);
 	}
+	
+	cout << "Allocation successful!" << endl;
+	
+	delete []adjacencyMatrix;
+	//delete []compactAdjacencyList;
+	//delete []vertexStartList;
+	adjacencyMatrix = NULL;
+	//compactAdjacencyList = NULL;
+	//vertexStartList = NULL;
 	
 	
 	// Some further intializations
@@ -1458,12 +1546,15 @@ int main(int argc, char *argv[]){
 	
 	cout << endl << endl << "!------- Graph Summary:" << endl;
 	cout << "Vertices: " << graphSize << "   Edges: " << numEdges << "   Density: " << (2*numEdges)/((float)graphSize*(graphSize-1)) << "   Degree: " << maxDegree << endl;
-	if (artificial == false)
-		cout << "Graph read in size: " << graphSizeRead << endl;
+	if (artificial == false){
+		cout << "Graph read in: " << inputFilename << endl;
+		cout << "Vertices in graph: " << graphSizeRead << endl;
+	}
 	else
 		cout << "Random seed used: " << randSeed << endl;
-	
 	cout << endl;
+	
+	
 	cout << "Grid Size: " << _gridSize << "    Block Size: " << _blockSize << "     Total number of threads: " << _gridSize*_blockSize << endl;
 	cout << "Graph Subsize: " << graphSize/(_gridSize*_blockSize) << endl;
 	
@@ -1494,18 +1585,18 @@ int main(int argc, char *argv[]){
 	cout << "Conflict count: " << conflictCount << endl;
 	cout << endl;
 	
+	
 	cout << "Colors before solving conflict: " << interColorsParallel << endl;
 	cout << "Sequential Colors: " << numColorsSeq << "      -       Parallel Colors: " << numColorsParallel << endl;     
-	
 	cout<<"GPU speed up : "<< elapsedTimeCPU/elapsedTimeGPU << " x" << endl;
 
 	cout << "||=============================================================||" << endl;
 
-	
+	displayAdjacencyList(adjacentList, graphSize, maxDegree);
 	
 	//--------------------- Cleanup ---------------------!		
 	
-	delete []adjacencyMatrix; 
+	 
 	delete []graphColors; 
 	delete []conflict; 
 	delete []boundaryList;
