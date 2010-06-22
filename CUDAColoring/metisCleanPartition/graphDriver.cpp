@@ -1592,7 +1592,7 @@ int main(int argc, char *argv[]){
 
 	cout << "||=============================================================||" << endl;
 
-	displayAdjacencyList(adjacentList, graphSize, maxDegree);
+//	displayAdjacencyList(adjacentList, graphSize, maxDegree);
 	
 	//--------------------- Cleanup ---------------------!		
 	
