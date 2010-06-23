@@ -361,7 +361,7 @@ void readGraph(int *&adjacencyMatrix, const char *filename, int _gridSize, int _
 					if (weightedGraph == 1)
 						cout << from << " , " << to << " : " << weight << endl; 
 					else
-						cout << from << " , " << to << " : " << weight << endl;
+						cout << from << " , " << to << endl;
 					*/
 				}
 			}
@@ -1572,7 +1572,7 @@ int main(int argc, char *argv[]){
 	
 	
 	cout << "Grid Size: " << _gridSize << "    Block Size: " << _blockSize << "     Total number of threads: " << _gridSize*_blockSize << endl;
-	cout << "Graph Subsize: " << graphSize/(_gridSize*_blockSize) << endl;
+	cout << "Graph average subsize: " << graphSize/(_gridSize*_blockSize) << endl;
 	
 	if (useMetis == true)
 		cout << "Number of metis partitions: " << numMetisPartitions << endl;
