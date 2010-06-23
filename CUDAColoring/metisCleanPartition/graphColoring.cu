@@ -478,6 +478,9 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	cudaFree(colorsD);
 	cudaFree(conflictD);
 	cudaFree(boundaryListD);
+	cudaFree(degreeListD);
+	cudaFree(numConflicts);
+	cudaFree(conflictListD);
 	cudaFree(startPartitionListD);
 	cudaFree(endPartitionListD);
 	cudaFree(randomListD);
