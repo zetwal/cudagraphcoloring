@@ -311,8 +311,10 @@ void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, unsigned i
 
 void readGraph(int *&adjacencyMatrix, const char *filename, int _gridSize, int _blockSize, int &graphSizeRead, int &graphSize, long &edgeSize){
 	char comments[512];
-	int graphSizeX, graphSizeY, from, to, numEdges;
+	int graphSizeX, graphSizeY, from, to, numEdges, weightedGraph;
 	float weight;
+	
+	
 	
 	numEdges = 0;
 	
@@ -334,6 +336,10 @@ void readGraph(int *&adjacencyMatrix, const char *filename, int _gridSize, int _
 		}
 		else 
 		{
+			cout << "Is it a weighted graph(1:yes  -  0:no): ";
+			cin >> weightedGraph;
+	
+			
 			graphSizeRead = graphSizeX;
 			graphSize = findMultiple(_gridSize*_blockSize, graphSizeRead);
 			
@@ -341,14 +347,22 @@ void readGraph(int *&adjacencyMatrix, const char *filename, int _gridSize, int _
 			memset(adjacencyMatrix, 0, graphSize * graphSize *sizeof(int));
 			
 			for (int i=0; i<edgeSize; i++){
-				graphFile >> from >> to >> weight;	
+				if (weightedGraph == 1)
+					graphFile >> from >> to >> weight;	
+				else
+					graphFile >> from >> to;
 				
 				if (!(from == to)){
 					numEdges++;
 					adjacencyMatrix[(from-1)*graphSize + (to-1)] = 1;
 					adjacencyMatrix[(to-1)*graphSize + (from-1)] = 1;
 				
-				//	cout << from << " , " << to << " : " << weight << endl; 
+					/*
+					if (weightedGraph == 1)
+						cout << from << " , " << to << " : " << weight << endl; 
+					else
+						cout << from << " , " << to << " : " << weight << endl;
+					*/
 				}
 			}
 		}
