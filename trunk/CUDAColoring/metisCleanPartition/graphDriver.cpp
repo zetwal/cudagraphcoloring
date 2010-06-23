@@ -311,8 +311,10 @@ void getAdjacentCompactListFromSparseMartix_mtx(const char* filename, unsigned i
 
 void readGraph(int *&adjacencyMatrix, const char *filename, int _gridSize, int _blockSize, int &graphSizeRead, int &graphSize, long &edgeSize){
 	char comments[512];
-	int graphSizeX, graphSizeY, from, to;
+	int graphSizeX, graphSizeY, from, to, numEdges;
 	float weight;
+	
+	numEdges = 0;
 	
 	ifstream graphFile(filename);
 	
@@ -342,6 +344,7 @@ void readGraph(int *&adjacencyMatrix, const char *filename, int _gridSize, int _
 				graphFile >> from >> to >> weight;	
 				
 				if (!(from == to)){
+					numEdges++;
 					adjacencyMatrix[(from-1)*graphSize + (to-1)] = 1;
 					adjacencyMatrix[(to-1)*graphSize + (from-1)] = 1;
 				
@@ -355,10 +358,9 @@ void readGraph(int *&adjacencyMatrix, const char *filename, int _gridSize, int _
 		exit(1);
 	}
 	
+	edgeSize = numEdges;
 	cout << graphSizeRead << " - " <<  graphSize << " - " <<  edgeSize << endl;
 	cout << "File " << filename << " was successfully read!" << endl;
-	
-	
 }
 
 
