@@ -56,6 +56,7 @@ int inline min(int n1, int n2)
 
 
 //----------------------- Graph initializations -----------------------//
+// Author: Pascal & Shusen
 void readGraph(int *&adjacencyMatrix, const char *filename, int _gridSize, int _blockSize, int &graphSizeRead, int &graphSize, long &edgeSize){
 	char comments[512];
 	int graphSizeX, graphSizeY, from, to, numEdges, weightedGraph;
@@ -127,7 +128,6 @@ void readGraph(int *&adjacencyMatrix, const char *filename, int _gridSize, int _
 
 
 
-
 //----------------------- Display -----------------------//
 // Author: Pascal
 // Displays an adjacencyList
@@ -150,14 +150,7 @@ void displayAdjacencyList(int *adjacencyList, int graphSize, int maxDegree){
 
 
 
-
-
-
-
-
-
 //----------------------- Graph initializations -----------------------//
-
 // Author: Pascal 
 // Genetates a graph 
 void generateMatrix(int *matrix, int graphSize, int num){  
@@ -179,7 +172,6 @@ void generateMatrix(int *matrix, int graphSize, int num){
 
 
 
-
 // Author:Peihong
 // node index start from 1
 // gets an adjacency list from an adjacencyMatrix
@@ -196,7 +188,6 @@ void getAdjacentList(int *adjacencyMatrix, int *adjacentList, int size, int maxD
 		}
 	}
 }
-
 
 
 
@@ -224,7 +215,6 @@ int getMaxDegree(int *adjacencyMatrix, int size){
 	
 	return maxDegree;  
 }  
-
 
 
 
@@ -293,12 +283,13 @@ int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boun
 
 
 
+// Author: Peihong & Pascal
 int getBoundaryList(int *adjacencyList, int *boundaryList, int graphSize, int maxDegree, int _gridSize, int _blockSize, int *startPartitionList, int *endPartitionList){  
 	int boundaryCount = 0;
 	set<int> boundarySet; 
 	boundarySet.clear(); 
 	
-	int start, end;
+	int start, end, node;
 	int partitionIndex = 0; 
 	//int subSize = graphSize/(_gridSize*_blockSize);
 	//cout << "SubSize = " << subSize << endl;
@@ -317,10 +308,15 @@ int getBoundaryList(int *adjacencyList, int *boundaryList, int graphSize, int ma
 		
 		
 		
-		for (int j=0; j<maxDegree; j++)           
-			if (adjacencyList[i*maxDegree + j] != -1) 
-				if ((j < start) || (j >= end))
+		for (int j=0; j<maxDegree; j++){ 
+			node = adjacencyList[i*maxDegree + j]; 
+			if (node != -1) 
+				if ((node < start) || (node >= end)){
 					boundarySet.insert(i);
+					//cout << "!~ " << i << endl;
+					break;		//	we just need one proof of that
+				}
+		}
 		
 	} 
 	
@@ -340,7 +336,6 @@ int getBoundaryList(int *adjacencyList, int *boundaryList, int graphSize, int ma
 
 
 //----------------------- Fast Fit Graph Coloring -----------------------//
-
 // Author: Pascal & Shusen
 // GraphColor Adjacency list
 int colorGraph_FF(int *list, int *colors, int size, int maxDegree){  
@@ -387,10 +382,7 @@ int colorGraph_FF(int *list, int *colors, int size, int maxDegree){
 
 
 
-
-
 //----------------------- SDO Improved Graph Coloring -----------------------//
-
 // Author: Pascal
 // returns the degree of that node
 int degree(int vertex, int *degreeList){
@@ -463,7 +455,6 @@ int color(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int n
 
 
 
-
 // Author: Pascal
 // main driver function for graph coloring
 int sdoIm(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, int maxDegree){
@@ -502,10 +493,7 @@ int sdoIm(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, 
 
 
 
-
-
 //----------------------- Conflict Solve -----------------------//
-
 // Author: Pascal
 void conflictSolveSDO(int *adjacencyList, int *conflict, int conflictSize, int *graphColors, int *degreeList, int sizeGraph, int maxDegree){
     int satDegree, numColored, max, index;
@@ -584,88 +572,9 @@ void conflictSolveFF(int *Adjlist, int size, int *conflict, int conflictSize, in
 
 
 
-
-//----------------------- Checking for error -----------------------//
-// Checking if coloring has been done properly...
-
-// Author: Pascal 
-// Checks if a graph has conflicts or not from Adjacency Matrix
-void checkCorrectColoring(int *adjacencyMatrix, int *graphColors, int graphSize){ 
-	int numErrors = 0; 
-	
-	cout << endl << "==================" << endl << "Error checking for Graph" << endl; 
-	
-	for (int i=0; i<graphSize; i++)                 // we check each row 
-	{ 
-		int nodeColor = graphColors[i]; 
-		int numErrorsOnRow = 0; 
-		
-		for (int j=0; j<graphSize;j++){ // check each column in the matrix 
-			
-			// skip itself 
-			if (i == j) 
-				continue; 
-			
-			if (adjacencyMatrix[i*graphSize + j] == 1)      // there is a connection to that node 
-				if (graphColors[j] == nodeColor) 
-				{ 
-					cout << "Color collision from node: " << i << " colored with: " << nodeColor << "  to node: " << j << " colored with " << graphColors[j] << endl; 
-					numErrors++; 
-					numErrorsOnRow++; 
-				} 
-		} 
-		
-		if (numErrorsOnRow != 0) 
-			cout << "Errors for node " << i << " : " << numErrorsOnRow << endl; 
-	} 
-	
-	cout << "Color errors for graph : " << numErrors << endl << "==================== " << endl ;    
-} 
-
-
-
-// Author: Pascal 
-// Checks if a graph has conflicts or not from adjacency List
-void checkCorrectColoring(int *adjacencyList, int *graphColors, int graphSize, int maxDegree){
-    int numErrors = 0;
-	
-    cout << endl << "==================" << endl << "Error checking for Graph" << endl;
-	
-    for (int i=0; i<graphSize; i++)                 // we check each row
-    {
-        int nodeColor = graphColors[i];
-        int numErrorsOnRow = 0;
-		
-        for (int j=0; j<maxDegree;j++){
-			
-            if (adjacencyList[i*maxDegree + j] == -1)
-                break;
-            else{     // there is a connection to that node
-                int node = adjacencyList[i*maxDegree + j];
-                if (graphColors[node] == nodeColor)
-                {
-                    cout << "Color collision from node: " << i << " col with " << nodeColor << "    to: " << node << " col with " << graphColors[node] << endl;
-                    numErrors++;
-                    numErrorsOnRow++;
-                }
-            }
-        }
-		
-        if (numErrorsOnRow != 0)
-            cout << "Errors for node " << i << " : " << numErrorsOnRow << endl;
-    }
-	
-    cout << "Color errors for graph : " << numErrors << endl << "==================== " << endl ;   
-}
-
-
-
-
-
 //----------------------- Metis -----------------------//
 // Metis related stuff...
-
-// Author: Pascal
+// Author: Pascal & Shusen
 // Creates outpuf for metis file
 void createMetisInput(int *adjacencyList, int graphSize, int numEdges, int maxDegree){
 	string metisInputFilename;
@@ -701,10 +610,9 @@ void createMetisInput(int *adjacencyList, int graphSize, int numEdges, int maxDe
 		exit(0);
 	}
 }
+		
 	
-	
-	
-	
+
 // Author: Pascal & Peihong 
 // Reads in metis partitioned file
 void readMetisOutput(int *partitionList, int graphSize){
@@ -739,7 +647,7 @@ void readMetisOutput(int *partitionList, int graphSize){
 
 
 
-// Author: Pascal
+// Author: Pascal & Pihong
 // Output file for use by metis
 // Input partitioned file
 // gets the new adjacency list
@@ -872,9 +780,83 @@ int metis(int *adjacencyList, int *newAdjacencyList, int graphSize, int numEdges
 
 
 
+//----------------------- Checking for error -----------------------//
+// Checking if coloring has been done properly...
+// Author: Pascal 
+// Checks if a graph has conflicts or not from Adjacency Matrix
+void checkCorrectColoring(int *adjacencyMatrix, int *graphColors, int graphSize){ 
+	int numErrors = 0; 
+	
+	cout << endl << "==================" << endl << "Error checking for Graph" << endl; 
+	
+	for (int i=0; i<graphSize; i++)                 // we check each row 
+	{ 
+		int nodeColor = graphColors[i]; 
+		int numErrorsOnRow = 0; 
+		
+		for (int j=0; j<graphSize;j++){ // check each column in the matrix 
+			
+			// skip itself 
+			if (i == j) 
+				continue; 
+			
+			if (adjacencyMatrix[i*graphSize + j] == 1)      // there is a connection to that node 
+				if (graphColors[j] == nodeColor) 
+				{ 
+					cout << "Color collision from node: " << i << " colored with: " << nodeColor << "  to node: " << j << " colored with " << graphColors[j] << endl; 
+					numErrors++; 
+					numErrorsOnRow++; 
+				} 
+		} 
+		
+		if (numErrorsOnRow != 0) 
+			cout << "Errors for node " << i << " : " << numErrorsOnRow << endl; 
+	} 
+	
+	cout << "Color errors for graph : " << numErrors << endl << "==================== " << endl ;    
+} 
+
+
+
+// Author: Pascal 
+// Checks if a graph has conflicts or not from adjacency List
+void checkCorrectColoring(int *adjacencyList, int *graphColors, int graphSize, int maxDegree){
+    int numErrors = 0;
+	
+    cout << endl << "==================" << endl << "Error checking for Graph" << endl;
+	
+    for (int i=0; i<graphSize; i++)                 // we check each row
+    {
+        int nodeColor = graphColors[i];
+        int numErrorsOnRow = 0;
+		
+        for (int j=0; j<maxDegree;j++){
+			
+            if (adjacencyList[i*maxDegree + j] == -1)
+                break;
+            else{     // there is a connection to that node
+                int node = adjacencyList[i*maxDegree + j];
+                if (graphColors[node] == nodeColor)
+                {
+                    cout << "Color collision from node: " << i << " col with " << nodeColor << "    to: " << node << " col with " << graphColors[node] << endl;
+                    numErrors++;
+                    numErrorsOnRow++;
+                }
+            }
+        }
+		
+        if (numErrorsOnRow != 0)
+            cout << "Errors for node " << i << " : " << numErrorsOnRow << endl;
+    }
+	
+    cout << "Color errors for graph : " << numErrors << endl << "==================== " << endl ;   
+}
+
+
+
+
 //----------------------- Other -----------------------//
 // Any additional stuff needed ....
-
 
 
 
