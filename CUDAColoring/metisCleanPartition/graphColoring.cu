@@ -192,10 +192,11 @@ __global__ void colorGraphBis_SDO(int *adjacencyList, int *graphColors, int *deg
 __global__ void conflictSolveSDO(int *adjacencyList, int *conflict, int *graphColors, int *degreeList, 
 								int sizeGraph, int maxDegree, int *startPartitionListD, int *endPartitionListD, int *randomListD){
 	int start, end, index, partitionIndex;
-	int subGraphSize, numColored = 0;
+	int numColored = 0;
 	int satDegree, max;
 	int randomCount = 0;
 	
+	// int subGraphSize;
 	//subGraphSize = sizeGraph/(gridDim.x * blockDim.x);
 	//start = (sizeGraph/gridDim.x * blockIdx.x) + (subGraphSize * threadIdx.x);
 	//end = start + subGraphSize;
@@ -203,7 +204,7 @@ __global__ void conflictSolveSDO(int *adjacencyList, int *conflict, int *graphCo
 	partitionIndex = (blockIdx.x * blockDim.x) + threadIdx.x;
 	start = startPartitionListD[partitionIndex];
 	end = endPartitionListD[partitionIndex];
-	subGraphSize = end - start;
+	
 	
 	
 	// Set their color to 0
@@ -252,8 +253,9 @@ __global__ void conflictSolveSDO(int *adjacencyList, int *conflict, int *graphCo
 // First Fit
 __global__ void colorGraph_FF(int *adjacencyListD, int *colors, int size, int maxDegree, int *startPartitionListD, int *endPartitionListD){
 	int i, j, start, end, partitionIndex;
-	int subGraphSize, numColors = 0;
+	int numColors = 0;
 	
+	//int subGraphSize;
 	//subGraphSize = size/(gridDim.x * blockDim.x);
 	//start = (size/gridDim.x * blockIdx.x) + (subGraphSize * threadIdx.x);
 	//end = start + subGraphSize;
@@ -261,7 +263,7 @@ __global__ void colorGraph_FF(int *adjacencyListD, int *colors, int size, int ma
 	partitionIndex = (blockIdx.x * blockDim.x) + threadIdx.x;
 	start = startPartitionListD[partitionIndex];
 	end = endPartitionListD[partitionIndex];
-	subGraphSize = end - start;
+	
 	
 	int degreeArray[100];
 	for(i=start; i<end; i++)
@@ -314,7 +316,7 @@ __global__ void conflictsDetection(int *adjacentListD, int *boundaryListD, int *
 		for (int k=0; k < maxDegree; k++)
 		{
 			j = adjacentListD[i*maxDegree + k];
-			if (j>i && (colors[i] == colors[j]))
+			if (j>=i && (colors[i] == colors[j]))
 			{
 				//conflictD[idx] = min(i,j)+1;	
 				conflictD[idx] = i+1;	
