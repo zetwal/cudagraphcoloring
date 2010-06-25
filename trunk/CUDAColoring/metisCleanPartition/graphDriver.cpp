@@ -1143,6 +1143,7 @@ int main(int argc, char *argv[]){
 	
 	
 	
+	
 	// count number of parallel colors
 	int interColorsParallel = 0;
 	for (int i=0; i<graphSize; i++)
@@ -1170,8 +1171,7 @@ int main(int argc, char *argv[]){
 	cudaEventRecord(stop_4, 0); 
     cudaEventSynchronize(stop_4); 
 	
-	
-	
+
 	
 	//--------------- Step 4: solve conflicts 
 	

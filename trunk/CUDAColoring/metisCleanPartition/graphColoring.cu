@@ -152,7 +152,7 @@ __global__ void conflictSolveSDO(int *adjacencyList, int *conflict, int *graphCo
 	int satDegree, max;
 	int randomCount = 0;
 	int numOfInitialConflicts = 0;
-	int numInPartition;
+	
 	
 	// int subGraphSize;
 	//subGraphSize = sizeGraph/(gridDim.x * blockDim.x);
@@ -162,7 +162,6 @@ __global__ void conflictSolveSDO(int *adjacencyList, int *conflict, int *graphCo
 	partitionIndex = (blockIdx.x * blockDim.x) + threadIdx.x;
 	start = startPartitionListD[partitionIndex];
 	end = endPartitionListD[partitionIndex];
-	numInPartition = end - start;
 	
 	
 	
@@ -333,7 +332,7 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
     cudaMemcpy(endPartitionListD, endPartitionList, _gridSize*_blockSize*sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemcpy(randomListD, randomList, numRand*sizeof(int), cudaMemcpyHostToDevice);
 	
-	cudaMemset(conflictListD, -1, boundarySize*sizeof(int));
+	
 	
 	
 	cudaEventRecord(stop_mem, 0); 
@@ -375,6 +374,7 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 		cudaEventCreate(&stop_confl); 
 		cudaEventRecord(start_confl, 0); 
 		
+		cudaMemset(conflictListD, -1, boundarySize*sizeof(int));
 		conflictsDetection<<<dimGrid_confl, dimBlock_confl>>>(adjacentListD, boundaryListD, colorsD, conflictListD, graphSize, boundarySize, maxDegree);
 		
 		cudaEventRecord(stop_confl, 0); 
@@ -397,6 +397,7 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
     cudaEventCreate(&stop_confl); 
     cudaEventRecord(start_confl, 0); 
 	
+	cudaMemset(conflictListD, -1, boundarySize*sizeof(int));
 	conflictsDetection<<<dimGrid_confl, dimBlock_confl>>>(adjacentListD, boundaryListD, colorsD, conflictListD, graphSize, boundarySize, maxDegree);
 	
 	cudaEventRecord(stop_confl, 0); 
