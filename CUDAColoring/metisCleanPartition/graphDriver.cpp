@@ -194,7 +194,6 @@ void getAdjacentList(int *adjacencyMatrix, int *adjacentList, int size, int maxD
 // Author: Pascal 
 // get the degree information for a graph 
 int getMaxDegree(int *adjacencyMatrix, int size){  
-	cout << "size : " <<  size << endl;
 	int maxDegree = 0;   
 	int degree;  
 	
@@ -313,7 +312,6 @@ int getBoundaryList(int *adjacencyList, int *boundaryList, int graphSize, int ma
 			if (node != -1) 
 				if ((node < start) || (node >= end)){
 					boundarySet.insert(i);
-					//cout << "!~ " << i << endl;
 					break;		//	we just need one proof of that
 				}
 		}
@@ -496,19 +494,16 @@ int sdoIm(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, 
 //----------------------- Conflict Solve -----------------------//
 // Author: Pascal
 void conflictSolveSDO(int *adjacencyList, int *conflict, int conflictSize, int *graphColors, int *degreeList, int sizeGraph, int maxDegree){
-    int satDegree, numColored, max, index;
+    int satDegree, numColored, max, index, vertex;
     numColored = 0;
-	
-	// Set their color to 0
-	for (int i=0; i<conflictSize; i++)
-		graphColors[conflict[i]-1] = 0;
     
 	
     while (numColored < conflictSize){
         max = -1;
         
         for (int i=0; i<conflictSize; i++){
-			int vertex = conflict[i]-1;
+			vertex = conflict[i];
+			 
             if (graphColors[vertex] == 0)                        // not colored
             {
                 satDegree = saturation(vertex, adjacencyList, graphColors, maxDegree);
@@ -864,17 +859,17 @@ void checkCorrectColoring(int *adjacencyList, int *graphColors, int graphSize, i
 //----------------------- The meat -----------------------//
 
 int main(int argc, char *argv[]){  
-	if (argc != 4){
+	if (argc != 5){
 		cout << "Arguments passed: " << argc << endl;
-		cout << "3 Arguments needed: " << endl 
-			<< "cuExe <passes> <atificial (0 => input file)>  <metis (1 => use metis)>" << endl 
-			<< "e.g. cuExe 1 0 1" << endl;
+		cout << "5 Arguments needed: " << endl 
+			<< "cuExe <passes> <atificial (1 => artificial file)>  <metis (1 => use metis)>  <randomness for GPU (0-2)>" << endl 
+			<< "e.g. cuExe 1 0 1 0" << endl;
 
 		return 1;
 	}
 	
 	int maxDegree, numColorsSeq, numColorsParallel, boundaryCount, conflictCount, passes, graphSize, graphSizeRead;
-	int _gridSize, _blockSize, numMetisPartitions;
+	int _gridSize, _blockSize, numMetisPartitions, randomnessValue;
 	float density;
 	long numEdges;
 	string inputFilename;
@@ -896,7 +891,9 @@ int main(int argc, char *argv[]){
 	randSeed = 1272167817;			// to set to a specific random seed for replicability
 	
 
-	passes = atoi(argv[1]);		// get number of passes
+	passes = atoi(argv[1]);				// get number of passes
+	randomnessValue = atoi(argv[4]);	// get randomness
+
 	
 	if (atoi(argv[3]) == 1)
 		useMetis = true;
@@ -921,6 +918,7 @@ int main(int argc, char *argv[]){
 	cin >> _gridSize;
 	cout << "Enter block size (e.g 64): ";
 	cin >> _blockSize;
+	cout << endl << "Number of threads: " << _gridSize*_blockSize << endl;
 	cout << endl;
 	
 	int *startPartitionList = new int[_gridSize*_blockSize];	
@@ -974,7 +972,7 @@ int main(int argc, char *argv[]){
 		
 		// generates a graph
 		generateMatrix(adjacencyMatrix, graphSize, numEdges);
-		
+		cout << "Got degree: " << maxDegree << endl;
 		
 		// gets the max degree
 		maxDegree = getMaxDegree(adjacencyMatrix, graphSize);
@@ -1009,10 +1007,10 @@ int main(int argc, char *argv[]){
 	
 	
 	
-	int *randomList = new int[numRandoms];
-	for (int i=0; i<numRandoms; i++)		// stores random numbers in the range of 0 to 2
-		randomList[i] = rand()%2;
 	
+	int *randomList = new int[numRandoms];
+	for (int i=0; i<numRandoms; i++)					// stores random numbers in the range of 0 to 2
+		randomList[i] = rand()%(randomnessValue+1);
 	
 	
 	//--------------------- Metis ---------------------!
@@ -1061,7 +1059,7 @@ int main(int argc, char *argv[]){
 	cudaEventRecord(stop_b, 0); 
 	cudaEventSynchronize(stop_b); 
 	cudaEventElapsedTime(&elapsedTimeBoundary, start_b, stop_b); 
-	cout << "Get boundaryList :"<< elapsedTimeBoundary << " ms" << endl;
+	//cout << "Time to getBoundaryList :"<< elapsedTimeBoundary << " ms" << endl;
 
 	
 
@@ -1153,15 +1151,15 @@ int main(int argc, char *argv[]){
 	
 	
 	
-	
-	
 	//-------- Conflict Count
-	for (int i=0; i< boundaryCount; i++)
+	conflictCount = 0;
+	for (int i=0; i<boundaryCount; i++)
 	{
 		int node = conflictTmp[i];
 		
-		if(node >= 1)
+		if (node != -1)
 		{
+			//cout << "conflict " << conflictCount <<  " at " << node << endl;
 			conflict[conflictCount] = node;
 			conflictCount++;
 		}
@@ -1176,14 +1174,11 @@ int main(int argc, char *argv[]){
 	
 	
 	//--------------- Step 4: solve conflicts 
-	//cout <<"Checkpoint " << endl;
-	
 	
 	if (sdoConflictSolver == true)
 		conflictSolveSDO(adjacentList, conflict, conflictCount, graphColors,degreeList, graphSize, maxDegree);
 	else
 		conflictSolveFF(adjacentList,  graphSize, conflict, conflictCount, graphColors, maxDegree); 
-	
 	
 	cudaEventRecord(stop, 0); 
 	cudaEventSynchronize(stop); 
@@ -1285,7 +1280,7 @@ int main(int argc, char *argv[]){
 	
 	cout << "Colors before solving conflict: " << interColorsParallel << endl;
 	cout << "Sequential Colors: " << numColorsSeq << "      -       Parallel Colors: " << numColorsParallel << endl;     
-	cout <<"GPU speed up (including boundary): "<< (elapsedTimeBoundary + elapsedTimeGPU)/elapsedTimeGPU << " x" << endl;
+	cout <<"GPU speed up (including boundary): " << elapsedTimeCPU/(elapsedTimeBoundary + elapsedTimeGPU) << " x" << endl;
 
 	cout << "||=============================================================||" << endl << endl;
 
