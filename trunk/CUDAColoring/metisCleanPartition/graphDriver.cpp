@@ -55,8 +55,32 @@ int inline min(int n1, int n2)
 
 
 
+//----------------------- Display -----------------------//
+// Author: Pascal
+// Displays an adjacencyList
+void displayAdjacencyList(int *adjacencyList, int graphSize, int maxDegree){
+	cout << endl << "Adjacency List:" << endl;
+	for (int i=0; i<graphSize; i++){
+		cout << i << ": ";
+		
+		for (int j=0; j<maxDegree; j++){
+			if (adjacencyList[i*maxDegree + j] != -1)
+				cout << adjacencyList[i*maxDegree + j] << " ";
+			else 
+				break;
+		}
+		
+		cout << endl;
+	}
+}
+
+
+
+
+
 //----------------------- Graph initializations -----------------------//
 // Author: Pascal & Shusen
+// readsa a matrix market format into an adjacency matrix
 void readGraph(int *&adjacencyMatrix, const char *filename, int _gridSize, int _blockSize, int &graphSizeRead, int &graphSize, long &edgeSize){
 	char comments[512];
 	int graphSizeX, graphSizeY, from, to, numEdges, weightedGraph;
@@ -127,30 +151,6 @@ void readGraph(int *&adjacencyMatrix, const char *filename, int _gridSize, int _
 
 
 
-
-//----------------------- Display -----------------------//
-// Author: Pascal
-// Displays an adjacencyList
-void displayAdjacencyList(int *adjacencyList, int graphSize, int maxDegree){
-	cout << endl << "Adjacency List:" << endl;
-	for (int i=0; i<graphSize; i++){
-		cout << i << ": ";
-		
-		for (int j=0; j<maxDegree; j++){
-			if (adjacencyList[i*maxDegree + j] != -1)
-				cout << adjacencyList[i*maxDegree + j] << " ";
-			else 
-				break;
-		}
-		
-		cout << endl;
-	}
-}
-
-
-
-
-//----------------------- Graph initializations -----------------------//
 // Author: Pascal 
 // Genetates a graph 
 void generateMatrix(int *matrix, int graphSize, int num){  
@@ -193,9 +193,10 @@ void getAdjacentList(int *adjacencyMatrix, int *adjacentList, int size, int maxD
 
 // Author: Pascal 
 // get the degree information for a graph 
-int getMaxDegree(int *adjacencyMatrix, int size){  
+int getMaxDegree(int *adjacencyMatrix, int size, int &avgDegree){  
 	int maxDegree = 0;   
 	int degree;  
+	avgDegree = 0;
 	
 	for (int i=0; i<size; i++){  
 		degree = 0;  
@@ -210,7 +211,11 @@ int getMaxDegree(int *adjacencyMatrix, int size){
 		
 		if (degree > maxDegree)  
 			maxDegree = degree;  
+		
+		avgDegree += degree;
 	}  
+	
+	avgDegree = avgDegree/size;
 	
 	return maxDegree;  
 }  
@@ -233,52 +238,6 @@ void getDegreeList(int *adjacencyList, int *degreeList, int sizeGraph, int maxDe
         degreeList[i] = count;
     }
 }
-
-
-
-// Author: Peihong
-int getBoundaryList(int *adjacencyMatrix, int *boundaryList, int size, int &boundaryCount, int graphSize, int _gridSize, int _blockSize){  
-	int maxDegree = 0;   
-	int degree;  
-	
-	set<int> boundarySet; 
-	boundarySet.clear(); 
-	
-	int subSize = graphSize/(_gridSize*_blockSize);
-	cout << "SubSize =" << subSize << endl;
-	
-	for (int i=0; i<size; i++){  
-		degree = 0;  
-		
-		int subIdx = i/(float)subSize;
-		int start = subIdx * subSize;
-		int end = min( (subIdx + 1)*subSize, size );
-		
-		for (int j=0; j<size; j++){           
-			if ( adjacencyMatrix[i*size + j] == 1)  
-				degree++;  
-			if ( adjacencyMatrix[i*size + j] == 1 && (j < start || j >= end))
-			{
-				boundarySet.insert(i);
-			}
-			
-		}
-		
-		if (degree > maxDegree)  
-			maxDegree = degree;  	
-	} 
-	
-	boundaryCount = boundarySet.size();
-	
-	set<int>::iterator it = boundarySet.begin(); 
-	for (int i=0; it != boundarySet.end(); it++)  
-	{ 
-		boundaryList[i] = *it;
-		i++; 
-	}  
-	
-	return maxDegree;  
-}  
 
 
 
@@ -869,7 +828,7 @@ int main(int argc, char *argv[]){
 	}
 	
 	int maxDegree, numColorsSeq, numColorsParallel, boundaryCount, conflictCount, passes, graphSize, graphSizeRead;
-	int _gridSize, _blockSize, numMetisPartitions, randomnessValue;
+	int _gridSize, _blockSize, numMetisPartitions, randomnessValue, avgDegree;
 	float density;
 	long numEdges;
 	string inputFilename;
@@ -942,8 +901,8 @@ int main(int argc, char *argv[]){
 		
 		
 		// gets the max degree
-		maxDegree = getMaxDegree(adjacencyMatrix, graphSize);
-		cout << "Got degree: " << maxDegree << endl;
+		maxDegree = getMaxDegree(adjacencyMatrix, graphSize, avgDegree);
+		cout << "Max degree: " << maxDegree << "   average degree: " << avgDegree << endl;
 		
 		
 		// Get adjacency list
@@ -975,8 +934,8 @@ int main(int argc, char *argv[]){
 		
 		
 		// gets the max degree
-		maxDegree = getMaxDegree(adjacencyMatrix, graphSize);
-		cout << "Got degree: " << maxDegree << endl;
+		maxDegree = getMaxDegree(adjacencyMatrix, graphSize, avgDegree);
+		cout << "Max degree: " << maxDegree << "   average degree: " << avgDegree << endl;
 		
 		
 		// Get adjacency list
@@ -1234,7 +1193,8 @@ int main(int argc, char *argv[]){
 	
 	
 	cout << endl << endl << "!------- Graph Summary:" << endl;
-	cout << "Vertices: " << graphSize << "   Edges: " << numEdges << "   Density: " << (2*numEdges)/((float)graphSize*(graphSize-1)) << "   Degree: " << maxDegree << endl;
+	cout << "Vertices: " << graphSize << "   Edges: " << numEdges << "   Density: " << (2*numEdges)/((float)graphSize*(graphSize-1)) << endl;
+	cout << "Max  Degree: " << maxDegree << "    Average degree: " << avgDegree << endl;
 	if (artificial == false){
 		cout << "Graph read in: " << inputFilename << endl;
 		cout << "Vertices in graph: " << graphSizeRead << endl;
@@ -1269,7 +1229,7 @@ int main(int argc, char *argv[]){
 	cout << "ALGO step 1, 2 & 3   : " 	<< elapsedTimeGPU_1 << " ms" << endl;  
 	cout << "Boundary count       : " 	<< elapsedTimeGPU_4 - elapsedTimeGPU_1 << " ms" << endl; 
 	cout << "ALGO step 4          : " 	<< elapsedTimeGPU   - elapsedTimeGPU_4 << " ms" << endl; 
-	cout << "Total time           : "	<< (elapsedTimeBoundary + elapsedTimeGPU) << " ms" << endl;
+	cout << "Total GPU time       : "	<< (elapsedTimeBoundary + elapsedTimeGPU) << " ms" << endl;
 	cout << endl;
 	
 	
@@ -1282,12 +1242,10 @@ int main(int argc, char *argv[]){
 	cout << "Sequential Colors: " << numColorsSeq << "      -       Parallel Colors: " << numColorsParallel << endl;     
 	cout <<"GPU speed up (including boundary): " << elapsedTimeCPU/(elapsedTimeBoundary + elapsedTimeGPU) << " x" << endl;
 
-	cout << "||=============================================================||" << endl << endl;
+	cout << "!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!" << endl << endl;
 
 	
 	//--------------------- Cleanup ---------------------!		
-	
-	 
 	delete []graphColors; 
 	delete []conflict; 
 	delete []boundaryList;

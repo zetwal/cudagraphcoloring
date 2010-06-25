@@ -257,9 +257,9 @@ __global__ void colorGraph_FF(int *adjacencyListD, int *colors, int size, int ma
 //----------------------- Detects conflicts -----------------------//
 //
 // Author: Peihong
-// each thread deals with 1 item
-// set the conflicted color to 0
-// set its value in the conflict list to point to the node
+// each thread deals with 1 vertex from boundary list
+// 		set the conflicted color to 0
+// 		set its value in the conflict list to point to the node
 __global__ void conflictsDetection(int *adjacentListD, int *boundaryListD, int *colors, int *conflictD, long size, int boundarySize, int maxDegree){
 	int idx = blockIdx.x*blockDim.x + threadIdx.x;
 	int nodeFrom, nodeTo;
