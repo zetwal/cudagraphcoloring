@@ -972,11 +972,11 @@ int main(int argc, char *argv[]){
 		
 		// generates a graph
 		generateMatrix(adjacencyMatrix, graphSize, numEdges);
-		cout << "Got degree: " << maxDegree << endl;
+		
 		
 		// gets the max degree
 		maxDegree = getMaxDegree(adjacencyMatrix, graphSize);
-		
+		cout << "Got degree: " << maxDegree << endl;
 		
 		
 		// Get adjacency list
