@@ -295,9 +295,10 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 						int maxDegree, int graphSize, int passes, int subsizeBoundary, int _gridSize, int _blockSize, 
 						int *startPartitionList, int *endPartitionList, int *randomList, int numRand)
 {
+	int conflictBlockSubsize = 256;
 	int *adjacentListD, *colorsD, *boundaryListD, *degreeListD, *conflictListD, *startPartitionListD, *endPartitionListD, *randomListD;     
-	int gridsize = ceil((float)boundarySize/(float)(256));
-	int blocksize = 256;
+	int gridsize = ceil((float)boundarySize/(float)(conflictBlockSubsize));
+	int blocksize = conflictBlockSubsize;
 	int *numConflicts;
 	
 	cudaEvent_t start_col, start_confl, stop_col, stop_confl, start_mem, stop_mem;         
