@@ -11,7 +11,7 @@
 using namespace std;
 
 
-const int TEMP_COLOR_LENGTH = 1024;
+const int TEMP_COLOR_LENGTH = 1024;		// should be at the very very least equal to maxDegree of graph + 1
 
 const int CONFLICT_BLOCK_SIZE = 256;
 
