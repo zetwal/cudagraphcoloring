@@ -665,12 +665,13 @@ int metis(int *adjacencyList, int *newAdjacencyList, int graphSize, int numEdges
 	cout << "Min in partiton: " << min << "  for partition: " << partitionMin << endl;
 	cout << "Max in parition: " << max << "  for partition: " << partitionMax << endl;
 	
+	/*
 	cout << "Partitions list:" << endl;
 	for (int i=0; i<numPartitions; i++)
 		cout << i << "-   start: " << startPartitionList[i] << "    end: " << endPartitionList[i] 
 					<<  "  size: " << (endPartitionList[i] - startPartitionList[i]) << endl;
 	cout << endl;
-	
+	*/
 	
 	
 	// Gets the new Ordering of the nodes
