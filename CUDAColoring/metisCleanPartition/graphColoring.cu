@@ -16,8 +16,8 @@ int __device__ degree(int vertex, int *degreeList){
 // saturation of a vertex
 int __device__ saturation(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int start, int end){
 	int saturation = 0;	
-	int colors[256];
-	for (int j=0; j<256; j++)
+	int colors[TEMP_COLOR_LENGTH];			
+	for (int j=0; j<TEMP_COLOR_LENGTH; j++)  
 		colors[j] = 0;
 	
 	
@@ -49,8 +49,8 @@ int __device__ saturation(int vertex, int *adjacencyList, int *graphColors, int 
 // Author: Shusen & Pascal
 // colors the vertex with the min possible color
 int __device__ color(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int numColored, int start, int end, int disp){
-	int colors[256];
-	for (int j=0; j<246; j++)
+	int colors[TEMP_COLOR_LENGTH];			
+	for (int j=0; j<TEMP_COLOR_LENGTH; j++)
 		colors[j] = 0;
 	
 	
@@ -222,7 +222,7 @@ __global__ void colorGraph_FF(int *adjacencyListD, int *colors, int size, int ma
 	end = endPartitionListD[partitionIndex];
 	
 	
-	int degreeArray[100];
+	int degreeArray[TEMP_COLOR_LENGTH];
 	for (i=start; i<end; i++)
 	{
 		for(j=0; j<maxDegree; j++)
@@ -295,10 +295,9 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 						int maxDegree, int graphSize, int passes, int subsizeBoundary, int _gridSize, int _blockSize, 
 						int *startPartitionList, int *endPartitionList, int *randomList, int numRand)
 {
-	int conflictBlockSubsize = 256;
 	int *adjacentListD, *colorsD, *boundaryListD, *degreeListD, *conflictListD, *startPartitionListD, *endPartitionListD, *randomListD;     
-	int gridsize = ceil((float)boundarySize/(float)(conflictBlockSubsize));
-	int blocksize = conflictBlockSubsize;
+	int gridsize = ceil((float)boundarySize/(float)(CONFLICT_BLOCK_SIZE));
+	int blocksize = CONFLICT_BLOCK_SIZE;
 	int *numConflicts;
 	
 	cudaEvent_t start_col, start_confl, stop_col, stop_confl, start_mem, stop_mem;         
