@@ -11,19 +11,9 @@
 using namespace std;
 
 
+const int TEMP_COLOR_LENGTH = 1024;
 
-//const long GRAPHSIZE = 4096;    // number of nodes
-//const float DENSITY = 0.01;
-//const long NUMEDGES = DENSITY*GRAPHSIZE*(GRAPHSIZE-1)/2;
-
-
-
-//const int GRIDSIZE = 4;				// number of blocks 
-//const int BLOCKSIZE = 64;			// number of threads in a block 
-
-//const int SUBSIZE = GRAPHSIZE/(GRIDSIZE*BLOCKSIZE); 
-
-//const int SUBSIZE_BOUNDARY = 256;
+const int CONFLICT_BLOCK_SIZE = 256;
 
 
 #ifdef __cplusplus 

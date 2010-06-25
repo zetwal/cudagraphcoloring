@@ -822,8 +822,8 @@ int main(int argc, char *argv[]){
 	if (argc != 5){
 		cout << "Arguments passed: " << argc << endl;
 		cout << "5 Arguments needed: " << endl 
-			<< "cuExe <passes> <atificial (1 => artificial file)>  <metis (1 => use metis)>  <randomness for GPU (0-2)>" << endl 
-			<< "e.g. cuExe 1 0 1 0" << endl;
+			<< "cudaExe <passes> <atificial (1 => artificial file)>  <metis (1 => use metis)>  <randomness for GPU (0-2)>" << endl 
+			<< "e.g. cudaExe 1 0 1 0" << endl;
 
 		return 1;
 	}
@@ -831,6 +831,7 @@ int main(int argc, char *argv[]){
 	int maxDegree, numColorsSeq, numColorsParallel, boundaryCount, conflictCount, passes, graphSize, graphSizeRead;
 	int _gridSize, _blockSize, numMetisPartitions, randomnessValue, avgDegree;
 	float density;
+	char ans;
 	long numEdges;
 	string inputFilename;
 	
@@ -946,7 +947,19 @@ int main(int argc, char *argv[]){
 		getAdjacentList(adjacencyMatrix, adjacentList, graphSize, maxDegree);
 	}
 	
-	cout << "Allocation successful!" << endl;
+	if (maxDegree > TEMP_COLOR_LENGTH)
+	{
+		cout << endl << "Warning ... degree of graph " << maxDegree << " exceeds current TEMP_COLOR_LENGTH." <<  TEMP_COLOR_LENGTH << endl;
+		cout << "This might cause errors!!!" << endl;
+		cout << "Are you sure you want to continue (y/n): ";
+		cin >> ans;
+		if (ans != 'y'){
+			cout << "Exiting now - please change value of constant TEMP_COLOR_LENGTH in graphColoring.h" << endl << endl;
+			exit(0);
+		}
+	}
+	else
+		cout << "Allocation successful!" << endl;
 	
 	delete []adjacencyMatrix;
 	adjacencyMatrix = NULL;
