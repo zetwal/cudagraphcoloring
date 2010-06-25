@@ -35,8 +35,9 @@ int __device__ saturation(int vertex, int *adjacencyList, int *graphColors, int 
 			break;
 	}
 	
-	
-	for (int i=1; i<maxDegree+1; i++)					// count the number of 1's but skip uncolored
+	// count the number of 1's but skip uncolored
+	// for (int i=1; i<TEMP_COLOR_LENGTH; i++)		// OPTION2
+	for (int i=1; i<maxDegree+1; i++)				// OPTION1
 		if (colors[i] == 1)
 			saturation++;
 	
@@ -74,7 +75,9 @@ int __device__ color(int vertex, int *adjacencyList, int *graphColors, int maxDe
 	}
 	
 	
-	for (int i=1; i<maxDegree+1; i++)					// nodes still equal to 0 are unassigned
+	// nodes still equal to 0 are unassigned
+	// for (int i=1; i<TEMP_COLOR_LENGTH; i++)		// OPTION2	
+	for (int i=1; i<maxDegree+1; i++)				// OPTION1				
 		if (colors[i] != 1){
 			if (disp == 0){
 				graphColors[vertex] = i;
@@ -241,7 +244,7 @@ __global__ void colorGraph_FF(int *adjacencyListD, int *colors, int size, int ma
 		}
 		
 		
-		for(j=0; j<maxDegree; j++)
+		for (j=0; j<maxDegree; j++)
 			if(degreeArray[j] != 0){
 				colors[i] = degreeArray[j];
 				break;

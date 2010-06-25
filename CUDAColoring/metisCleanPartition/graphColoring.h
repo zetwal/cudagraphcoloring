@@ -11,7 +11,10 @@
 using namespace std;
 
 
-const int TEMP_COLOR_LENGTH = 1024;		// should be at the very very least equal to maxDegree of graph + 1
+// Should be at least equal to maxDegree of graph + 1
+//    if doing that generates an error like: too much local memory, then use commented line 
+//    maked OPTION2 instead of OPTION1 in function color & saturation in gaphColoring.cu
+const int TEMP_COLOR_LENGTH = 1024;		
 
 const int CONFLICT_BLOCK_SIZE = 256;
 
