@@ -17,7 +17,8 @@ int __device__ degree(int vertex, int *degreeList){
 int __device__ saturation(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int start, int end){
 	int saturation = 0;	
 	int colors[TEMP_COLOR_LENGTH];			
-	for (int j=0; j<TEMP_COLOR_LENGTH; j++)  
+	for (int j=0; j<TEMP_COLOR_LENGTH; j++)	// OPTION2  
+	//for (int j=0; j<(maxDegree+1); j++)  		// OPTION1
 		colors[j] = 0;
 	
 	
@@ -36,8 +37,8 @@ int __device__ saturation(int vertex, int *adjacencyList, int *graphColors, int 
 	}
 	
 	// count the number of 1's but skip uncolored
-	// for (int i=1; i<TEMP_COLOR_LENGTH; i++)		// OPTION2
-	for (int i=1; i<maxDegree+1; i++)				// OPTION1
+	for (int i=1; i<TEMP_COLOR_LENGTH; i++)		// OPTION2
+	//for (int i=1; i<maxDegree+1; i++)			// OPTION1
 		if (colors[i] == 1)
 			saturation++;
 	
@@ -51,7 +52,8 @@ int __device__ saturation(int vertex, int *adjacencyList, int *graphColors, int 
 // colors the vertex with the min possible color
 int __device__ color(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int numColored, int start, int end, int disp){
 	int colors[TEMP_COLOR_LENGTH];			
-	for (int j=0; j<TEMP_COLOR_LENGTH; j++)
+	for (int j=0; j<TEMP_COLOR_LENGTH; j++)	// OPTION2
+	//for (int j=0; j<(maxDegree+1); j++)		// OPTION1
 		colors[j] = 0;
 	
 	
@@ -76,8 +78,8 @@ int __device__ color(int vertex, int *adjacencyList, int *graphColors, int maxDe
 	
 	
 	// nodes still equal to 0 are unassigned
-	// for (int i=1; i<TEMP_COLOR_LENGTH; i++)		// OPTION2	
-	for (int i=1; i<maxDegree+1; i++)				// OPTION1				
+	for (int i=1; i<TEMP_COLOR_LENGTH; i++)		// OPTION2	
+	//for (int i=1; i<maxDegree+1; i++)				// OPTION1				
 		if (colors[i] != 1){
 			if (disp == 0){
 				graphColors[vertex] = i;

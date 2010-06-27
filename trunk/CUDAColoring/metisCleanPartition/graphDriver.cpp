@@ -80,7 +80,7 @@ void displayAdjacencyList(int *adjacencyList, int graphSize, int maxDegree){
 
 //----------------------- Graph initializations -----------------------//
 // Author: Pascal & Shusen
-// readsa a matrix market format into an adjacency matrix
+// reads a matrix market format into an adjacency matrix
 void readGraph(int *&adjacencyMatrix, const char *filename, int _gridSize, int _blockSize, int &graphSizeRead, int &graphSize, long &edgeSize){
 	char comments[512];
 	int graphSizeX, graphSizeY, from, to, numEdges, weightedGraph;
@@ -147,6 +147,153 @@ void readGraph(int *&adjacencyMatrix, const char *filename, int _gridSize, int _
 	edgeSize = numEdges;
 	cout << "Graph: " << graphSizeRead << " - " <<  graphSize << " - " <<  edgeSize << endl;
 	cout << "File " << filename << " was successfully read!" << endl;
+}
+
+
+
+// Author: Pascal & Shusen
+// reads a matrix market format into an adjacency list
+void readGraphAdj(int *&adjacencyList, const char *filename, int _gridSize, int _blockSize, int &graphSizeRead, int &graphSize, long &edgeSize, int &maxDegree)
+{		
+	char comments[512];
+	int graphSizeX, graphSizeY, numUsefulEdges, from, to, weightedGraph;
+	int *edgesCount, *degreeList;
+	double weight;
+	
+	numUsefulEdges = maxDegree = 0;
+	
+	
+	ifstream graphFile(filename);
+	
+	
+	if (graphFile.is_open())
+	{
+		//
+		// Pass 1: get the degree of each node
+		//
+		while (graphFile.peek() == '%'){
+			graphFile.getline(comments,512);
+		}
+		
+		graphFile >> graphSizeX >> graphSizeY >> edgeSize;
+		cout << "Rows: " << graphSizeX << "  ,  Columns: " <<  graphSizeY << "   - Number of edges: " << edgeSize << endl;
+		
+		if (graphSizeX != graphSizeY){
+			cout << "Non Symmetric graph!" << endl;
+			exit(1);
+		}
+		else 
+		{
+			cout << "Is it a weighted graph(1:yes  -  0:no): ";
+			cin >> weightedGraph;
+			
+			graphSizeRead = graphSizeX;
+			graphSize = findMultiple(_gridSize*_blockSize, graphSizeRead);
+			
+			degreeList = new int[graphSize];
+			memset(degreeList, 0, graphSize*sizeof(int));
+			
+			
+			for (int i=0; i<edgeSize; i++){
+				if (weightedGraph == 1){
+					graphFile >> from >> to >> weight;	
+				//	cout << from << " , " << to << " : " << weight << endl;
+				}
+				else{
+					graphFile >> from >> to;	
+				//	cout << from << " , " << to << endl;
+				}
+				
+				
+				if (from != to){
+					degreeList[(from-1)]+= 1;
+					degreeList[(to-1)]+= 1;
+					
+					numUsefulEdges++;
+				}
+			}
+		}
+		
+		
+		//
+		// Get max degree and reset
+		//
+		for (int i=0; i<graphSize; i++){
+			//cout << i << ": " << degreeList[i] << endl;  
+			if (maxDegree < degreeList[i]){
+				maxDegree = degreeList[i];
+//				cout << i << "  Max degree: " << maxDegree << endl;  
+			}
+		}
+	
+		
+		edgesCount = new int[graphSize];
+		memset(edgesCount, 0, graphSize*sizeof(int));
+		
+		adjacencyList = new int[graphSize*maxDegree];
+		memset(adjacencyList, -1, graphSize*maxDegree*sizeof(int));
+		
+		
+		graphFile.seekg(0, ios::beg);
+		
+		
+		
+		//
+		// Pass 2: Fill in the adjacency List
+		//
+		while (graphFile.peek() == '%'){
+			graphFile.getline(comments,512);
+		}
+		
+		
+		graphFile >> graphSizeX >> graphSizeY >> edgeSize;
+		//cout << graphSizeX << " " <<  graphSizeY << " - " << numEdges << endl;
+		
+		if (graphSizeX != graphSizeY){
+			cout << "Non Symmetric graph!" << endl;
+			exit(1);
+		}
+		else 
+		{
+			for (int i=0; i<edgeSize; i++){
+				
+				if (weightedGraph == 1){
+					graphFile >> from >> to >> weight;	
+					//cout << from << " , " << to << " : " << weight << endl;
+				}
+				else{
+					graphFile >> from >> to;	
+					//cout << from << " , " << to << endl;
+				}
+				
+				
+				
+				if (from != to){
+					adjacencyList[(from-1)*maxDegree + edgesCount[(from-1)]] = (to-1);
+					edgesCount[(from-1)]++;
+					
+				
+					adjacencyList[(to-1)*maxDegree + edgesCount[(to-1)]] = (from-1);
+					edgesCount[(to-1)]++;
+				}
+			}
+		}
+	}
+	else {
+		cout << "Reading " << filename << " failed!" << endl;
+		exit(1);
+	}
+	
+	graphFile.close();
+	
+	
+	edgeSize = numUsefulEdges;
+	cout << "Graph: " << graphSizeRead << " - " <<  graphSize << " - " <<  edgeSize << endl;
+	cout << "Max degree: " << maxDegree << endl;
+	cout << "File " << filename << " was successfully read!" << endl;
+	
+	delete []degreeList;
+	delete []edgesCount;
 }
 
 
@@ -894,9 +1041,10 @@ int main(int argc, char *argv[]){
 	if (artificial == false){	// input file required - returns an adjacency list of the graph, graph size and max degree
 		ifstream testFile;	
 	
-		cout << "Enter graph input filename (e.g. 1138_bus.mtx): ";
+		cout << "Enter graph input filename (e.g. graphs/1138_bus.mtx): ";
 		cin >> inputFilename;
 		
+		/*
 		// gets a compact adjacency list from the file input
 		readGraph(adjacencyMatrix, inputFilename.c_str(), _gridSize, _blockSize, graphSizeRead, graphSize, numEdges);
 		cout << graphSizeRead << " - " << graphSize << " - " << numEdges << endl; 
@@ -912,6 +1060,13 @@ int main(int argc, char *argv[]){
 		memset(adjacentList, -1, graphSize*maxDegree*sizeof(int)); 
 	
 		getAdjacentList(adjacencyMatrix, adjacentList, graphSize, maxDegree);
+		
+		 
+		delete []adjacencyMatrix;
+		adjacencyMatrix = NULL;
+		*/
+		
+		readGraphAdj(adjacentList, inputFilename.c_str(), _gridSize, _blockSize, graphSizeRead, graphSize, numEdges, maxDegree);
 	}
 	else
 	{
@@ -945,6 +1100,9 @@ int main(int argc, char *argv[]){
 		memset(adjacentList, -1, graphSize*maxDegree*sizeof(int)); 
 		
 		getAdjacentList(adjacencyMatrix, adjacentList, graphSize, maxDegree);
+		
+		delete []adjacencyMatrix;
+		adjacencyMatrix = NULL;
 	}
 	
 	if (maxDegree > TEMP_COLOR_LENGTH)
@@ -961,8 +1119,7 @@ int main(int argc, char *argv[]){
 	else
 		cout << "Allocation successful!" << endl;
 	
-	delete []adjacencyMatrix;
-	adjacencyMatrix = NULL;
+	
 	
 	
 	// Some further intializations
