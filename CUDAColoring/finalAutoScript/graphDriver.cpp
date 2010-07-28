@@ -802,20 +802,22 @@ void conflictSolveFF(int *Adjlist, int size, int *conflict, int conflictSize, in
 // Creates outpuf for metis file
 void createMetisInput(int *adjacencyList, int graphSize, int numEdges, int maxDegree, string metisInputFile, int interactive){
 	string metisInputFilename;
-	
-	cout << endl << "Creating file to send to metis ..." << endl;
-	cout << "Enter filename for file: ";
+
+	if (interactive != 2){	
+		cout << endl << "Creating file to send to metis ..." << endl;
+		cout << "Enter filename for file: ";
+	}
 	if (interactive == 1)
 		cin >> metisInputFilename;
 	else{
 		metisInputFilename = metisInputFile;
-		cout << metisInputFilename << endl;
+		//cout << metisInputFilename << endl;
 	}
 	
-	
-	cout << "Graph Size: " << graphSize << endl;
-	cout << "Num Edges: " << numEdges << endl;
-	
+	if (interactive != 2){	
+		cout << "Graph Size: " << graphSize << endl;
+		cout << "Num Edges: " << numEdges << endl;
+	}
 	
 	ofstream myfile (metisInputFilename.c_str());
   	if (myfile.is_open())
@@ -848,14 +850,16 @@ void createMetisInput(int *adjacencyList, int graphSize, int numEdges, int maxDe
 void readMetisOutput(int *partitionList, int graphSize, string metisOutputFile, int interactive){
 	string metisOutputFilename;
 	
-	
-	cout << endl << "Reading partitioned metis file..." << endl;
-	cout << "Enter filename to read from (e.g. metisInput2048.txt.part.256): ";
+	if (interactive != 2){
+		cout << endl << "Reading partitioned metis file..." << endl;
+		cout << "Enter filename to read from (e.g. metisInput2048.txt.part.256): ";
+	}
 	if (interactive == 1)
 		cin >> metisOutputFilename;
 	else{
 		metisOutputFilename = metisOutputFile;
-		cout << metisOutputFilename << endl;
+		if (interactive != 2)
+			cout << metisOutputFilename << endl;
 	}
 	
 	
@@ -902,8 +906,10 @@ int metis(int *adjacencyList, int *newAdjacencyList, int graphSize, int numEdges
 	
 	
 	createMetisInput(adjacencyListOrg, graphSize, numEdges, maxDegree, metisInputFile, interactive);
+
+	if (interactive != 2)	
+		cout << endl << "Enter the number of partitions used in metis: ";
 	
-	cout << endl << "Enter the number of partitions used in metis: ";
 	if (interactive == 1)
 		cin >> numPartitions;
 	else
@@ -945,10 +951,13 @@ int metis(int *adjacencyList, int *newAdjacencyList, int graphSize, int numEdges
 			partitionMin = i;
 		}
 	}
-	
-	cout << "Min in partiton: " << min << "  for partition: " << partitionMin << endl;
-	cout << "Max in parition: " << max << "  for partition: " << partitionMax << endl;
-	
+
+	if (interactive != 2){	
+		cout << "Min in partiton: " << min << "  for partition: " << partitionMin << endl;
+		cout << "Max in parition: " << max << "  for partition: " << partitionMax << endl;
+	}else{
+		cout << min << " " << max << " "; 
+	}
 	/*
 	 cout << "Partitions list:" << endl;
 	 for (int i=0; i<numPartitions; i++)
@@ -1176,7 +1185,7 @@ int main(int argc, char *argv[]){
 	//if (((argc != 8) || (argc!=13))|| (argc !=16)){
 		cout << "Arguments passed: " << argc << endl;
 		cout << "8 or 13 or 16 Arguments needed:" << endl;
-		cout << "cudaExe <passes: 0-automatic> <atificial (1: artificial)>  <metis (1: use metis)>  <randomness for GPU (0-2)> <CPU technique (1: SDO)> <GPU technique (0: FF, 1:SDO, 2:Max, 3:Min) inter(1:interactive/0:batch/2:csv)" << endl;
+		cout << "cudaExe <passes: 0-automatic> <atificial (1: artificial)>  <metis (1: use metis)>  <randomness for GPU (0-2)> <CPU technique (1: SDO)> <GPU technique (0: FF, 1:SDO, 2:Max, 3:Min) inter(1:interactive/0:batch/2:csv-batch)" << endl;
 		cout << "additional if batch: gridsize blocksize path+graphName weighted(y/n) less-than-deg-ok(y/n) " << endl;
 		cout << "additional if batch and metis: metisInputFile numMetisPartitions metisOutput-to-use " << endl;
 		
@@ -1245,23 +1254,30 @@ int main(int argc, char *argv[]){
 	
 	// Grid and block size
 	
-	if (interactive == 1){
+	if (interactive != 2){
 		cout << endl << "!--------------- Graph Coloring program -------------------!" << endl;
 		cout << "Enter grid size (e.g 4): ";
-	//if (interactive == 1)
+	}
+	if (interactive == 1)
 		cin >> _gridSize;
-	}
-	else
+	else{
 		_gridSize = atoi(argv[8]);
-	
-	if (interactive == 1){
-		cout << "Enter block size (e.g 64): ";
-	//if (interactive == 1)
-		cin >> _blockSize;
+
+		if (interactive != 2)
+			cout << _gridSize << endl;
 	}
-	else
-		_blockSize = atoi(argv[9]);
+
+	if (interactive != 2)
+		cout << "Enter block size (e.g 64): ";
 	
+	if (interactive == 1)
+		cin >> _blockSize;
+	else{
+		_blockSize = atoi(argv[9]);
+		
+		if (interactive != 2)
+			cout << _blockSize << endl;
+	}
 	if (interactive == 1){
 		cout << endl << "Number of threads: " << _gridSize*_blockSize << endl;
 		cout << endl;
