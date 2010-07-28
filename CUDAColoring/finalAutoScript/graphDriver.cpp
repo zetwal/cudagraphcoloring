@@ -39,7 +39,7 @@ int findMultiple(int multipleOf, int x){
 		num = base * powerIndex;	
 	}
 	
-	cout << "Closest multiple of " << base << ": " << num << endl;
+	//cout << "Closest multiple of " << base << ": " << num << endl;
 	return num;
 }
 
@@ -158,7 +158,7 @@ void readGraph(int *&adjacencyMatrix, const char *filename, int _gridSize, int _
 
 // Author: Pascal & Shusen
 // reads a matrix market format into an adjacency list
-void readGraphAdj(int *&adjacencyList, const char *filename, int _gridSize, int _blockSize, int &graphSizeRead, int &graphSize, long &edgeSize, int &maxDegree, char weighted)
+void readGraphAdj(int *&adjacencyList, const char *filename, int _gridSize, int _blockSize, int &graphSizeRead, int &graphSize, long &edgeSize, int &maxDegree, char weighted, int interactive)
 {		
 	char comments[512], weightedAns;
 	int graphSizeX, graphSizeY, numUsefulEdges, from, to, weightedGraph;
@@ -181,7 +181,8 @@ void readGraphAdj(int *&adjacencyList, const char *filename, int _gridSize, int 
 		}
 		
 		graphFile >> graphSizeX >> graphSizeY >> edgeSize;
-		cout << "Rows: " << graphSizeX << "  ,  Columns: " <<  graphSizeY << "   - Number of edges: " << edgeSize << endl;
+		if (interactive != 2)
+			cout << "Rows: " << graphSizeX << "  ,  Columns: " <<  graphSizeY << "   - Number of edges: " << edgeSize << endl;
 		
 		if (graphSizeX != graphSizeY){
 			cout << "Non Symmetric graph!" << endl;
@@ -189,9 +190,11 @@ void readGraphAdj(int *&adjacencyList, const char *filename, int _gridSize, int 
 		}
 		else 
 		{
-			cout << "Is it a weighted graph(y/n): ";
-			if (weighted == 'i')
+			if (weighted == 'i'){
+				cout << "Is it a weighted graph(y/n): ";
+			//if (weighted == 'i')
 				cin >> weightedAns;
+			}
 			else
 				weightedAns = weighted;
 
@@ -302,10 +305,12 @@ void readGraphAdj(int *&adjacencyList, const char *filename, int _gridSize, int 
 	
 	
 	edgeSize = numUsefulEdges;
-	cout << "Graph: " << graphSizeRead << " - " <<  graphSize << " - " <<  edgeSize << endl;
-	cout << "Max degree: " << maxDegree << endl;
-	cout << "File " << filename << " was successfully read!" << endl;
-	
+	if (interactive != 2){
+		cout << "Graph: " << graphSizeRead << " - " <<  graphSize << " - " <<  edgeSize << endl;
+		cout << "Max degree: " << maxDegree << endl;
+		cout << "File " << filename << " was successfully read!" << endl;
+	}
+
 	delete []degreeList;
 	delete []edgesCount;
 }
@@ -752,6 +757,10 @@ void conflictSolveSDO(int *adjacencyList, int *conflict, int conflictSize, int *
 
 
 
+
+
+
+
 // Author: Pascal & Shusen
 // Solves conflicts using Fast Fit
 void conflictSolveFF(int *Adjlist, int size, int *conflict, int conflictSize, int *graphColors, int maxDegree){
@@ -1052,11 +1061,12 @@ void checkCorrectColoring(int *adjacencyMatrix, int *graphColors, int graphSize)
 
 // Author: Pascal 
 // Checks if a graph has conflicts or not from adjacency List
-int checkCorrectColoring(int *adjacencyList, int *graphColors, int graphSize, int maxDegree){
+int checkCorrectColoring(int *adjacencyList, int *graphColors, int graphSize, int maxDegree, int interactive){
     int numErrors = 0;
     int maxColor = -1;
 	
-    cout << endl << "==================" << endl << "Error checking for Graph" << endl;
+	if (interactive != 2)
+    	cout << endl << "==================" << endl << "Error checking for Graph" << endl;
 	
     for (int i=0; i<graphSize; i++)                 // we check each row
     {
@@ -1085,7 +1095,8 @@ int checkCorrectColoring(int *adjacencyList, int *graphColors, int graphSize, in
             cout << "Errors for node " << i << " : " << numErrorsOnRow << endl;
     }
 	
-    cout << "Number of colors used: " << maxColor << "  ; Color errors for graph : " << numErrors << endl << "==================== " << endl ;   
+	if (interactive != 2)
+    	cout << "Number of colors used: " << maxColor << "  ; Color errors for graph : " << numErrors << endl << "==================== " << endl ;   
    
     return maxColor;
 }
@@ -1160,11 +1171,12 @@ void getGraphStats(int *adjacencyList,  int graphSize, int maxDegree, int *start
 //----------------------- The meat -----------------------//
 
 int main(int argc, char *argv[]){  
+	
 	if (! (((argc == 8) || (argc == 13)) || (argc == 16)) ){
 	//if (((argc != 8) || (argc!=13))|| (argc !=16)){
 		cout << "Arguments passed: " << argc << endl;
 		cout << "8 or 13 or 16 Arguments needed:" << endl;
-		cout << "cudaExe <passes: 0-automatic> <atificial (1: artificial)>  <metis (1: use metis)>  <randomness for GPU (0-2)> <CPU technique (1: SDO)> <GPU technique (0: FF, 1:SDO, 2:Max, 3:Min) inter(1:interactive/0:batch)" << endl;
+		cout << "cudaExe <passes: 0-automatic> <atificial (1: artificial)>  <metis (1: use metis)>  <randomness for GPU (0-2)> <CPU technique (1: SDO)> <GPU technique (0: FF, 1:SDO, 2:Max, 3:Min) inter(1:interactive/0:batch/2:csv)" << endl;
 		cout << "additional if batch: gridsize blocksize path+graphName weighted(y/n) less-than-deg-ok(y/n) " << endl;
 		cout << "additional if batch and metis: metisInputFile numMetisPartitions metisOutput-to-use " << endl;
 		
@@ -1232,22 +1244,28 @@ int main(int argc, char *argv[]){
 	//--------------------- Graph Creation ---------------------!
 	
 	// Grid and block size
-	cout << endl << "!--------------- Graph Coloring program -------------------!" << endl;
-	cout << "Enter grid size (e.g 4): ";
-	if (interactive == 1)
+	
+	if (interactive == 1){
+		cout << endl << "!--------------- Graph Coloring program -------------------!" << endl;
+		cout << "Enter grid size (e.g 4): ";
+	//if (interactive == 1)
 		cin >> _gridSize;
+	}
 	else
 		_gridSize = atoi(argv[8]);
 	
-	
-	cout << "Enter block size (e.g 64): ";
-	if (interactive == 1)
+	if (interactive == 1){
+		cout << "Enter block size (e.g 64): ";
+	//if (interactive == 1)
 		cin >> _blockSize;
+	}
 	else
 		_blockSize = atoi(argv[9]);
 	
-	cout << endl << "Number of threads: " << _gridSize*_blockSize << endl;
-	cout << endl;
+	if (interactive == 1){
+		cout << endl << "Number of threads: " << _gridSize*_blockSize << endl;
+		cout << endl;
+	}
 	
 	int *startPartitionList = new int[_gridSize*_blockSize];	
 	int *endPartitionList = new int[_gridSize*_blockSize];		
@@ -1261,14 +1279,16 @@ int main(int argc, char *argv[]){
 	if (artificial == false){	// input file required - returns an adjacency list of the graph, graph size and max degree
 		ifstream testFile;	
 		
-		cout << "Enter graph input filename (e.g. graphs/1138_bus.mtx): ";
-		if (interactive == 1)
+		if (interactive == 1){
+			cout << "Enter graph input filename (e.g. graphs/1138_bus.mtx): ";
+		//if (interactive == 1)
 			cin >> inputFilename;
+		}
 		else
 			inputFilename = argv[10];
 		
 		
-		if (interactive != 1)
+		if ((interactive == 0)||(interactive == 2))
 			weighted = argv[11][0];
 		
 
@@ -1294,7 +1314,7 @@ int main(int argc, char *argv[]){
 		 adjacencyMatrix = NULL;
 		 */
 		
-		readGraphAdj(adjacentList, inputFilename.c_str(), _gridSize, _blockSize, graphSizeRead, graphSize, numEdges, maxDegree, weighted);
+		readGraphAdj(adjacentList, inputFilename.c_str(), _gridSize, _blockSize, graphSizeRead, graphSize, numEdges, maxDegree, weighted, interactive);
 	}
 	else
 	{
@@ -1335,18 +1355,21 @@ int main(int argc, char *argv[]){
 	
 	if (maxDegree > TEMP_COLOR_LENGTH)
 	{
-		cout << endl << "Warning ... degree of graph (" << maxDegree << ") exceeds current TEMP_COLOR_LENGTH (" <<  TEMP_COLOR_LENGTH << ") " << endl;
-		cout << "This might cause errors!!!" << endl;
-		cout << "Are you sure you want to continue (y/n): ";
-		if (interactive == 1)
+		if (interactive == 1){
+			cout << endl << "Warning ... degree of graph (" << maxDegree << ") exceeds current TEMP_COLOR_LENGTH (" <<  TEMP_COLOR_LENGTH << ") " << endl;
+			cout << "This might cause errors!!!" << endl;
+			cout << "Are you sure you want to continue (y/n): ";
+		//if (interactive == 1)
 			cin >> ans;
+		}
 		else
 			ans = argv[12][0];
 		
-		if (ans != 'y'){
-			cout << "Exiting now - please change value of constant TEMP_COLOR_LENGTH in graphColoring.hi or use OPTION TWO in graphColoring.cu" << endl << endl;
-			exit(0);
-		}
+			if (ans != 'y'){
+				cout << "Exiting now - please change value of constant TEMP_COLOR_LENGTH in graphColoring.hi or use OPTION TWO in graphColoring.cu" << endl << endl;
+				exit(0);
+			}
+		
 	}
 	else
 		cout << "Allocation successful!" << endl;
@@ -1463,8 +1486,8 @@ int main(int argc, char *argv[]){
 	float elapsedTimesGPU[MAXGPUITERATIONS], elapsedTimesGPU_Bound[MAXGPUITERATIONS], elapsedTimesGPU_Col[MAXGPUITERATIONS], elapsedTimesGPU_Sol[MAXGPUITERATIONS]; 
 	float elapsedTimeGPU, elapsedTimeGPU_Bound, elapsedTimeGPU_Col, elapsedTimeGPU_Sol; 
 	int numColorsParallels[MAXGPUITERATIONS], conflictCounts[MAXGPUITERATIONS], interColorsParallels[MAXGPUITERATIONS];
-	int avgConflicts, avgColors, avgInterColorsParallel;
-	
+	int avgConflicts, avgInterColorsParallel;
+    float avgColors;	
 	avgConflicts = avgColors = avgInterColorsParallel = 0;
 	elapsedTimeGPU = 0;
 	elapsedTimeGPU_Col = 0;
@@ -1494,13 +1517,10 @@ int main(int argc, char *argv[]){
 	
 	
 	//--------------------- Checking for color conflict ---------------------!
+	if (interactive != 2)
+		cout << endl << endl << "Sequential Conflict check: ";
 	
-	cout << endl << "Sequential Conflict check: ";
-	numColorsSeq = checkCorrectColoring(adjacentList, graphColors, graphSize, maxDegree);
-	
-	cout << endl;  
-	cout << "Sequential colors: " << numColorsSeq << endl;
-	
+	numColorsSeq = checkCorrectColoring(adjacentList, graphColors, graphSize, maxDegree,interactive);
 	
 	
 	
@@ -1573,10 +1593,12 @@ int main(int argc, char *argv[]){
 		
 		//--------------- Step 4: solve conflicts 
 		
-		if (sdoConflictSolver == true)
+	
+
+		if (GPUSDO == 0)
+		    conflictSolveFF(adjacentList,  graphSize, conflict, conflictCount, graphColors, maxDegree);
+		else	
 			conflictSolveSDO(adjacentList, conflict, conflictCount, graphColors, degreeList, graphSize, maxDegree);
-		else
-			conflictSolveFF(adjacentList,  graphSize, conflict, conflictCount, graphColors, maxDegree); 
 		
 		cudaEventRecord(stop, 0); 
 		cudaEventSynchronize(stop); 
@@ -1588,13 +1610,14 @@ int main(int argc, char *argv[]){
 		
 		
 		//--------------------- Checking for color conflict ---------------------!
+		if (interactive != 2)
+			cout << endl <<  "Parallel Conflict check:   Run: " << repeatGPU;	
 		
-		cout << endl <<  "Parallel Conflict check: " << repeatGPU;	
-		numColorsParallels[repeatGPU] = checkCorrectColoring(adjacentList, graphColors, graphSize, maxDegree);
+		numColorsParallels[repeatGPU] = checkCorrectColoring(adjacentList, graphColors, graphSize, maxDegree, interactive);
 	}
 	
 	
-	
+	int minColor = 100000;	
 	for (int k=0; k<GPUIterations; k++){
 		elapsedTimesGPU_Col[k] = elapsedTimesGPU_1[k];
 		elapsedTimeGPU_Col += elapsedTimesGPU_Col[k];								// coloring time
@@ -1610,6 +1633,11 @@ int main(int argc, char *argv[]){
 		
 		avgInterColorsParallel += interColorsParallels[k];
 		avgConflicts += conflictCounts[k];
+
+		
+		if (minColor > numColorsParallels[k])
+			minColor = numColorsParallels[k];
+
 		avgColors += numColorsParallels[k];
 	}
 	
@@ -1617,28 +1645,31 @@ int main(int argc, char *argv[]){
 	
 	elapsedTimeGPU = elapsedTimeGPU/GPUIterations;
 	elapsedTimeGPU_Col = elapsedTimeGPU_Col/GPUIterations; 
-	elapsedTimeGPU_Bound = elapsedTimeGPU/GPUIterations;
+	elapsedTimeGPU_Bound = elapsedTimeGPU_Bound/GPUIterations;
 	elapsedTimeGPU_Sol = elapsedTimeGPU_Sol/GPUIterations;
 	avgConflicts = avgConflicts/GPUIterations;
 	avgColors = avgColors/GPUIterations;
 	avgInterColorsParallel = avgInterColorsParallel/GPUIterations;
 	
-	
+	/*
 	// Display average timings
 	cout << endl << endl << "Coloring runs: " << endl;
 	for (int k=0; k<GPUIterations; k++){
+		cout << "others: " << elapsedTimesGPU_1[k] << " , " << elapsedTimesGPU_4[k]<< endl;   
 		cout << "Run " << (k+1) << " : Coloring: " << elapsedTimesGPU_Col[k]  << " ms " << 
 							       "    Boundary : " << elapsedTimesGPU_Bound[k]<< " ms " << 
 								   "    Conflict : " << elapsedTimesGPU_Sol[k]  << " ms " << 
 								   "    Total: "     << elapsedTimesGPU[k] + elapsedTimeBoundary  << " ms." << endl;	
 		cout << "Conflicts: " <<  conflictCounts[k] << "   GPU Colors: " << interColorsParallels[k] << "   Colors: " << numColorsParallels[k] << endl << endl;
 	}
-	
+	*/
 	
 	
 	//--------------------- Information Output ---------------------!	
-	
-	
+	if (interactive == 2){
+		cout << _gridSize << " " << _blockSize << " " << _gridSize*_blockSize << " " << graphSize/(_gridSize*_blockSize) << " " << passes << " " << avgConflicts << " " << (elapsedTimeBoundary + elapsedTimeGPU) << " " << minColor << " " << avgColors << " ;" << endl; 
+	}
+	else{
 	cout << endl << endl << "!------- Graph Summary:" << endl;
 	cout << "Vertices: " << graphSize << "   Edges: " << numEdges << "   Density: " << (2*numEdges)/((float)graphSize*(graphSize-1)) << endl;
 	cout << "Max  Degree: " << maxDegree << "    Average degree: " << avgDegree << endl;
@@ -1694,10 +1725,10 @@ int main(int argc, char *argv[]){
 	}
 	
 	cout << endl << "Getting boundary list: " 	<< elapsedTimeBoundary << " ms" << endl; 
-	cout << "ALGO step 1, 2 & 3   : " 	<< elapsedTimeGPU_Col << " ms" << endl;  
-	cout << "Boundary count       : " 	<< elapsedTimeGPU_Bound << " ms" << endl; 
-	cout << "ALGO step 4          : " 	<< elapsedTimeGPU_Sol << " ms" << endl; 
-	cout << "Total GPU time       : "	<< (elapsedTimeBoundary + elapsedTimeGPU) << " ms" << endl;
+	cout << "ALGO step 1, 2 & 3 (GPU)      : " 	<< elapsedTimeGPU_Col << " ms" << endl;  
+	cout << "Count Conflicts               : " 	<< elapsedTimeGPU_Bound << " ms" << endl; 
+	cout << "ALGO step 4 (solve conflicts) : " 	<< elapsedTimeGPU_Sol << " ms" << endl; 
+	cout << "Total time                    : "	<< (elapsedTimeBoundary + elapsedTimeGPU) << " ms" << endl;
 	cout << endl;
 	
 	
@@ -1705,14 +1736,15 @@ int main(int argc, char *argv[]){
 	cout << "Avg Conflict count: " << avgConflicts << endl;
 	cout << endl;
 	
-	
+	cout << "Sequential Color: " << numColorsSeq << endl;
 	cout << "Avg Colors before solving conflict: " << avgInterColorsParallel << endl;
-	cout << "Sequential Colors: " << numColorsSeq << "      -      Avg Parallel Colors: " << avgColors << endl;     
+	cout << "Min color allocated: " << minColor << "   -   Average color: " << avgColors << endl;
 	cout << "Avg GPU speed up (including boundary): " << elapsedTimeCPU/(elapsedTimeBoundary + elapsedTimeGPU) << " x" << endl;
 	
 	cout << "!~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~!" << endl << endl;
 	
-	
+	}
+
 	//--------------------- Cleanup ---------------------!		
 	delete []graphColors; 
 	delete []conflict; 
