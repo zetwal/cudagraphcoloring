@@ -550,15 +550,15 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	int *numConflicts;
 	
 	cudaEvent_t start_col, start_confl, stop_col, stop_confl, start_mem, stop_mem;         
-    	float elapsedTime_memory, elapsedTime_col, elapsedTime_confl; 
-	
-	int *tempColor = (int*)malloc(graphSize * sizeof(int));	
+    float elapsedTime_memory, elapsedTime_col, elapsedTime_confl; 
+    int conflictCount = 0;	
+	//int *tempColor = (int*)malloc(boundarySize * sizeof(int));	
 	
 	
 	//-------------- memory transfer -----------------!
 	cudaEventCreate(&start_mem); 
-    	cudaEventCreate(&stop_mem); 
-    	cudaEventRecord(start_mem, 0); 
+    cudaEventCreate(&stop_mem); 
+    cudaEventRecord(start_mem, 0); 
 	
 	
 	cudaMalloc((void**)&adjacentListD, graphSize*maxDegree*sizeof(int));
@@ -574,27 +574,27 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	
 	
 	cudaMemcpy(adjacentListD, adjacentList, graphSize*maxDegree*sizeof(int), cudaMemcpyHostToDevice);
-    	cudaMemcpy(colorsD, graphColors, graphSize*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(colorsD, graphColors, graphSize*sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemcpy(boundaryListD, boundaryList, boundarySize*sizeof(int), cudaMemcpyHostToDevice);
-    	cudaMemcpy(degreeListD, degreeList, graphSize*sizeof(int), cudaMemcpyHostToDevice);
-    	cudaMemcpy(startPartitionListD, startPartitionList, _gridSize*_blockSize*sizeof(int), cudaMemcpyHostToDevice);
-    	cudaMemcpy(endPartitionListD, endPartitionList, _gridSize*_blockSize*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(degreeListD, degreeList, graphSize*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(startPartitionListD, startPartitionList, _gridSize*_blockSize*sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(endPartitionListD, endPartitionList, _gridSize*_blockSize*sizeof(int), cudaMemcpyHostToDevice);
 	cudaMemcpy(randomListD, randomList, numRand*sizeof(int), cudaMemcpyHostToDevice);
  	cudaMemcpy(numOutD, numOut, graphSize*sizeof(int), cudaMemcpyHostToDevice);
 	
 
 	cudaEventRecord(stop_mem, 0);
-    	cudaEventSynchronize(stop_mem);
+    cudaEventSynchronize(stop_mem);
 
 
 	cudaError_t error = cudaGetLastError();
-        if(error != cudaSuccess)
-        {
-                // print the CUDA error message and exit
-                cout << "Cuda error - After memory allocation: " << error << endl;
-                printf("CUDA error: %s\n", cudaGetErrorString(error));
-                exit(-1);
-        }	
+    if (error != cudaSuccess)
+    {
+    	// print the CUDA error message and exit
+        cout << "Cuda error - After memory allocation: " << error << endl;
+        printf("CUDA error: %s\n", cudaGetErrorString(error));
+        exit(-1);
+    }	
 	
 	
 	dim3 dimGrid_col(_gridSize);
@@ -608,8 +608,8 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	
 	//-------------- Sequential Graph coloring -----------------!
 	cudaEventCreate(&start_col); 
-    	cudaEventCreate(&stop_col); 
-    	cudaEventRecord(start_col, 0); 
+    cudaEventCreate(&stop_col); 
+    cudaEventRecord(start_col, 0); 
 	
 	
 	if (useSDO == 0){
@@ -628,7 +628,7 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 			}
 	
 	cudaEventRecord(stop_col, 0); 
-    	cudaEventSynchronize(stop_col); 
+    cudaEventSynchronize(stop_col); 
 	
 	
 
@@ -642,18 +642,19 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 
 	
 	cudaEventCreate(&start_confl); 
-    	cudaEventCreate(&stop_confl); 
-    	cudaEventRecord(start_confl, 0); 
+    cudaEventCreate(&stop_confl); 
+    cudaEventRecord(start_confl, 0); 
 	
 	cudaMemset(conflictListD, -1, boundarySize*sizeof(int));
 	conflictsDetection<<<dimGrid_confl, dimBlock_confl>>>(adjacentListD, boundaryListD, colorsD, conflictListD, graphSize, boundarySize, maxDegree);
 	
 	cudaEventRecord(stop_confl, 0); 
-    	cudaEventSynchronize(stop_confl); 
+    cudaEventSynchronize(stop_confl); 
 
 
+	/*
 	cudaMemcpy(tempColor, colorsD, graphSize*sizeof(int), cudaMemcpyDeviceToHost);
-	int conflictCount = 0;
+	conflictCount = 0;
 	for (int k=0; k<graphSize; k++)
 		if (tempColor[k] == 0)
 			conflictCount++;
@@ -669,40 +670,131 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 				passes = 4 + ((int)((conflictCount - 10000)/10000));
 	}
 	cout << "Passes: " << passes << endl;	
+	*/
+
+
+	int setPassNum = 1;
+	if (passes == 0)
+		setPassNum = 0;
+	
+
+	cudaEvent_t start_memcon, stop_memcon;
+    float elapsedTime_memcon;
+
+	cudaEventCreate(&start_memcon);
+    cudaEventCreate(&stop_memcon);
+    cudaEventRecord(start_memcon, 0);	
+
+/*
+	if (setPassNum == 0){
+		cudaMemcpy(tempColor, colorsD, graphSize*sizeof(int), cudaMemcpyDeviceToHost);
+    	conflictCount = 0;
+    	for (int k=0; k<graphSize; k++)
+        	if (tempColor[k] == 0){
+            	conflictCount++;
+				if (conflictCount > 200){
+					passes = 2;
+					break;
+				}
+			}
+	}
+*/
+
+	if (setPassNum == 0){
+        //cudaMemcpy(tempColor, conflictListD, boundarySize*sizeof(int), cudaMemcpyDeviceToHost);
+        cudaMemcpy(conflict, conflictListD, boundarySize*sizeof(int), cudaMemcpyDeviceToHost);
+        conflictCount = 0;
+        for (int k=0; k<boundarySize; k++)
+            if (conflict[k] != -1){
+                conflictCount++;
+                if (conflictCount > 200){
+                    passes = 2;
+                    break;
+                }
+            }
+    }
+
+	cudaEventRecord(stop_memcon, 0);
+    cudaEventSynchronize(stop_memcon);
+
+	cudaEventElapsedTime(&elapsedTime_memcon, start_memcon, stop_memcon);
+	//cout << "Conflict count time: " << elapsedTime_memcon << endl;
 
 
 	for (int times=1; times<passes; times++){
-                cudaEventCreate(&start_col);
-                cudaEventCreate(&stop_col);
-                cudaEventRecord(start_col, 0);
+        cudaEventCreate(&start_col);
+       	cudaEventCreate(&stop_col);
+        cudaEventRecord(start_col, 0);
                 
 		if (useSDO == 1)
-                        conflictSolveSDO<<<dimGrid_col, dimBlock_col>>>(adjacentListD, conflictListD, colorsD, degreeListD, graphSize, maxDegree, startPartitionListD, endPartitionListD, randomListD);
-                else
+            conflictSolveSDO<<<dimGrid_col, dimBlock_col>>>(adjacentListD, conflictListD, colorsD, degreeListD, graphSize, maxDegree, startPartitionListD, endPartitionListD, randomListD);
+        else
 			if (useSDO ==2)
-			conflictSolveMAX<<<dimGrid_col, dimBlock_col>>>(adjacentListD, conflictListD, colorsD, degreeListD, graphSize, maxDegree, startPartitionListD, endPartitionListD, randomListD,numOutD);
+				conflictSolveMAX<<<dimGrid_col, dimBlock_col>>>(adjacentListD, conflictListD, colorsD, degreeListD, graphSize, maxDegree, startPartitionListD, endPartitionListD, randomListD,numOutD);
 			else
 				if (useSDO == 3)
 					conflictSolveMIN<<<dimGrid_col, dimBlock_col>>>(adjacentListD, conflictListD, colorsD, degreeListD, graphSize, maxDegree, startPartitionListD, endPartitionListD, randomListD,numOutD);
-                        else
-				recolorGraph_FF<<<dimGrid_col, dimBlock_col>>>(adjacentListD, colorsD, graphSize, maxDegree, startPartitionListD, endPartitionListD);
+                else
+					recolorGraph_FF<<<dimGrid_col, dimBlock_col>>>(adjacentListD, colorsD, graphSize, maxDegree, startPartitionListD, endPartitionListD);
                 
 		cudaEventRecord(stop_col, 0);
-                cudaEventSynchronize(stop_col);
+        cudaEventSynchronize(stop_col);
 
 
 
 		cudaEventCreate(&start_confl);
-                cudaEventCreate(&stop_confl);
-                cudaEventRecord(start_confl, 0);
+        cudaEventCreate(&stop_confl);
+        cudaEventRecord(start_confl, 0);
 
-                cudaMemset(conflictListD, -1, boundarySize*sizeof(int));
-                conflictsDetection<<<dimGrid_confl, dimBlock_confl>>>(adjacentListD, boundaryListD, colorsD, conflictListD, graphSize, boundarySize, maxDegree);
+        cudaMemset(conflictListD, -1, boundarySize*sizeof(int));
+        conflictsDetection<<<dimGrid_confl, dimBlock_confl>>>(adjacentListD, boundaryListD, colorsD, conflictListD, graphSize, boundarySize, maxDegree);
 
-                cudaEventRecord(stop_confl, 0);
-                cudaEventSynchronize(stop_confl);
+        cudaEventRecord(stop_confl, 0);
+        cudaEventSynchronize(stop_confl);
+	
+
+		cudaEventCreate(&start_memcon);
+    	cudaEventCreate(&stop_memcon);
+    	cudaEventRecord(start_memcon, 0);
+		/*
+		if (setPassNum == 0){
+			cudaMemcpy(tempColor, colorsD, graphSize*sizeof(int), cudaMemcpyDeviceToHost);
+			conflictCount = 0;
+        	for (int k=0; k<graphSize; k++)
+            	if (tempColor[k] == 0){
+                	conflictCount++;
+                	if (conflictCount > 200){
+                    	passes++;
+                    	break;
+                	}
+            	}
+		}
+		*/
+	
+		if (setPassNum == 0){        
+		//	cudaMemcpy(tempColor, conflictListD, boundarySize*sizeof(int), cudaMemcpyDeviceToHost);
+            cudaMemcpy(conflict, conflictListD, boundarySize*sizeof(int), cudaMemcpyDeviceToHost);
+			conflictCount = 0;
+        	for (int k=0; k<boundarySize; k++)
+            	if (conflict[k] != -1){
+                	conflictCount++;
+                	if (conflictCount > 200){
+                    	passes++;
+                    	break;
+                	}
+            	}
+    	}
+
+		cudaEventRecord(stop_memcon, 0);
+    	cudaEventSynchronize(stop_memcon);
+    	cudaEventElapsedTime(&elapsedTime_memcon, start_memcon, stop_memcon);
+    	//cout << "Conflict count time: " << elapsedTime_memcon << endl;
+
+
 	}
 	
+	//cout << "Passes done: " << passes << endl;
+
 	//-------------- Cleanup -----------------!
 	cudaMemcpy(graphColors, colorsD, graphSize*sizeof(int), cudaMemcpyDeviceToHost);
 	cudaMemcpy(conflict, conflictListD, boundarySize*sizeof(int), cudaMemcpyDeviceToHost);
@@ -713,10 +805,10 @@ void cudaGraphColoring(int *adjacentList, int *boundaryList, int *graphColors, i
 	cudaEventElapsedTime(&elapsedTime_col, start_col, stop_col); 
 	cudaEventElapsedTime(&elapsedTime_confl, start_confl, stop_confl); 
 	
-	cout << endl << "GPU timings ~ Memory transfer: " << elapsedTime_memory  << " ms     Coloring: " 
-	<< elapsedTime_col << " ms    Conflict: " << elapsedTime_confl << " ms" << endl; 
+	//cout << endl << "GPU timings ~ Memory transfer: " << elapsedTime_memory  << " ms     Coloring: " 
+	//<< elapsedTime_col << " ms    Conflict: " << elapsedTime_confl << " ms" << endl; 
 	
-	delete []tempColor;
+//	delete []tempColor;
 	
 	cudaFree(adjacentListD);
 	cudaFree(colorsD);
