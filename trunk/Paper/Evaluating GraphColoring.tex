@@ -86,6 +86,13 @@ Our study also identifies several features of graphs and the GPU implementation 
 
 The remainder of this paper is structured as follows: we first review previous graph coloring work will be presented.  The following section discusses the details of the parallel algorithm and the coloring heuristics we evaluated.  We present extensive experimental results followed by a conclusion.
 
+\section{Target platform}
+GPUs have different architectures compared to parallel computers where most of the parallel graph-coloring algorithms are run. The main differences and how they impact on algorithm are described below:
+i) Number of processors. Graphics cards have many processors: an NVIDIA GTX 260 has 192 cores while a Tesla S1070 processor has 240 cores. This allows us to have much more parallelism (and having many more threads running at the same time) compared to other architectures. Moreover, as thread creation is inexpensive on a GPU, we will be running a lot to fully use the power of the GPU. Consequently our algorithm will be using many more threads than existing algorithms.
+
+ii) Processor speed. While a state-of-the-art processor typically operates at around 3 GHz processor cores on GPUs are much slower: one core on a GTX 260 operates at 1242 MHz while a core on a Tesla S1070 operates between 1.296 to 1.44  GHz. Hence we need to use the many threads to match or better the speed of a standard CPU. Moreover, trying to get speedups for  O(N) algorithms are hard as the cores are individually slower and some time is wasted copying data to and from the GPU
+
+iii) Memory. The memory available to parallel computers is normally bigger but it is sharing data between processors is usually much more expensive. On a GPU, all the data can be stored in the global memory and all the cores can readily access it.
 \section{ Related Work}
 In this section we give an overview of existing graph coloring algorithms, both sequential and parallel.  In this discussion, a graph $G=(V,E)$, where $V$ is a set of vertices, and $E$ is a set of edges.We denote the number of vertices $V$ by $|V|$, the number of edges $E$ by $|E|$. And the degree of a vertex $v_i \in V$ is denoted by $d(v_i)$. The maximum vertex degree of a graph is denoted as $\Delta$.
 
@@ -133,15 +140,13 @@ and the ith vertice is $v_i$.
 \end{algorithm}
 
 
-Figure 1:  SDO $\&$ LDO algorithm.
-
 \subsection{Previous work on parallel graph coloring}
 
-A number of existing parallel algorithms are based on the concept of maximal independent set (MIS) proposed by \citet{luby1985simple}. An independent set is defined as a set of vertices in which no two vertices are neighbors. For Luby’s MIS algorithm, all the vertices in an independent set are assigned to the same color, and once an independent set is found and colored, the vertices in the set and their neighbors are removed from the graph. By iterating the procedure until all the vertices in the graph are colored, the independent sets found are merged into a maximal independent set. Luby proposed a parallel algorithm of searching for an independent set based on a Monto Carlo method in \cite{luby1985simple}
+A number of existing parallel algorithms are based on the concept of maximal independent set (MIS) proposed by \citet{luby1985simple}. An independent set is defined as a set of vertices in which no two vertices are neighbors. For Luby’s MIS algorithm, all the vertices in an independent set are assigned to the same color, and once an independent set is found and colored, the vertices in the set and their neighbors are removed from the graph. By iterating the procedure until all the vertices in the graph are colored, the independent sets found are merged into a maximal independent set. Luby proposed a parallel algorithm of searching for an independent set based on a Monto Carlo method in \cite{luby1985simple}.
 
 Jones-Plassmann’s algorithm \cite{jones1993parallel}  improves the work of Luby. A single set of random weights is constructed and assigned to each vertex before coloring, and it searches for independent sets in parallel just like the MIS algorithm does, selecting the vertices with the (local) largest weights. Instead of assigning the same color to the vertices in an independent set, they are colored by the smallest color that has not been assigned to any neighbors. Gjertsen et al \cite{gjertsen1996parallel} and Allwright et al \cite{allwright1995comparison} share the same idea.  The parallel implementations that follow this approach are targeting distributed memory architectures.  Graphs are uniformly partitioned into subgraphs and each subgraph is associated with a specific processor.  To avoid color conflicts, two adjacent vertices on different processors cannot be colored in the same time step. This restriction can be overcome by Johansson’s algorithm, where each processor is assigned one single vertex and the vertices are colored randomly in the same time step. Color inconsistency may occur in this  scheme, so the coloring procedure is recursively re-run for the vertices receiving illegal colors.
 
-Gebremedhin and Manne proposed a  parallel coloring algorithm for shared memory architectures, which achieves a linear speedup on the PRAM model \cite{gebremedhin2000scalable} . The G-M algorithm consists of four phases: (1) Partitioning: Assuming the number of processors is p, in this phase the graph is broken down into p independent subgraphs of almost the same size, and each subgraph is assigned to one processor ; (2) Pseudo-coloring: Each processor tentatively colors the vertices assigned to it in sequence. When two adjacent vertices reside on different processors are colored simultaneously, coloring inconsistency may arise.; (3) Conflict detection:  Each processor checks the colors of  vertices assigned to it for consistency and identify a set of vertices which have color conflicts; (4) Conflict resolving: Re-coloring the detected vertices with conflicts.
+Gebremedhin and Manne proposed a  parallel coloring algorithm for shared memory architectures, which achieves a linear speedup on the PRAM model \cite{gebremedhin2000scalable} .And in \cite{gebremedhin2006speeding} they inproved their work and proposed a G-M algorithm which provides better performance. The G-M algorithm consists of four phases: (1) Partitioning: Assuming the number of processors is p, in this phase the graph is broken down into p independent subgraphs of almost the same size, and each subgraph is assigned to one processor ; (2) Pseudo-coloring: Each processor tentatively colors the vertices assigned to it in sequence. When two adjacent vertices reside on different processors are colored simultaneously, coloring inconsistency may arise.; (3) Conflict detection:  Each processor checks the colors of  vertices assigned to it for consistency and identify a set of vertices which have color conflicts; (4) Conflict resolving: Re-coloring the detected vertices with conflicts.
 
 \begin{algorithm}
 \begin{algorithmic}
@@ -171,24 +176,13 @@ p$ \mbox{do in parallel}}
 \end{algorithmic}
 \end{algorithm}           
 
-Figure 2: psedocode for the G-M algorithm \cite{gebremedhin2006speeding} \
-
-
-In this paper, we proposed a framework based on the G-M algorithm, which is adapted for an  NVIDIA GPU platform.  In addition, two new heuristic algorithms are proposed to match the parallelism exploited by the GPU, which are shown to give better results than existing heuristics such as FF and SDO. The proposed framework and algorithms are described in the next section.
+In this paper, we proposed a framework based on the G-M algorithm, which is adapted for an NVIDIA GPU platform.  In addition, two new heuristic algorithms are proposed to match the parallelism exploited by the GPU, which are shown to give better results than existing heuristics such as FF and SDO. The proposed framework and algorithms are described in the next section.
 
 \section{Algorithm}
 
 After studying previous work on parallel graph-coloring algorithms,  we have developed a CUDA version of the algorithm which is based on the former but is more suited to GPU architectures.
 
-\subsection{GPU vs other parallel architectures}
-GPUs have different architectures compared to parallel computers where most of the parallel graph-coloring algorithms are run. The main differences and how they impact on algorithm are described below:
-i) Number of processors. Graphics cards have many processors: an NVIDIA GTX 260 has 192 cores while a Tesla S1070 processor has 240 cores. This allows us to have much more parallelism (and having many more threads running at the same time) compared to other architectures. Moreover, as thread creation is inexpensive on a GPU, we will be running a lot to fully use the power of the GPU. Consequently our algorithm will be using many more threads than existing algorithms.
-
-ii) Processor speed. While a state-of-the-art processor typically operates at around 3 GHz processor cores on GPUs are much slower: one core on a GTX 260 operates at 1242 MHz while a core on a Tesla S1070 operates between 1.296 to 1.44  GHz. Hence we need to use the many threads to match or better the speed of a standard CPU. Moreover, trying to get speedups for  O(N) algorithms are hard as the cores are individually slower and some time is wasted copying data to and from the GPU
-
-iii) Memory. The memory available to parallel computers is normally bigger but it is sharing data between processors is usually much more expensive. On a GPU, all the data can be stored in the global memory and all the cores can readily access it.
-
-\subsection{The Graph Coloring Algorithm}
+\subsection{The Graph Coloring Framework}
 Step 1: Boundary Nodes (on CPU)
 
 The graph is logically partitioned, boundary nodes are identified and the number         of neighbors out of the subgraph is identified for each node.
