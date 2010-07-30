@@ -87,7 +87,7 @@ Our study also identifies several features of graphs and the GPU implementation 
 The remainder of this paper is structured as follows: we first review previous graph coloring work will be presented.  The following section discusses the details of the parallel algorithm and the coloring heuristics we evaluated.  We present extensive experimental results followed by a conclusion.
 
 \section{ Related Work}
-In this section we give an overview of existing graph coloring algorithms, both sequential and parallel.  In this discussion, a graph $G=(V,E)$, where $V$ is a set of vertices, and $E$ is a set of edges.We denote the number of vertices $V$ by $|V|$, the number of edges $E$ by $|E|$. And the degree of a vertex $v_i$ is denoted by $d(v_i)$. The maximum vertex degree of a graph is denoted as $\delta$.
+In this section we give an overview of existing graph coloring algorithms, both sequential and parallel.  In this discussion, a graph $G=(V,E)$, where $V$ is a set of vertices, and $E$ is a set of edges.We denote the number of vertices $V$ by $|V|$, the number of edges $E$ by $|E|$. And the degree of a vertex $v_i \in V$ is denoted by $d(v_i)$. The maximum vertex degree of a graph is denoted as $\delta$.
 
 \subsection{Sequential greedy coloring}
 
@@ -106,25 +106,25 @@ Generally, the First Fit algorithm uses more colors than the degree-based algori
 
 \renewcommand{\algorithmicrequire}{\textbf{phase}}
 Assume the total number of vertices in the graph to be colored is N,
-and the ith vertice is $n_i$.
+and the ith vertice is $v_i$.
 \begin{algorithm}
 \begin{algorithmic}
 \STATE {\mbox {SDO $\&$ LDO algorithm:}}
 \WHILE {$N_{colored} < N $}
     \STATE  $ max = -1$
     \FOR {$ i = 1\: to\: N$}
-       \IF {$!colored(n_i)$}
-           \STATE $d = SaturatedDegree(n_i) $
-           \IF {$d > max$}
-               \STATE $max = d$
+       \IF {$!colored(v_i)$}
+           \STATE $sd = SaturatedDegree(v_i) $
+           \IF {$sd > max$}
+               \STATE $max = sd$
                \STATE $index = i$
            \ENDIF
-           \IF {$ d = max$}
-             \IF {$Degree(n_i) > Degree(n_{index})$}
+           \IF {$ sd = max$}
+             \IF {$d(v_i) > d(v_{index})$}
                  \STATE $index = i$
              \ENDIF
            \ENDIF
-        \STATE $ Color \:n_{index} $
+        \STATE $ Color \:v_{index} $
         \STATE $N_{colored} ++$
         \ENDIF
     \ENDFOR
@@ -240,6 +240,34 @@ Memory: ...
 CPU: ...
 
 Table 1
+
+\begin{table}
+\scriptsize
+\begin{center}
+\begin{tabular}{l r r r r}
+\hline
+Name & $|V|$ & $|E|$ & Max Degree & Avg Degree \\
+\\
+\hline
+ct20stif & 52,329 & 1,375,396 & 206 & 50 \\
+nasasrb & 54,870 & 1,366,097 & 275 & 47 \\
+pwtk  & 217,918 & 5,926,171 & 179 & 52 \\
+\\
+pkustk10 & 81,920 & 2,114,154 & 89 & 52 \\
+pkustk11 & 87,804 & 2,565,054 & 131 & 55 \\
+pkustk13 & 94,893 & 3,260,967 & 299 & 68\\
+\\
+hood & 220,542 & 5,273,947 & 76  & 47 \\
+msdoor & 417,792 & 9,912,536 & 76 & 46 \\
+ldoor & 958,464 & 22,785,136 & 76 & 46 \\
+
+\end{tabular}
+\caption{Anisotropic Mean Volume Process Timing}
+\label{amean_time}
+\end{center}
+\end{table}
+
+
 
 
 
