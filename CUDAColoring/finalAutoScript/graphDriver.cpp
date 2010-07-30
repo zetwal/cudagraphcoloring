@@ -158,7 +158,7 @@ void readGraph(int *&adjacencyMatrix, const char *filename, int _gridSize, int _
 
 // Author: Pascal & Shusen
 // reads a matrix market format into an adjacency list
-void readGraphAdj(int *&adjacencyList, const char *filename, int _gridSize, int _blockSize, int &graphSizeRead, int &graphSize, long &edgeSize, int &maxDegree, char weighted, int interactive)
+void readGraphAdj(int *&adjacencyList, const char *filename, int _gridSize, int _blockSize, int &graphSizeRead, int &graphSize, long &edgeSize, int &maxDegree, char weighted, int interactive, bool useMetis)
 {		
 	char comments[512], weightedAns;
 	int graphSizeX, graphSizeY, numUsefulEdges, from, to, weightedGraph;
@@ -205,8 +205,11 @@ void readGraphAdj(int *&adjacencyList, const char *filename, int _gridSize, int 
 				weightedGraph = 0;
 			
 			graphSizeRead = graphSizeX;
-			graphSize = findMultiple(_gridSize*_blockSize, graphSizeRead);
-			
+			if (useMetis == false)
+				graphSize = findMultiple(_gridSize*_blockSize, graphSizeRead);
+			else
+				graphSize = graphSizeX;		
+	
 			degreeList = new int[graphSize];
 			memset(degreeList, 0, graphSize*sizeof(int));
 			
@@ -682,16 +685,23 @@ int color(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int n
 
 // Author: Pascal
 // main driver function for graph coloring
-int sdoIm(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, int maxDegree){
+int sdoIm(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, int maxDegree, int numPartitions, int *startPartitionList, int *endPartitionList ){
     int satDegree, numColored, max, index;
     numColored = 0;
     int iterations = 0;
-    
-	
-    while (numColored < sizeGraph){
+    int start, end, subGraphSize;
+
+	for (int k=0; k<numPartitions; k++){
+		
+		start = startPartitionList[k];
+		end = endPartitionList[k];
+		subGraphSize = end - start;
+ 
+	numColored = 0;
+    while (numColored < subGraphSize){
         max = -1;
         
-        for (int i=0; i<sizeGraph; i++){
+        for (int i=start; i<end; i++){
             if (graphColors[i] == 0)                        // not colored
             {
                 satDegree = saturation(i,adjacencyList,graphColors, maxDegree);
@@ -714,6 +724,8 @@ int sdoIm(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, 
 			//iterations++;
         }
     }
+	}
+
     
     return iterations;
 }
@@ -927,7 +939,9 @@ int metis(int *adjacencyList, int *newAdjacencyList, int graphSize, int numEdges
 	partitionMin = partitionMax = -1;
 	startPartitionCount = endPartitionCount = 0;
 	
+	
 	for (int i=0; i<numPartitions; i++){
+		//cout << " i " << partitionList[i] << endl;
 		count = 0;
 		startPartitionCount = endPartitionCount;
 		
@@ -935,6 +949,7 @@ int metis(int *adjacencyList, int *newAdjacencyList, int graphSize, int numEdges
 			if (partitionList[j] == i){
 				count++;
 			}
+
 		}
 		endPartitionCount += count;
 		
@@ -950,13 +965,16 @@ int metis(int *adjacencyList, int *newAdjacencyList, int graphSize, int numEdges
 			min = count;
 			partitionMin = i;
 		}
+	
+//		cout << i << " : " << partitionList[j] << " - " << count << endl;
 	}
 
 	if (interactive != 2){	
 		cout << "Min in partiton: " << min << "  for partition: " << partitionMin << endl;
 		cout << "Max in parition: " << max << "  for partition: " << partitionMax << endl;
-	}else{
-		cout << min << " " << max << " "; 
+	}
+	else{
+		cout << min <<  "  "  << max << " "; 
 	}
 	/*
 	 cout << "Partitions list:" << endl;
@@ -1330,7 +1348,7 @@ int main(int argc, char *argv[]){
 		 adjacencyMatrix = NULL;
 		 */
 		
-		readGraphAdj(adjacentList, inputFilename.c_str(), _gridSize, _blockSize, graphSizeRead, graphSize, numEdges, maxDegree, weighted, interactive);
+		readGraphAdj(adjacentList, inputFilename.c_str(), _gridSize, _blockSize, graphSizeRead, graphSize, numEdges, maxDegree, weighted, interactive, useMetis);
 	}
 	else
 	{
@@ -1455,6 +1473,24 @@ int main(int argc, char *argv[]){
 	
 	
 	//--------------------- Boundary List ---------------------!
+	cudaEvent_t start_bc, stop_bc;
+        float elapsedTimeBoundaryc = 0;
+
+	if (CPUSDO == true){
+        cudaEventCreate(&start_bc);
+        cudaEventCreate(&stop_bc);
+        cudaEventRecord(start_bc, 0);
+
+        getBoundaryNodes(adjacentList, boundaryList, graphSize, maxDegree, _gridSize,_blockSize, startPartitionList, endPartitionList);	
+
+        cudaEventRecord(stop_bc, 0);
+        cudaEventSynchronize(stop_bc);
+        cudaEventElapsedTime(&elapsedTimeBoundaryc, start_bc, stop_bc);	
+	}
+
+
+
+
 	///////// Needs to be updated to use adjacencyList instead of adjacencyMatrix!!!!!!!!!!!!!!!!!!!
 	cudaEvent_t start_b, stop_b;
 	float elapsedTimeBoundary;
@@ -1519,7 +1555,10 @@ int main(int argc, char *argv[]){
 	
 	// Original adjacency List
 	if (CPUSDO == true)
-		sdoIm(adjacentList, graphColors, degreeList, graphSize, maxDegree);
+		if (interactive != 2)
+			cout << "Iterations:" << sdoIm(adjacentList, graphColors, degreeList, graphSize, maxDegree,_gridSize*_blockSize, startPartitionList, endPartitionList) << endl;
+		else
+			sdoIm(adjacentList, graphColors, degreeList, graphSize, maxDegree,_gridSize*_blockSize, startPartitionList, endPartitionList);
 	else
 		colorGraph_FF(adjacentList, graphColors, graphSize, maxDegree);  
 	
@@ -1680,10 +1719,25 @@ int main(int argc, char *argv[]){
 	}
 	*/
 	
-	
+//cout << graphSize << endl;	
 	//--------------------- Information Output ---------------------!	
 	if (interactive == 2){
-		cout << _gridSize << " " << _blockSize << " " << _gridSize*_blockSize << " " << graphSize/(_gridSize*_blockSize) << " " << passes << " " << avgConflicts << " " << (elapsedTimeBoundary + elapsedTimeGPU) << " " << minColor << " " << avgColors << " ;" << endl; 
+		 float timeCPU;
+        timeCPU = elapsedTimeCPU+elapsedTimeBoundaryc;
+
+		if (GPUSDO == 0)
+                	cout << "0 ";
+		else
+                        if (GPUSDO == 1)
+			 	cout << "1 ";
+                        else
+                                if (GPUSDO == 2)
+					cout << "2 ";
+                                else
+                                        if (GPUSDO == 3)
+						cout << "3 ";
+
+		cout << _gridSize << " " << _blockSize << " " << _gridSize*_blockSize << " " << graphSize/(_gridSize*_blockSize) << " " << passes << " " << avgConflicts << " " << timeCPU << " " << (elapsedTimeBoundary + elapsedTimeGPU) << " " << timeCPU/(elapsedTimeBoundary + elapsedTimeGPU)  << " " << minColor << " " << avgColors << " " << numColorsSeq  << " " << graphSize << ";" << endl; 
 	}
 	else{
 	cout << endl << endl << "!------- Graph Summary:" << endl;
@@ -1710,6 +1764,7 @@ int main(int argc, char *argv[]){
 
 	cout << endl << "Average timing for " <<  GPUIterations << " runs: " << endl;
 	if (CPUSDO == true){
+		elapsedTimeCPU = elapsedTimeCPU+elapsedTimeBoundary;
 		cout << "CPU time (SDO): " << elapsedTimeCPU << " ms ";
 		if (GPUSDO == 0)
 			cout << "   -  GPU Time (FF Solver): " << elapsedTimeGPU << " ms" << endl;
