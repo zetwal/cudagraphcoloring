@@ -42,21 +42,12 @@
 
 \title{Evaluating Graph Coloring on GPUs}
 
-\authorinfo{Pascal Grosset}
-          {University of Utah}
-          {pgrosset@sci.utah.edu}
-\authorinfo{Peihong Zhu}
-          {University of Utah}
-          {peihong.zhu@utah.edu}
-\authorinfo{Shusen Liu}
-          {University of Utah}
-          {Email2/3}
-\authorinfo{Mary Hall}
-          {University of Utah}
-          {mhall@cs.utah.edu}
-\authorinfo{Suresh Venkatasubramanian}
-          {University of Utah}
-          {suresh@cs.utah.edu}
+\authorinfo{Name1}
+           {Affiliation1}
+           {Email1}
+\authorinfo{Name2\and Name3}
+           {Affiliation2/3}
+           {Email2/3}
 
 \maketitle
 
@@ -148,63 +139,38 @@ Jones-Plassmann’s algorithm \cite{jones1993parallel}  improves the work of Lub
 
 Gebremedhin and Manne proposed a  parallel coloring algorithm for shared memory architectures, which achieves a linear speedup on the PRAM model \cite{gebremedhin2000scalable} .And in \cite{gebremedhin2006speeding} they inproved their work and proposed a G-M algorithm which provides better performance. The G-M algorithm consists of four phases: (1) Partitioning: Assuming the number of processors is p, in this phase the graph is broken down into p independent subgraphs of almost the same size, and each subgraph is assigned to one processor ; (2) Pseudo-coloring: Each processor tentatively colors the vertices assigned to it in sequence. When two adjacent vertices reside on different processors are colored simultaneously, coloring inconsistency may arise.; (3) Conflict detection:  Each processor checks the colors of  vertices assigned to it for consistency and identify a set of vertices which have color conflicts; (4) Conflict resolving: Re-coloring the detected vertices with conflicts.
 
-\begin{algorithm}
-\begin{algorithmic}
-\STATE {\mbox {GM-Algorithm:}}
-\REQUIRE {$1 \: : \:
-Partition$}
-    \STATE{\mbox {Partition V into $p$ equal subsets $V_1,
-    V_2,...,V_p$}, each $V_i$ is assigned to processor $P_i$}
-\
-\REQUIRE {$2 \: : \: Pseudo-coloring$}
-    {\FOR {$ i = 1\: to\:
-p$ \mbox{do in parallel}}
-    \FOR {$v \in V_i$}
-          \STATE {Assign legal color to $v$}
-    \ENDFOR
-    \ENDFOR}
-\REQUIRE {$3 \: : \: Conflict \: dection$}
-\FOR {$i=1 \: to \: p$ \mbox{do in parallel}}
-\FOR {$v \in V_i$}
-\IF {$ (v,q) \in E, color(v)=color(q)$} \STATE{$ConflictSet
-\leftarrow min(v,q)$}
-\ENDIF
-\ENDFOR
-\ENDFOR
-\REQUIRE {$4 \: : \: Conflict \: resolving$}
-\STATE{\quad \mbox{Recolor the vertices in $conflictSet$}}
-\end{algorithmic}
-\end{algorithm}           
-
-In this paper, we proposed a framework based on the G-M algorithm, which is adapted for an NVIDIA GPU platform.  In addition, two new heuristic algorithms are proposed to match the parallelism exploited by the GPU, which are shown to give better results than existing heuristics such as FF and SDO. The proposed framework and algorithms are described in the next section.
+In this paper, we propose a framework based on the G-M algorithm, which is adapted for an NVIDIA GPU platform.  In addition, two new heuristics are proposed to match the parallelism exploited by the GPU, which are shown to give better results than existing heuristics such as FF and SDO. The proposed framework and algorithms are described in the next section.
 
 \section{Algorithm}
 
-After studying previous work on parallel graph-coloring algorithms,  we have developed a CUDA version of the algorithm which is based on the former but is more suited to GPU architectures.
+After studying previous work on parallel graph-coloring algorithms, we have developed a CUDA version of the algorithm which is based on the former but is more suited to GPU architectures.
 
 \subsection{The Graph Coloring Framework}
-Step 1: Boundary Nodes (on CPU)
 
-The graph is logically partitioned, boundary nodes are identified and the number         of neighbors out of the subgraph is identified for each node.
+\begin{algorithm}
+\begin{algorithmic}
+\STATE {\mbox{CUDA-Coloring Framework}}
+\linebreak 
+\REQUIRE {$1 \: : \: Boundary Nodes - CPU$}
+    \STATE{ \mbox{Logically partition graph into subgraphs}}
+	\STATE{ \mbox{Indentify boundary nodes}}
+	\STATE{ \mbox{Count neighbors outside the subgraph for each node}}
+	
+\REQUIRE {$2 \: : \: Graph Coloring - GPU$}
+	\WHILE {Number of color conflicts is high}
+		\STATE{ \mbox{Color graph using the specified heuristic}}
+		\STATE{ \mbox{Identify color conflicts}}
+	\ENDWHILE
 
-When a graph is divided into subgraphs, some of the vertices of the subgraph will
+\REQUIRE {$3 \: : \: Sequential Conflicts resolution - CPU$}
+	\STATE{ \mbox{Residual conflicts are eliminated}}
+		
+\end{algorithmic}
+\end{algorithm}  
 
-have all of their neighbors in the subgraph while others will have some of the         neighbours in while others are outside. Vertices who have all their neighbors in         the subgraph are called interior nodes while vertices who have some of their         neighbors outside the subgraph are called boundary nodes.
-
-Step 2: Graph Coloring (on GPU)
-        The graph is physically divided into subgraphs and each is colored paying                 attention to vertices already colored inside and outside the subgraph
-
-Step 3: Detect Conflicts (on GPU)
-        The graph is partitioned so that each thread is assigned one boundary node and             the latter is checked for color conflict
-
-Step 2 $\&$ 3 can be repeated for a number of times to reduce the total number of conflicts
-
-Step 4: Sequential conflict elimination (CPU)
-
-The final conflicts on boundary nodes are resolved on CPU 
 
 \textbf{Graph Partitioning}\
-The graph is initially padded with empty nodes so that it is exactly divisible by the total number of threads. The graph can be partitioned in two ways: either arbitrary regular subgraphs or using a graph partitioning system like METIS[Karypis] and the number of partitions is set to be equal to the number of threads used.
+The graph is initially padded with empty nodes so that it is exactly divisible by the total number of threads. The graph can be partitioned in two ways: either arbitrary regular subgraphs or using a graph partitioning system like METIS[Karypis] (in which case the graph is not padded) and the number of partitions is set to be equal to the number of threads used.
 Ideally we would like all the subgraphs to be of the same size. But when METIS is used, the resulting subgraphs tend to be unevenly sized. This is an issue when using GPUs as we would like all the cores to be working roughly the same amount.\
 
 \textbf{Boundary Nodes}\
@@ -336,10 +302,21 @@ Given that the graphs have very different sizes, it does not make sense to use t
 
 To determine subgraph sizes that tend to give fewer colors, we linearly decreased the size of the subgraph by varying the number of threads for each of the 9 real graphs that we have. The results are shown below:
 
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.5]{figures/subgraphSize.png}
+  \caption{ Subgraph sizes }
+\end{figure}
+
 
 \textbf{Automatic Pass determination}\
 In the second set of experiments, we allow the program to determine the number of GPU passes it requires. We have seen that if the CPU has fewer than 200 conflicts to solve it is very fast(It is better to use a percentage, like percentage of the total number of vertices, but the stop criterion dose not have math ). (How did you arrive at this number of 200?)  - can we instead say that we move over to CPU when the number of remaining conflicts is negligible So after each pass we check to see the number of conflicts and if it is approximately less than 200, we terminate the GPU Passes and send the remaining conflicts to the CPU for solving.\
 
+\begin{figure}
+  \centering
+  \includegraphics[scale=0.4]{figures/automotiveColors.png}
+  \caption{ Subgraph sizes }
+\end{figure}
 
 Refer to the figures.  Need better labels (graph names rather than a,b,c).  SDO$\&$LDO is approximately twice as fast as compared to MAX or MIN. However, the number of colors for MAX and MIN is usually better than SDO$\&$LDO, with MAX nearly consistently yielding  fewer colors. For this set of graphs, the MAX heuristic also yields fewer colors that the sequential SDO$\&$LDO algorithm and the sequential First Fit   (FF: 42, 57, 57 - SDO: 42, 51, 51 - Best form other Paper: 44, 57,57 removed)  Also should talk about relationship between number of threads and colors, and number of threads and performance.  Where in these graphs does the performance associated with 8 vertices per subgraph fall?  Need to make a connection back to that.\
 
@@ -350,6 +327,7 @@ For ct20stif, in our 10 test runs we sometimes get 47 colors which beat the sequ
 
 \subsection{Using METIS}
 METIS is a set of algorithms that can be used to partition a graph into subgraphs. Many parallel graph algorithms advise the use of METIS to have better partitioning. However these algorithms run on parallel machines and they do not divide graphs in as many partitions as we do. Consequently when we tried to run METIS to partition the graph as we need, the resulting partitions were very unbalanced. The figure below shows the subgraph sizes from metis.
+
 
 \subsection{Conclusion}
 
