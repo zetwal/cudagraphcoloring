@@ -141,58 +141,112 @@ Gebremedhin and Manne proposed a  parallel coloring algorithm for shared memory 
 
 In this paper, we propose a framework based on the G-M algorithm, which is adapted for an NVIDIA GPU platform.  In addition, two new heuristics are proposed to match the parallelism exploited by the GPU, which are shown to give better results than existing heuristics such as FF and SDO. The proposed framework and algorithms are described in the next section.
 
+
 \section{Algorithm}
 
 After studying previous work on parallel graph-coloring algorithms, we have developed a CUDA version of the algorithm which is based on the former but is more suited to GPU architectures.
 
 \subsection{The Graph Coloring Framework}
 
-\begin{algorithm}
+
 \begin{algorithmic}
-\STATE {\mbox{CUDA-Coloring Framework}}
-\linebreak 
-\REQUIRE {$1 \: : \:Boundary \: Nodes \: Detection - CPU$}
+\REQUIRE {$1 \: : \: Graph Partitioning - CPU$}
     \STATE{ \mbox{Logically partition graph into subgraphs}}
 	\STATE{ \mbox{Indentify boundary nodes}}
 	\STATE{ \mbox{Count neighbors outside the subgraph for each vertex}}
+\newline
 	
-\REQUIRE {$2 \: : \: Graph \: Coloring \: and \: Conflict \: Detection - GPU$}
+\REQUIRE {$2 \: : \: Graph Coloring $\&$ Conflict Solving- GPU$}
 	\WHILE {Number of color conflicts is high}
 		\STATE{ \mbox{Color graph using the specified heuristic}}
 		\STATE{ \mbox{Identify color conflicts}}
+		\newline
 	\ENDWHILE
+	
 
-\REQUIRE {$3 \: : \: Sequential\: Conflicts \: resolution - CPU$}
+\REQUIRE {$3 \: : \: Sequential Conflicts resolution - CPU$}
 	\STATE{ \mbox{Residual conflicts are eliminated}}
 		
-\end{algorithmic}
-\end{algorithm}  
+\end{algorithmic}\
 
 
-\textbf{Graph Partitioning}\\
-The graph is initially padded with empty nodes so that it is exactly divisible by the total number of threads. The graph can be partitioned in two ways: either arbitrary regular subgraphs or using a graph partitioning system like METIS[Karypis] (in which case the graph is not padded) and the number of partitions is set to be equal to the number of threads used.
-Ideally we would like all the subgraphs to be of the same size. But when METIS is used, the resulting subgraphs tend to be unevenly sized. This is an issue when using GPUs as we would like all the cores to be working roughly the same amount.\
+\textbf{Phase 1: Graph Partitioning}\
+The graph can be partitioned in 2 ways. Either the graph is padded so that it can be evenly divisible by the number of threads or METIS [Karypis] can be used to partition the graph.\
 
-\textbf{Boundary Nodes Detection}\\
-For many graphs, especially if METIS is not used, the number of boundary nodes is roughly equal to the number of of vertices as we have very small partitions (less than 50 in most cases). However, when METIS is used, checking only boundary nodes can help make Steps 3 $\&$ 4 faster for some graphs.
-Moreover, we have designed two heuristics (see section 3.2.3) which base their color allocation on the number of neighbours of a node which are outside the subgraph.\
+\textbf{Boundary Nodes}\
+When a graph is divided into subgraphs, some of the vertices found in the subgraph will have neighbors only in the subgraph while others will have some which are inside while others are outside. The latter are referred to as boundary nodes and they are the ones who might have color conflicts. For many graphs, especially if METIS is not used and the partitions are small, the number of boundary nodes is roughly equal to the total number of vertices. However, it can help speedup in some case and when heuristics like MIN and MAX are used, we need to know the number of neighbors of a vertex which is outside the subgraph.\\
 
-\textbf{Graph Coloring  and Conflicts detection}\\
-Each thread assigns colors to its subgraph but checks the whole graph before allocating colors. We tried four strategies for color allocation:
-i) First Fit. Works according to the First Fit heuristic. It’s an O(N) algorithm which is fast but whic generally produces many colors
+\textbf{Phase 2: Graph Coloring $\&$ Conflicts detection}\
 
-ii) (SDO $\&$ LDO) SDO and LDO Combined. This is an $O(N^3)$ algorithm referred to as Proposed Algorithm 2 from [Sabri]
+\textbf{Graph Coloring}\
+Each thread assigns colors to its subgraph but checks the whole graph before allocating colors. We tried four heuristics for color allocation:
+\renewcommand{\labelenumi}{\roman{enumi}) } 
+\begin{enumerate}
+  \item First Fit
+  \item SDO $\&$ LDO
+  \item MAX OUT
+  \item MIN OUT
+\end{enumerate}
 
-iii) MAX OUT. This is a  proposed new heuristic that is based on the second strategy. Nodes that are colored first are those having a maximum number of neighbours outside the subgraph and then it based on the largest degree
+First Fit and SDO $\&$ LDO have already bee described in Section 3.1. We will focus on the 2 new heuristics we have devised:\\
 
-iv) MIN OUT. A proposed new heuristic which is like the third one but here the nodes which have the minimum number of neighbors outside the subgraph (and have largest degree) are colored first.
+\textbf{MAX OUT algorithm:}\
+\begin{algorithmic}
+\WHILE {$N_{colored} < N $}
+    \STATE  $ max = -1$
+    \FOR {$ i = 1\: to\: N$}
+       \IF {$!colored(v_i)$}
+           \STATE $no = Number of neighbors outside partition $
+           \IF {$no > max$}
+               \STATE $max = no$
+               \STATE $index = i$
+           \ENDIF
+           \IF {$ no == max$}
+             \IF {$d(v_i) > d(v_{index})$}
+                 \STATE $index = i$
+             \ENDIF
+           \ENDIF
+        \STATE $ Color \:v_{index} $
+        \STATE $N_{colored} ++$
+        \ENDIF
+    \ENDFOR
+\ENDWHILE
+\end{algorithmic}\
 
-Conflicts are detected by checking whether the boundary nodes have any conflicts. If they do, their color is reset to NULL.\
 
-\textbf{Multiple Passes on GPU}\
-Sometimes after the first pass of Graph Coloring and Conflicts detection on GPU there are many nodes with conflicts. Solving the conflicts on CPU as is done in many other approaches, like in [Gebremedhin], results in a drastic slowdown of the system. Instead, a second, third, ... as many passes as required are done on the GPU to bring down the total number of conflicts to a minimum before finally eliminating residual conflicts on the sequentially on the CPU.
 
-This step provides drastic increases speedups and most of the time does not increase the number of colors used a lot.
+\textbf{MIN OUT algorithm:}\
+\begin{algorithmic}
+\WHILE {$N_{colored} < N $}
+    \STATE  $ min = max degree$
+    \FOR {$ i = 1\: to\: N$}
+       \IF {$!colored(v_i)$}
+           \STATE $no = Number of neighbors outside partition $
+           \IF {$no < min$}
+               \STATE $min = no$
+               \STATE $index = i$
+           \ENDIF
+           \IF {$ no == min$}
+             \IF {$d(v_i) > d(v_{index})$}
+                 \STATE $index = i$
+             \ENDIF
+           \ENDIF
+        \STATE $ Color \:v_{index} $
+        \STATE $N_{colored} ++$
+        \ENDIF
+    \ENDFOR
+\ENDWHILE
+\end{algorithmic}\
+
+
+
+For both of the above algorithms as well as for SDO $\&$ LDO, when we have chosen a vertex to color, we consider all the neighbors of the latter both inside and outside the subgraph.\\
+
+\textbf{Conflicts Detection}\
+Given that coloring is being done in parallel, conflicts occur frequently. They are identified by assigning one thread per boundary node that checks whether there is a conflict with one of its neighbors. If that happens, the color of that node is reset to NULL.\\
+
+Dropping to the CPU to solve the conflicts is common in many approaches but given that we have many small partitions, we tend to have lots of conflicts and resolving that on the CPU can be quite slow. So we do several passes of coloring and conflict detection until we have few conflicts which can be quickly solved sequentially on the CPU. 
+
 
 \section{Experiments and Results}
 The algorithms have been implemented using the CUDA API and the tests are mainly carried out on a  one processor of a Tesla S1070. The configuration is as follows:
