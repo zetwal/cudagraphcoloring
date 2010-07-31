@@ -165,6 +165,7 @@ In this paper, we propose a framework based on the \gm algorithm, which is adapt
 \subsection{The Graph Coloring Framework}
 
 \begin{algorithm}
+\caption{Graph Coloring Framework \label{alg:framework}}
 \begin{algorithmic}
 \REQUIRE {$1 \: : \: Graph \: Partitioning - CPU$}
     \STATE{ \mbox{Logically partition graph into subgraphs}}
@@ -210,7 +211,7 @@ Each thread assigns colors to its subgraph but checks the whole graph before all
 First Fit and SDO $\&$ LDO have already bee described in Section 3.1. We will focus on the 2 new heuristics we have devised:\\
 
 \begin{algorithm}
-\textbf{MAX OUT algorithm:}\
+\caption{Max Out Algorithm \label{alg:MAXOUT}}
 \begin{algorithmic}
 \WHILE {$N_{colored} < N $}
     \STATE  $ max = -1$
@@ -235,7 +236,7 @@ First Fit and SDO $\&$ LDO have already bee described in Section 3.1. We will fo
 \end{algorithm}
 
 \begin{algorithm}
-\textbf{MIN OUT algorithm:}\
+\caption{Min Out Algorithm \label{alg:MINOUT}}
 \begin{algorithmic}
 \WHILE {$N_{colored} < N $}
     \STATE  $ min = max degree$
@@ -276,7 +277,6 @@ The algorithm has been implemented using the CUDA API and the tests were carried
 \end{itemize}
 
 
-
 The tests were carried out on these 9 real graphs from the University of Florida Sparse Matrix Collection [] which were regrouped in 3 categories
 
 \begin{table}
@@ -284,7 +284,7 @@ The tests were carried out on these 9 real graphs from the University of Florida
 \begin{center}
 \begin{tabular}{c c c c c}
 \hline
-Name & $|V|$ & $|E|$ & Max Degree & Avg Degree \
+Name & $n$ & $m$ & $\Delta$ & Avg Degree \
 \\
 \hline
 Structural Engineering  \\
@@ -387,11 +387,30 @@ MIN OUT & 9.3 & 3.8 \\
 \subsection{Multi Passes}\
 In the second set of experiments, we allow the program to determine the number of GPU passes it requires. We have seen that if the CPU has fewer than 200 conflicts to solve it is very fast(It is better to use a percentage, like percentage of the total number of vertices, but the stop criterion dose not have math ). (How did you arrive at this number of 200?)  - can we instead say that we move over to CPU when the number of remaining conflicts is negligible So after each pass we check to see the number of conflicts and if it is approximately less than 200, we terminate the GPU Passes and send the remaining conflicts to the CPU for solving.\
 
-\begin{figure}
-  \centering
-  \includegraphics[scale=0.4]{figures/automotiveColors.png}
-  \caption{ Subgraph sizes }
-\end{figure}
+\begin{figure*}[h]
+  \includegraphics[scale=0.4]{figures/automotive.png}
+  \caption{ Automotive }
+\end{figure*}
+
+\begin{figure*}[h]
+  \includegraphics[scale=0.3]{figures/structuralLand.png}
+  \caption{ Structural }
+\end{figure*}
+
+\begin{figure*}[h]
+  \includegraphics[scale=0.34]{figures/civilLand.png}
+  \caption{ Civil }
+\end{figure*}
+
+\begin{figure*}[h]
+  \includegraphics[scale=0.45]{figures/pwtkMetis.png}
+  \caption{ Pwtk Metis }
+\end{figure*}
+
+\begin{figure*}[h]
+  \includegraphics[scale=0.45]{figures/nasasrbMetis.png}
+  \caption{ Nasasrb Metis }
+\end{figure*}
 
 Refer to the figures.  Need better labels (graph names rather than a,b,c).  SDO$\&$LDO is approximately twice as fast as compared to MAX or MIN. However, the number of colors for MAX and MIN is usually better than SDO$\&$LDO, with MAX nearly consistently yielding  fewer colors. For this set of graphs, the MAX heuristic also yields fewer colors that the sequential SDO$\&$LDO algorithm and the sequential First Fit   (FF: 42, 57, 57 - SDO: 42, 51, 51 - Best form other Paper: 44, 57,57 removed)  Also should talk about relationship between number of threads and colors, and number of threads and performance.  Where in these graphs does the performance associated with 8 vertices per subgraph fall?  Need to make a connection back to that.\
 
