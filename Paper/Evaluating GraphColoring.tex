@@ -151,33 +151,33 @@ After studying previous work on parallel graph-coloring algorithms, we have deve
 \begin{algorithmic}
 \STATE {\mbox{CUDA-Coloring Framework}}
 \linebreak 
-\REQUIRE {$1 \: : \: Boundary Nodes - CPU$}
+\REQUIRE {$1 \: : \:Boundary \: Nodes \: Detection - CPU$}
     \STATE{ \mbox{Logically partition graph into subgraphs}}
 	\STATE{ \mbox{Indentify boundary nodes}}
-	\STATE{ \mbox{Count neighbors outside the subgraph for each node}}
+	\STATE{ \mbox{Count neighbors outside the subgraph for each vertex}}
 	
-\REQUIRE {$2 \: : \: Graph Coloring - GPU$}
+\REQUIRE {$2 \: : \: Graph \: Coloring \: and \: Conflict \: Detection - GPU$}
 	\WHILE {Number of color conflicts is high}
 		\STATE{ \mbox{Color graph using the specified heuristic}}
 		\STATE{ \mbox{Identify color conflicts}}
 	\ENDWHILE
 
-\REQUIRE {$3 \: : \: Sequential Conflicts resolution - CPU$}
+\REQUIRE {$3 \: : \: Sequential\: Conflicts \: resolution - CPU$}
 	\STATE{ \mbox{Residual conflicts are eliminated}}
 		
 \end{algorithmic}
 \end{algorithm}  
 
 
-\textbf{Graph Partitioning}\
+\textbf{Graph Partitioning}\\
 The graph is initially padded with empty nodes so that it is exactly divisible by the total number of threads. The graph can be partitioned in two ways: either arbitrary regular subgraphs or using a graph partitioning system like METIS[Karypis] (in which case the graph is not padded) and the number of partitions is set to be equal to the number of threads used.
 Ideally we would like all the subgraphs to be of the same size. But when METIS is used, the resulting subgraphs tend to be unevenly sized. This is an issue when using GPUs as we would like all the cores to be working roughly the same amount.\
 
-\textbf{Boundary Nodes}\
+\textbf{Boundary Nodes Detection}\\
 For many graphs, especially if METIS is not used, the number of boundary nodes is roughly equal to the number of of vertices as we have very small partitions (less than 50 in most cases). However, when METIS is used, checking only boundary nodes can help make Steps 3 $\&$ 4 faster for some graphs.
 Moreover, we have designed two heuristics (see section 3.2.3) which base their color allocation on the number of neighbours of a node which are outside the subgraph.\
 
-\textbf{Graph Coloring  and Conflicts detection}\
+\textbf{Graph Coloring  and Conflicts detection}\\
 Each thread assigns colors to its subgraph but checks the whole graph before allocating colors. We tried four strategies for color allocation:
 i) First Fit. Works according to the First Fit heuristic. It’s an O(N) algorithm which is fast but whic generally produces many colors
 
