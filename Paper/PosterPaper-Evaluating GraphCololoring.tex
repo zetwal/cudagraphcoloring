@@ -289,7 +289,7 @@ The algorithm has been implemented using the CUDA API and the tests were carried
 %\end{itemize}
 
 
-The tests were carried out on different categories of real graphs from the University of Florida Sparse Matrix Collection []. In this paper we will focus on 3 graphs from the Civil Engineering domain:
+The tests were carried out on different categories of real graphs from the University of Florida Sparse Matrix Collection []. In this paper we will focus on 3 graphs from the Civil Engineering domain as shown in Table~\ref{tbl:properties}
 
 \begin{table}
 \scriptsize
@@ -382,7 +382,7 @@ While the colors are accurate, the timing information for the sequential SDO $\&
 Ideally what we would really want is a fast algorithm that generates as few colors as possible.
 
            
-\subsection{Algorithms Compared}
+\subsection{Results}
 
 To investigate the impact of parallel graph coloring algorithms on  both performance and number of colors obtained, the number of threads is linearly incremented and the timing and color obtained is compared.\\
 %
@@ -418,9 +418,9 @@ To investigate the impact of parallel graph coloring algorithms on  both perform
 %\end{table}
 
 
-
-\subsection{Multi Passes}\
-In the second set of experiments, we allow the program to determine the number of GPU passes it requires. We have seen that if the CPU has fewer than 200 conflicts to solve it is very fast(It is better to use a percentage, like percentage of the total number of vertices, but the stop criterion dose not have math ). (How did you arrive at this number of 200?)  - can we instead say that we move over to CPU when the number of remaining conflicts is negligible So after each pass we check to see the number of conflicts and if it is approximately less than 200, we terminate the GPU Passes and send the remaining conflicts to the CPU for solving.\
+%
+%\subsection{Multi Passes}\
+%In the second set of experiments, we allow the program to determine the number of GPU passes it requires. We have seen that if the CPU has fewer than 200 conflicts to solve it is very fast(It is better to use a percentage, like percentage of the total number of vertices, but the stop criterion dose not have math ). (How did you arrive at this number of 200?)  - can we instead say that we move over to CPU when the number of remaining conflicts is negligible So after each pass we check to see the number of conflicts and if it is approximately less than 200, we terminate the GPU Passes and send the remaining conflicts to the CPU for solving.\
 
 %\begin{figure*}[h]
 %  \includegraphics[scale=0.4]{figures/automotive.png}
@@ -435,6 +435,7 @@ In the second set of experiments, we allow the program to determine the number o
 \begin{figure*}[t]
   \includegraphics[scale=0.34]{figures/civilLand.png}
   \caption{ Civil }
+  \label{fig:results}
 \end{figure*}
 %
 %\begin{figure*}[h]
