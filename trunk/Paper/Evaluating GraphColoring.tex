@@ -28,8 +28,14 @@
 \usepackage{amsmath}
 \usepackage[pdftex]{graphicx}
 \usepackage[noend]{algorithmic}
-\usepackage{algorithm}
+\usepackage{algorithm,xspace}
 
+\newcommand{\ff}{\text{First Fit}\xspace}
+\newcommand{\ffshort}{FF\xspace}
+\newcommand{\ldo}{LDO\xspace}
+\newcommand{\sdo}{SDO\xspace}
+\newcommand{\ido}{IDO\xspace}
+\newcommand{\sldo}{SDO\& LDO\xspace}
 
 \begin{document}
 
@@ -65,9 +71,9 @@ Graph coloring, Parallel algorithm, CUDA
 
 \section{Introduction}
 
-edges) subject to certain constraints. In this paper, we consider the specific problem of assigning colors to vertices so that no two neighboring vertices (vertices connected by an edge) have the same color.  There are several known applications of graph coloring like assigning frequencies to wireless access points, time-tabling and scheduling, register allocation and printed circuit testing, iterative solution of sparse linear systems [], preconditions [], sparse tiling [], and eigenvalue computation [].  
+Graph coloring refers to the assignment of labels or colors to elements of a graph (vertices or edges) subject to certain constraints. In this paper, we consider the specific problem of assigning colors to vertices so that no two neighboring vertices (vertices connected by an edge) have the same color.  There are several known applications of graph coloring like assigning frequencies to wireless access points, time-tabling and scheduling, register allocation and printed circuit testing, iterative solution of sparse linear systems [], preconditions [], sparse tiling [], and eigenvalue computation [].  
 
-Theoretically,  graph coloring has been proven to be NP-complete, and even approximating the chromatic number of a graph is known to be NP-hard [reference?]. Therefore, a number of approximate graph coloring algorithms have been developed that use heuristics to guide assignment of colors; some commonly used heuristics include First Fit, Largest Degree Order and Saturation Degree Order.  These heuristics tend to trade off minimizing the number of colors and minimizing execution time.  Combinations of these algorithms have also been used to create better heuristics. These algorithms are generally based on the same general greedy framework: a. vertex is selected according to some predefined criteria and colored with the smallest valid color. The selection and coloring continues until all the vertices in the graph are colored.
+Graph coloring is NP-hard, and computing any sublinear approximation of the chromatic number of a graph is also NP-hard \cite{zuckerman07}. Therefore, a number of heuristics have been developed to assign colors to vertices; some commonly used heuristics include First Fit\cite{}, Largest Degree Order\cite{} and Saturation Degree Order\cite{}.  These heuristics tend to trade off minimizing the number of colors and minimizing execution time.  Combinations of these algorithms have also been used to create better heuristics. These algorithms are generally based on the same general greedy framework: a. vertex is selected according to some predefined criteria and colored with the smallest valid color. The selection and coloring continues until all the vertices in the graph are colored.
 
 For coloring large graphs, a parallel implementation seems natural as we can split the graph into small subgraphs, color each of them separately in parallel, and then combine results for all of the subgraphs to derive the final coloring.   Occasionally, this combining step will encounter conflicts, where two adjacent vertices that span multiple subgraphs have been assigned the same color.  A parallel algorithm must resolve conflicts, by assigning one of the vertices involved in the conflict a different color.    Processing conflicts partially serializes the computation and may also lead to the use of a higher number of colors.
 
@@ -84,21 +90,24 @@ i) Number of processors. Graphics cards have many processors: an NVIDIA GTX 260 
 ii) Processor speed. While a state-of-the-art processor typically operates at around 3 GHz processor cores on GPUs are much slower: one core on a GTX 260 operates at 1242 MHz while a core on a Tesla S1070 operates between 1.296 to 1.44  GHz. Hence we need to use the many threads to match or better the speed of a standard CPU. Moreover, trying to get speedups for  O(N) algorithms are hard as the cores are individually slower and some time is wasted copying data to and from the GPU
 
 iii) Memory. The memory available to parallel computers is normally bigger but it is sharing data between processors is usually much more expensive. On a GPU, all the data can be stored in the global memory and all the cores can readily access it.
+
+
 \section{ Related Work}
-In this section we give an overview of existing graph coloring algorithms, both sequential and parallel.  In this discussion, a graph $G=(V,E)$, where $V$ is a set of vertices, and $E$ is a set of edges.We denote the number of vertices $V$ by $|V|$, the number of edges $E$ by $|E|$. And the degree of a vertex $v_i \in V$ is denoted by $d(v_i)$. The maximum vertex degree of a graph is denoted as $\Delta$.
+In this section we give an overview of existing graph coloring algorithms, both sequential and parallel.  In this discussion, a graph $G=(V,E)$, where $V$ is a set of $n$ vertices, and $E$ is a set of $m$ edges. The degree of a vertex $v \in V$ is denoted by $d(v)$. The maximum vertex degree of a graph is denoted by $\Delta$.
 
 \subsection{Sequential greedy coloring}
 
-The problem of sequential graph coloring has been studied extensively. Among all the sequential approaches, greedy algorithms are proven to be very effective in practice, such as First Fit, Largest degree ordering, Saturation degree ordering and Incidence degree ordering[citations?]. Such greedy algorithms iterate over the vertices to be colored in a certain order, and at each step assign the current vertex the smallest permissible color. Given a graph $G$, and the maximum degree of vertex in $G$ is $\Delta$, then the vertex to be colored can have at most $\Delta$ neighbors. As a result, the number of colors for greedy algorithms is bounded by the degree of the graph (actually $\Delta+1$) \cite{allwright1995comparison}.  We now describe each of these greedy coloring algorithms in more detail.
+The problem of sequential graph coloring has been studied extensively. Among all the sequential approaches, greedy algorithms are proven to be very effective in practice, such as First Fit, Largest degree ordering, Saturation degree ordering and Incidence degree ordering[citations?]. Such greedy algorithms iterate over the vertices to be colored in a certain order, and at each step assign the current vertex the smallest permissible color. Given a graph $G$ with maximum degree $\Delta$, these procedures will use a maximum of $\Delta+1$ colors since each vertex has at most $\Delta$ neighbors. We now describe each of these greedy coloring algorithms in more detail.
 
-1. First Fit (FF): It is the simplest algorithm of all greedy coloring heuristics and the computation complexity is $O(n)$ \cite{klotz2002graph}.To color a vertex, a permissible color is chosen from the interval $[1,C]$, where C is the largest color currently used. Use a new color C+1 if all the C colors have been assigned to its neighboors.
+\begin{description}
+  \item[\ff (\ffshort):] This is the simplest algorithm of all greedy coloring heuristics\cite{klotz2002graph}. To color a vertex, a permissible color is chosen from the interval $[1,C]$, where $C$ is the largest color currently used. A new color $C+1$ is used if all  $C$ colors have been assigned to the neighbors of the vertex. \ffshort runs in time $O(m+n)$. 
+  \item[Largest degree ordering (\ldo):] \ldo first sorts vertices by degree in nonincreasing order and then runs \ff. It runs in time $O(m + n\log n)$. 
+\item[Saturation degree ordering (\sdo):] The saturation degree of a vertex is defined  as the number of different colors its neighbor vertices have been assigned. It can give less colors than \ldo and the computational complexity is $O(n^3)$\cite{klotz2002graph}.
+\item[Incidence degree ordering (\ido):] The incidence degree of a vertex is defined as the number of its adjacent colored vertices. It can achieve a computation complexity of $O(n^2)$\cite{klotz2002graph}.
 
-2. Degree based algorithms:
-a. Largest degree ordering(LDO):  It chooses a  vertex with largest degree.This algorithm has a computational complexity around $O(n^2)$ \cite{klotz2002graph}
+\end{description}
 
-b. Saturation degree ordering (SDO): The saturation degree of a vertex is defined  as the number of different colors its neighbor vertices have been assigned. It can give less colors than LDO and the computational complexity is $O(n^3)$\cite{klotz2002graph}.
 
-c. Incidence degree ordering (IDO): The incidence degree of a vertex is defined as the number of its adjacent colored vertices. It can achieve a computation complexity of $O(n^2)$\cite{klotz2002graph}.
 
 Generally, the First Fit algorithm uses more colors than the degree-based algorithms, but it is the most efficient one. The degree-based algorithms all have a polynomial algorithmic complexity, since all vertices are traversed to determine the next node to color.  In \cite{gebremedhin1999parallel}, it was shown that SDO gives best quality of coloring in terms of  the number of colors among all degree-based greedy algorithms.   However, when more than one vertex has the same degree, it is hard to decide which one to choose for coloring.  To overcome this disadvantage,  some variants are proposed by  \cite{al2006new}, such as the algorithm that combines SDO $\& $LDO.
 
