@@ -283,7 +283,7 @@ For all of the 4 heuristics, when we have chosen a vertex to color, we consider 
 
 
 \textbf{Phase 3: Conflicts Detection}\
-Given that coloring is being done in parallel, conflicts occur frequently. They are identified by assigning one thread per boundary node that checks whether there is a conflict with one of its neighbors. If that happens, the color of that node is reset to NULL.\
+Given that coloring is being performed in parallel, conflicts occur frequently. They are identified by assigning one thread per boundary node that checks whether there is a conflict with one of its neighbors. If that happens, the color of that node is reset to NULL.\
 
 Dropping to the CPU to solve the conflicts is common in many approaches but given that we have many small partitions, we tend to have lots of conflicts and resolving that on the CPU can be quite slow. So we do several passes of coloring and conflict detection on GPU until we have few conflicts which can be quickly solved sequentially on the CPU. 
 
@@ -305,12 +305,12 @@ The tests were carried out on different categories of real graphs from the Unive
 \begin{center}
 \begin{tabular}{c c c c c c c c c}
 \hline
-Name & $n$ & $m$ & $\Delta$ & Avg Degree & FF Colors & SDO $\&$ LDO Col & FF Time & Time \
+Name & $n$ & $m$ & $\Delta$ & FF Colors & SDO $\&$ LDO Col & FF Time & Time \
 \\
 \hline
-pkustk10 & 81,920 & 2,114,154 & 89 & 52 & 42 & 42 & 39 & 226838\\
-pkustk11 & 87,804 & 2,565,054 & 131 & 55 & 57 & 51 & 48 & 250112\\
-pkustk13 & 94,893 & 3,260,967 & 299 & 68 & 57 & 51 & 66 & 612960\\
+pkustk10 & 81,920 & 2,114,154 & 89 & 42 & 42 & 39\\
+pkustk11 & 87,804 & 2,565,054 & 131 & 57 & 51 & 48\\
+pkustk13 & 94,893 & 3,260,967 & 299 & 57 & 51 & 66\\
 \\
 \end{tabular}
 \caption{Graph properties}
