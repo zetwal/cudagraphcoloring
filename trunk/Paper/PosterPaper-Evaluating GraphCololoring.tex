@@ -59,7 +59,7 @@
 \maketitle
 
 \begin{abstract}
-This paper evaluates features of graph coloring algorithms implemented on graphics processing units (GPUs), comparing coloring heuristics, partitioning strategies, and thread decompositions.  As compared to prior work on parallel graph coloring for other parallel architectures, we find that the large number of cores and relatively high global memory bandwidth of a GPU lead to different strategies for the parallel implementation.  Specifically, we find that a simple block partitioning of nodes often outperforms, in terms of execution time or number of colors, the partition found by METIS, which tries to minimize cross-processor edges.  We also discover that our coloring heuristics lead to the same or fewer colors than a prior approach for a distributed-memory cluster architecture.  Our algorithm resolves many coloring conflicts across partitioned blocks on the GPU by iterating through the coloring process up to three times, before returning to the CPU to resolve remaining conflicts, and this iteration dramatically impacts speedups as compared to a single pass. 
+This paper evaluates features of graph coloring algorithms implemented on graphics processing units (GPUs), comparing coloring heuristics and thread decompositions.  As compared to prior work on parallel graph coloring for other parallel architectures, we find that the large number of cores and relatively high global memory bandwidth of a GPU lead to different strategies for the parallel implementation.  Specifically, we find that a simple uniform block partitioning is very effective on GPUs.  We also discover that our parallel coloring heuristics lead to the same or fewer colors than a prior approach for a distributed-memory cluster architecture.  Our algorithm resolves many coloring conflicts across partitioned blocks on the GPU by iterating through the coloring process up to three times, before returning to the CPU to resolve remaining conflicts, and this iteration dramatically impacts speedups as compared to a single pass. 
 
 %Overall, parallel graph coloring speeds up well for the sparse graphs we studied, commonly yielding speedups above 1000X over a baseline CPU implementation.
 \end{abstract}
@@ -77,7 +77,7 @@ Graph coloring, Parallel algorithm, CUDA
 Graph coloring refers to the assignment of labels or colors to elements of a graph (vertices or edges) subject to certain constraints. In this paper, we consider the specific problem of assigning colors to vertices so that no two neighboring vertices (vertices connected by an edge) have the same color.  There are several known applications of graph coloring like assigning frequencies to wireless access points, time-tabling and scheduling, register allocation and printed circuit testing among others.
 
 
-In this discussion, a graph $G=(V,E)$, where $V$ is a set of $n$ vertices, and $E$ is a set of $m$ edges. The degree of a vertex $v \in V$ is denoted by $d(v)$. The maximum vertex degree of a graph is denoted by $\Delta$. Graph coloring is NP-hard, and even computing a $n^{1-\epsilon}$-approximation of the chromatic number of a graph is NP-hard \cite{zuckerman07}. Therefore, a number of heuristics have been developed to assign colors to vertices; some commonly used heuristics include First Fit, Largest Degree Order and Saturation Degree Order\cite{al2006new}.  These heuristics tend to trade off minimizing the number of colors and minimizing execution time but generally the faster algorithms have poor coloring quality while the slow ones tend to be better. Combinations of these algorithms have also been used to create better heuristics like the combined SDO $\&$ LDO \cite{al2006new}.
+In this discussion, a graph $G=(V,E)$, where $V$ is a set of $n$ vertices, and $E$ is a set of $m$ edges. The degree of a vertex $v \in V$ is denoted by $d(v)$. The maximum vertex degree of a graph is denoted by $\Delta$. Graph coloring is NP-hard, and even computing a $n^{1-\epsilon}$-approximation of the chromatic number of a graph is NP-hard. Therefore, a number of heuristics have been developed to assign colors to vertices; some commonly used heuristics include First Fit, Largest Degree Order and Saturation Degree Order\cite{al2006new}.  These heuristics tend to trade off minimizing the number of colors and minimizing execution time but generally the faster algorithms have poor coloring quality while the slow ones tend to be better. Combinations of these algorithms have also been used to create better heuristics like the combined SDO $\&$ LDO \cite{al2006new}.
 
 This paper examines a graphics processing unit (GPU) mapping of parallel graph coloring.  Prior parallel graph coloring algorithms have been evaluated on conventional shared-memory multiprocessors \cite{gebremedhin2000scalable} or distributed systems \cite{bozdag2008a} but to the best of our knowledge, this is the first study of how GPU architectures affect performance gains and number of assigned colors in a parallel implementation.  Our study demonstrates that features of the GPU architecture significantly impact the algorithms selected. Specifically, the support for efficient fine-grain multithreading facilitates strong performance gains over CPU implementations. Because hundreds or even thousands of threads can be applied to the parallel coloring, we can obtain as few colors as the best sequential algorithm while operating nearly as fast as the fastest sequential algorithms. 
 
@@ -179,7 +179,7 @@ GPUs have different architectures compared to parallel computers where most of t
 
 \section{Algorithm}
 
-In this paper, we propose a framework based on the \gm algorithm \cite{gebremedhin2000scalable}, which is adapted for an NVIDIA GPU platform.  In addition, two new heuristics are proposed to match the parallelism exploited by the GPU, which are shown to give better results than existing heuristics such as FF and SDO. 
+In this paper, we propose a framework based on the \gm algorithm \cite{gebremedhin2000scalable}, which is adapted for an NVIDIA GPU platform.  In addition, two new heuristics are proposed to match the parallelism exploited by the GPU, which are shown to give better coloring quality than FF and  the same or better quality as SDO with the running time that is comparable to FF. 
 
 \subsection{The Graph Coloring Framework}
 
@@ -215,7 +215,7 @@ The graph is initially padded with empty nodes so that it is exactly divisible b
 
 
 \textbf{Phase 2: Graph Coloring $\&$ Conflicts detection:}\
-Each thread assigns colors to its subgraph but checks the whole graph before allocating colors. We tried four heuristics for color allocation:
+Each thread assigns colors to its subgraph but checks the whole graph before allocating colors. We tried four heuristics inlcuding two proposed heuristics (MAX OUT and MIN OUt)for color allocation:
 \renewcommand{\labelenumi}{\roman{enumi}) } 
 \begin{enumerate}
   \item First Fit: Allocate the smallest possible color to each vertex
@@ -224,7 +224,8 @@ Each thread assigns colors to its subgraph but checks the whole graph before all
   \item MIN OUT: Color is allocated to the vertex having fewest neighbors out of the subgraph and then highest degree
 \end{enumerate}
 
-For all of the 4 heuristics, when we have chosen a vertex to color, we consider all the neighbors of the latter both inside and outside the subgraph when allocating colors.\\
+Given that coloring is being performed in parallel, conflicts occur accorssing subgraphs. Conflicted nodes are identified by assigning one thread per boundary node that checks whether there is a conflict with one of its neighbors. The nodes detected in this step need to be re-assign colors in the nex step.\
+%For all of the 4 heuristics, when we have chosen a vertex to color, we consider all the neighbors of the latter both inside and outside the subgraph %when allocating colors.\\
 
 %
 %First Fit and SDO $\&$ LDO have already bee described in Section 3.1. We will focus on the 2 new heuristics we have devised:\\
@@ -280,12 +281,8 @@ For all of the 4 heuristics, when we have chosen a vertex to color, we consider 
 %\end{algorithm}
 
 
-
-
-\textbf{Phase 3: Conflicts Detection}\
-Given that coloring is being performed in parallel, conflicts occur frequently. They are identified by assigning one thread per boundary node that checks whether there is a conflict with one of its neighbors. If that happens, the color of that node is reset to NULL.\
-
-Dropping to the CPU to solve the conflicts is common in many approaches but given that we have many small partitions, we tend to have lots of conflicts and resolving that on the CPU can be quite slow. So we do several passes of coloring and conflict detection on GPU until we have few conflicts which can be quickly solved sequentially on the CPU. 
+\textbf{Phase 3: Conflicts Resolving}\
+Dropping to the CPU to solve the conflicts is common in many approaches but given that we have many small partitions, we tend to have lots of conflicts and resolving that on the CPU can be quite slow. So we do multiple passes of step 2 on GPU until the number of conflicts become very small and conflictions can be quickly solved sequentially on the CPU. 
 
 
 \section{Experiments and Results}
@@ -391,7 +388,6 @@ pkustk13 & 94,893 & 3,260,967 & 299 & 57 & 51 & 66\\
 %While the colors are accurate, the timing information for the sequential SDO $\&$ LDO could have been improved. The latter has is from a naive implementation which is quite inefficient. Nevertheless, the sequential SDO $\&$ LDO has been reported by its authors [...] to be O (N$^2$) and despite yielding a good coloring is quite slow. On the other hand, First Fit which is fast yields a poor coloration!\
 %Ideally what we would really want is a fast algorithm that generates as few colors as possible.
 
-           
 \subsection{Results}
 
 To investigate the impact of parallel graph coloring algorithms on  both performance and number of colors obtained, the number of threads is linearly incremented and the timing and color obtained is compared.\\
