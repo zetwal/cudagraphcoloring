@@ -298,14 +298,15 @@ The algorithm has been implemented using the CUDA API and the tests were carried
 %\end{itemize}
 
 
-The tests were carried out on different categories of real graphs from the University of Florida Sparse Matrix Collection \cite{uofMatrix}. In this paper we will focus on 3 graphs from the Civil Engineering domain as shown in Table~\ref{tbl:properties}
+The tests were carried out on different categories of real graphs from the University of Florida Sparse Matrix Collection \cite{uofMatrix}. In this paper we will focus on 3 graphs from 3 different categories as shown in Table~\ref{tbl:properties}
 
 \begin{table}
 \scriptsize
 \begin{center}
-\begin{tabular}{c c c c c c c c c}
+\begin{tabular}{c c c c c c c c }
 \hline
-Name & $n$ & $m$ & $\Delta$ & FF Colors & SDO $\&$ LDO Col & FF Time & Time \
+  &   &  &  &   \multicolumn{2}{c}{Colors} &  \\
+Name & $n$ & $m$ & $\Delta$ & FF & SDO $\&$ LDO & FF Time \
 \\
 \hline
 pkustk10 & 81,920 & 2,114,154 & 89 & 42 & 42 & 39\\
@@ -469,7 +470,7 @@ To investigate the impact of parallel graph coloring algorithms on  both perform
 
 
 \section{Conclusion}
-Though our GPU implementation is slower than the reported fastest Sequential Graph Coloring algorithm, in terms of color quality, we are much better; we sometimes even beat the sequential SDO $\&$ LDO as well as colors reported in \citet{bozdag2008a}.
+Though our GPU implementation is slower than the reported fastest Sequential Graph Coloring algorithm, in terms of color quality, we are much better; we sometimes even beat the sequential SDO $\&$ LDO as well as colors reported in \cite{bozdag2008a}.
 
 
 %\appendix
