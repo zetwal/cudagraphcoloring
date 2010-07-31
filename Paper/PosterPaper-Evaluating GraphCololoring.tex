@@ -78,7 +78,7 @@ Graph coloring refers to the assignment of labels or colors to elements of a gra
 
 Graph coloring is NP-hard, and even computing a $n^{1-\epsilon}$-approximation of the chromatic number of a graph is NP-hard \cite{zuckerman07}. Therefore, a number of heuristics have been developed to assign colors to vertices; some commonly used heuristics include First Fit\cite{}, Largest Degree Order\cite{} and Saturation Degree Order\cite{}.  These heuristics tend to trade off minimizing the number of colors and minimizing execution time but generally the faster algorithms have poor coloring quality while the slow ones tend to be better. Combinations of these algorithms have also been used to create better heuristics like the combined SDO $\&$ LDO \cite{}.
 
-This paper examines a graphics processing unit (GPU) mapping of parallel graph coloring.  Prior parallel graph coloring algorithms have been evaluated on conventional shared-memory multiprocessors [reference] or distributed systems [reference], but to the best of our knowledge, this is the first study of how GPU architectures affect performance gains and number of assigned colors in a parallel implementation.  Our study demonstrates that features of the GPU architecture significantly impact the algorithms selected. Specifically, the support for efficient fine-grain multithreading facilitates strong performance gains over CPU implementations because hundreds or even thousands of threads can be applied to the parallel coloring allowing us to have as few colors as the best sequential algorithm while operating nearly as fast as the fastest sequential algorithms. 
+This paper examines a graphics processing unit (GPU) mapping of parallel graph coloring.  Prior parallel graph coloring algorithms have been evaluated on conventional shared-memory multiprocessors [reference] or distributed systems [reference], some of which also use METIS to help the graph partitioning, but to the best of our knowledge, this is the first study of how GPU architectures affect performance gains and number of assigned colors in a parallel implementation.  Our study demonstrates that features of the GPU architecture significantly impact the algorithms selected. Specifically, the support for efficient fine-grain multithreading facilitates strong performance gains over CPU implementations because hundreds or even thousands of threads can be applied to the parallel coloring allowing us to have as few colors as the best sequential algorithm while operating nearly as fast as the fastest sequential algorithms. 
 
 %Graph coloring refers to the assignment of labels or colors to elements of a graph (vertices or edges) subject to certain constraints. In this paper, we consider the specific problem of assigning colors to vertices so that no two neighboring vertices (vertices connected by an edge) have the same color.  There are several known applications of graph coloring like assigning frequencies to wireless access points, time-tabling and scheduling, register allocation and printed circuit testing, iterative solution of sparse linear systems [], preconditions [], sparse tiling [], and eigenvalue computation [].  
 
@@ -88,84 +88,85 @@ This paper examines a graphics processing unit (GPU) mapping of parallel graph c
 
 %This paper examines a graphics processing unit (GPU) mapping of parallel graph coloring.  Prior parallel graph coloring algorithms have been evaluated on conventional shared-memory multiprocessors [reference] or distributed systems [reference], but to the best of our knowledge, this is the first study of how GPU architectures affect performance gains and number of assigned colors in a parallel implementation.  Our study demonstrates that features of the GPU architecture significantly impact the algorithms selected.  Specifically, the support for efficient fine-grain multithreading facilitates strong performance gains over CPU implementations (as high as 1000X) because hundreds or even thousands of threads can be applied to the parallel coloring.  Further, multi-threading can hide the latency to memory of the irregular accesses that on a conventional CPU do not effectively utilize caches.  In addition, most parallel graph algorithms seek to partition graphs carefully to minimize the number of edges that cross processor boundaries, since cross-processor accesses typically have very high communication latencies [need a reference, possibly just a METIS reference].  On a GPU, where the entire graph is stored in a global device memory, the latency of accessing vertices inside or outside the current subgraph is no different, making the partitioning process less important. 
 
-This paper examines a graphics processing unit (GPU) mapping of parallel graph coloring.  Prior parallel graph coloring algorithms have been evaluated on conventional shared-memory multiprocessors [reference] or distributed systems [reference], but to the best of our knowledge, this is the first study of how GPU architectures affect performance gains and number of assigned colors in a parallel implementation.  Our study demonstrates that features of the GPU architecture significantly impact the algorithms selected.  Specifically, the support for efficient fine-grain multithreading facilitates strong performance gains over CPU implementations (as high as 1000X) because hundreds or even thousands of threads can be applied to the parallel coloring.  Further, multi-threading can hide the latency to memory of the irregular accesses that on a conventional CPU do not effectively utilize caches.  In addition, most parallel graph algorithms seek to partition graphs carefully to minimize the number of edges that cross processor boundaries, since cross-processor accesses typically have very high communication latencies [need a reference, possibly just a METIS reference].  On a GPU, where the entire graph is stored in a global device memory, the latency of accessing vertices inside or outside the current subgraph is no different, making the partitioning process less important. 
-
-Our study also identifies several features of graphs and the GPU implementation that impact both performance and number of assigned colors.  The size and sparsity of a graph affects the number of conflicts, which as suggested above, affects both performance and the quality of the coloring.  Our study evaluates parallelizing polynomial graph coloring algorithms that are known to derive fewer colors than lower complexity algorithms, but for small graphs these more efficient algorithms may also lead to the same quality solution at lower cost.  Therefore, certain graph properties determine whether using a GPU is profitable.  We will evaluate alternative coloring heuristics, partitioning strategies and granularity of the partitioning, to find the solution that leads to a high-quality coloring and a significant performance gain over a baseline CPU implementation.  We compare our coloring results to a prior parallel algorithm on the same set of graphs [from where] [reference?].
+%Our study also identifies several features of graphs and the GPU implementation that impact both performance and number of assigned colors.  The size and sparsity of a graph affects the number of conflicts, which as suggested above, affects both performance and the quality of the coloring.  Our study evaluates parallelizing polynomial graph coloring algorithms that are known to derive fewer colors than lower complexity algorithms, but for small graphs these more efficient algorithms may also lead to the same quality solution at lower cost.  Therefore, certain graph properties determine whether using a GPU is profitable.  We will evaluate alternative coloring heuristics, partitioning strategies and granularity of the partitioning, to find the solution that leads to a high-quality coloring and a significant performance gain over a baseline CPU implementation.  We compare our coloring results to a prior parallel algorithm on the same set of graphs [from where] [reference?].
 
 %The remainder of this paper is structured as follows: we first review previous graph coloring work will be presented.  The following section discusses the details of the parallel algorithm and the coloring heuristics we evaluated.  We present extensive experimental results followed by a conclusion.
 
 \section{Target platform}
 GPUs have different architectures compared to parallel computers where most of the parallel graph-coloring algorithms are run. The main differences and how they impact on algorithm are described below:
-i) Number of processors. Graphics cards have many processors: an NVIDIA GTX 260 has 192 cores while a Tesla S1070 processor has 240 cores. This allows us to have much more parallelism (and having many more threads running at the same time) compared to other architectures. Moreover, as thread creation is inexpensive on a GPU, we will be running a lot to fully use the power of the GPU. Consequently our algorithm will be using many more threads than existing algorithms.
+\renewcommand{\labelenumi}{\roman{enumi}) } 
+\begin{enumerate}
+ \item Number of processors: Graphics cards have many processors: an NVIDIA GTX 260 has 192 cores while a Tesla S1070 processor has 240 cores. This allows us to have much more parallelism (and having many more threads running at the same time) compared to other architectures. Moreover, as thread creation is inexpensive on a GPU, we will be running a lot to fully use the power of the GPU. Consequently our algorithm will be using many more threads than existing algorithms.
 
-ii) Processor speed. While a state-of-the-art processor typically operates at around 3 GHz processor cores on GPUs are much slower: one core on a GTX 260 operates at 1242 MHz while a core on a Tesla S1070 operates between 1.296 to 1.44  GHz. Hence we need to use the many threads to match or better the speed of a standard CPU. Moreover, trying to get speedups for  O(N) algorithms are hard as the cores are individually slower and some time is wasted copying data to and from the GPU
+\item Processor speed: While a state-of-the-art processor typically operates at around 3 GHz processor cores on GPUs are much slower: one core on a GTX 260 operates at 1242 MHz while a core on a Tesla S1070 operates between 1.296 to 1.44  GHz. Hence we need to use the many threads to match or better the speed of a standard CPU. Moreover, trying to get speedups for  O(N) algorithms are hard as the cores are individually slower and some time is wasted copying data to and from the GPU
 
-iii) Memory. The memory available to parallel computers is normally bigger but it is sharing data between processors is usually much more expensive. On a GPU, all the data can be stored in the global memory and all the cores can readily access it.
+\item Memory: The memory available to parallel computers is normally bigger but it is sharing data between processors is usually much more expensive. On a GPU, all the data can be stored in the global memory and all the cores can readily access it.
 
+\end{enumerate}
 
-\section{ Related Work}
-In this section we give an overview of existing graph coloring algorithms, both sequential and parallel.  In this discussion, a graph $G=(V,E)$, where $V$ is a set of $n$ vertices, and $E$ is a set of $m$ edges. The degree of a vertex $v \in V$ is denoted by $d(v)$. The maximum vertex degree of a graph is denoted by $\Delta$.
-
-\subsection{Sequential greedy coloring}
-
-The problem of sequential graph coloring has been studied extensively. Among all the sequential approaches, greedy algorithms are proven to be very effective in practice, such as First Fit, Largest degree ordering, Saturation degree ordering and Incidence degree ordering[citations?]. Such greedy algorithms iterate over the vertices to be colored in a certain order, and at each step assign the current vertex the smallest permissible color. Given a graph $G$ with maximum degree $\Delta$, these procedures will use a maximum of $\Delta+1$ colors since each vertex has at most $\Delta$ neighbors. We now describe each of these greedy coloring algorithms in more detail.
-
-\begin{description}
-  \item[\ff (\ffshort):] This is the simplest algorithm of all greedy coloring heuristics\cite{klotz2002graph}. To color a vertex, a permissible color is chosen from the interval $[1,C]$, where $C$ is the largest color currently used. A new color $C+1$ is used if all  $C$ colors have been assigned to the neighbors of the vertex. \ffshort runs in time $O(m+n)$. 
-  \item[Largest degree ordering (\ldo):] \ldo first sorts vertices by degree in nonincreasing order and then runs \ff. It runs in time $O(m + n\log n)$. 
-\item[Saturation degree ordering (\sdo):] The saturation degree of a vertex is defined  as the number of different colors its neighbor vertices have been assigned. \sdo greedily picks the vertex with largest saturation degree and colors it. Since this step could change the saturation degree of other vertices, \sdo is more computationally intensive; a naive implementation takes time $O(m^2/n)$, and this can be reduced to $O(m\log n)$ using hash tables and dynamic search trees. Notice that the naive implementation runs in time $O(n^2)$ for sparse graphs.
-\item[Incidence degree ordering (\ido):] The incidence degree of a vertex is defined as the number of its adjacent colored vertices. The \ido algorithm always picks the vertex with maximum incidence degree to be colored next. It runs in time $O(m\log n)$. 
-\end{description}
-
-In general, \ff is more efficient than the other heuristics, but uses more colors. \sdo returns the fewest colors of all the heuristics\cite{gebremedhin1999parallel}, while being more expensive. Since it is often the case that many vertices have the same saturation degree, tiebreaking rules must be employed to pick the next vertex to color. A useful choice of tiebreaker is to use \ldo for tiebreaking\cite{al2006new}; Algorithm~\ref{alg:sldo} describes the resulting procedure that we term \sldo. 
-
-\renewcommand{\algorithmicrequire}{\textbf{phase}}
-\begin{algorithm}
-\caption{\sldo\label{alg:sldo}}
-\begin{algorithmic}
-\STATE {\mbox {SDO $\&$ LDO algorithm:}}
-\WHILE {$N_{colored} < n $}
-    \STATE  $ max = -1$
-    \FOR {$ i = 1\: to\: n$}
-       \IF {$!colored(v_i)$}
-           \STATE $sd = SaturatedDegree(v_i) $
-           \IF {$sd > max$}
-               \STATE $max = sd$
-               \STATE $index = i$
-           \ENDIF
-           \IF {$ sd = max$}
-             \IF {$d(v_i) > d(v_{index})$}
-                 \STATE $index = i$
-             \ENDIF
-           \ENDIF
-        \STATE $ Color \:v_{index} $
-        \STATE $N_{colored} ++$
-        \ENDIF
-    \ENDFOR
-\ENDWHILE
-\end{algorithmic}
-\end{algorithm}
-
-
-\subsection{Parallel graph coloring}
-
-A number of existing parallel algorithms are based on the concept of a maximal independent set (MIS), which is a maximal set of vertices in which no two are connected by an edge. Since all such vertices can be colored with the same color, a parallel graph coloring algorithm repeatedly finds an MIS, colors it, and then removes the vertices from the graph. Luby \cite{luby1985simple} first proposed a randomized parallel MIS algorithm that yielded an independent set in $O(\log n)$ parallel steps; this was subsequently improved by Jones  and Plassman\cite{jones1993parallel}  to $O(\log n/\log\log n)$ paralle steps for bounded-degree graphs.
+%\section{ Related Work}
+%In this section we give an overview of existing graph coloring algorithms, both sequential and parallel.  In this discussion, a graph $G=(V,E)$, where $V$ is a set of $n$ vertices, and $E$ is a set of $m$ edges. The degree of a vertex $v \in V$ is denoted by $d(v)$. The maximum vertex degree of a graph is denoted by $\Delta$.
+%
+%\subsection{Sequential greedy coloring}
+%
+%The problem of sequential graph coloring has been studied extensively. Among all the sequential approaches, greedy algorithms are proven to be very effective in practice, such as First Fit, Largest degree ordering, Saturation degree ordering and Incidence degree ordering[citations?]. Such greedy algorithms iterate over the vertices to be colored in a certain order, and at each step assign the current vertex the smallest permissible color. Given a graph $G$ with maximum degree $\Delta$, these procedures will use a maximum of $\Delta+1$ colors since each vertex has at most $\Delta$ neighbors. We now describe each of these greedy coloring algorithms in more detail.
+%
+%\begin{description}
+%  \item[\ff (\ffshort):] This is the simplest algorithm of all greedy coloring heuristics\cite{klotz2002graph}. To color a vertex, a permissible color is chosen from the interval $[1,C]$, where $C$ is the largest color currently used. A new color $C+1$ is used if all  $C$ colors have been assigned to the neighbors of the vertex. \ffshort runs in time $O(m+n)$. 
+%  \item[Largest degree ordering (\ldo):] \ldo first sorts vertices by degree in nonincreasing order and then runs \ff. It runs in time $O(m + n\log n)$. 
+%\item[Saturation degree ordering (\sdo):] The saturation degree of a vertex is defined  as the number of different colors its neighbor vertices have been assigned. \sdo greedily picks the vertex with largest saturation degree and colors it. Since this step could change the saturation degree of other vertices, \sdo is more computationally intensive; a naive implementation takes time $O(m^2/n)$, and this can be reduced to $O(m\log n)$ using hash tables and dynamic search trees. Notice that the naive implementation runs in time $O(n^2)$ for sparse graphs.
+%\item[Incidence degree ordering (\ido):] The incidence degree of a vertex is defined as the number of its adjacent colored vertices. The \ido algorithm always picks the vertex with maximum incidence degree to be colored next. It runs in time $O(m\log n)$. 
+%\end{description}
+%
+%In general, \ff is more efficient than the other heuristics, but uses more colors. \sdo returns the fewest colors of all the heuristics\cite{gebremedhin1999parallel}, while being more expensive. Since it is often the case that many vertices have the same saturation degree, tiebreaking rules must be employed to pick the next vertex to color. A useful choice of tiebreaker is to use \ldo for tiebreaking\cite{al2006new}; Algorithm~\ref{alg:sldo} describes the resulting procedure that we term \sldo. 
+%
+%\renewcommand{\algorithmicrequire}{\textbf{phase}}
+%\begin{algorithm}
+%\caption{\sldo\label{alg:sldo}}
+%\begin{algorithmic}
+%\STATE {\mbox {SDO $\&$ LDO algorithm:}}
+%\WHILE {$N_{colored} < n $}
+%    \STATE  $ max = -1$
+%    \FOR {$ i = 1\: to\: n$}
+%       \IF {$!colored(v_i)$}
+%           \STATE $sd = SaturatedDegree(v_i) $
+%           \IF {$sd > max$}
+%               \STATE $max = sd$
+%               \STATE $index = i$
+%           \ENDIF
+%           \IF {$ sd = max$}
+%             \IF {$d(v_i) > d(v_{index})$}
+%                 \STATE $index = i$
+%             \ENDIF
+%           \ENDIF
+%        \STATE $ Color \:v_{index} $
+%        \STATE $N_{colored} ++$
+%        \ENDIF
+%    \ENDFOR
+%\ENDWHILE
+%\end{algorithmic}
+%\end{algorithm}
+%
+%
+%\subsection{Parallel graph coloring}
+%
+%A number of existing parallel algorithms are based on the concept of a maximal independent set (MIS), which is a maximal set of vertices in which no two are connected by an edge. Since all such vertices can be colored with the same color, a parallel graph coloring algorithm repeatedly finds an MIS, colors it, and then removes the vertices from the graph. Luby \cite{luby1985simple} first proposed a randomized parallel MIS algorithm that yielded an independent set in $O(\log n)$ parallel steps; this was subsequently improved by Jones  and Plassman\cite{jones1993parallel}  to $O(\log n/\log\log n)$ paralle steps for bounded-degree graphs.
 
 % proposed by \cite{luby1985simple}. An independent set is defined as a set of vertices in which no two vertices are neighbors. For Luby’s MIS algorithm, all the vertices in an independent set are assigned to the same color, and once an independent set is found and colored, the vertices in the set and their neighbors are removed from the graph. By iterating the procedure until all the vertices in the graph are colored, the independent sets found are merged into a maximal independent set. Luby proposed a parallel algorithm of searching for an independent set based on a Monto Carlo method in \cite{luby1985simple}.
 
 % Jones and Plassmann’s algorithm  improves the work of Luby. A single set of random weights is constructed and assigned to each vertex before coloring, and it searches for independent sets in parallel just like the MIS algorithm does, selecting the vertices with the (local) largest weights. Instead of assigning the same color to the vertices in an independent set, they are colored by the smallest color that has not been assigned to any neighbors. 
 
-Gjertsen\etal\cite{gjertsen1996parallel} and Allwright\etal \cite{allwright1995comparison} adapted this idea for distributed memory architectures.  Graphs are uniformly partitioned into subgraphs and each subgraph is associated with a specific processor.  To avoid color conflicts, two adjacent vertices on different processors cannot be colored in the same time step. This restriction can be overcome by Johansson’s algorithm\cite{}, where each processor is assigned a single vertex and vertices are colored randomly in the same time step. Color inconsistency may occur in this  scheme, so the coloring procedure is recursively re-run for the vertices receiving illegal colors.
-
-Gebremedhin and Manne proposed a  parallel coloring algorithm algorithm (\gm) for shared memory architectures, which achieves a linear speedup in the PRAM model \cite{gebremedhin2000scalable}. In followup work \cite{gebremedhin2006speeding} they improved the \gm algorithm by ordering the vertices to reduce cache misses and performing vertex-to-processor assignments based on graph partitioning rather than arbitrary allocation. 
-
-The \gm algorithm consists of four phases: 
-\begin{inparaenum}[(1)]
-  \item Partitioning: Assuming the number of processors is p, in this phase the graph is broken down into p independent subgraphs of almost the same size, and each subgraph is assigned to one processor. 
-  \item Pseudo-coloring: Each processor tentatively colors the vertices assigned to it in sequence. When two adjacent vertices reside on different processors are colored simultaneously, coloring inconsistency may arise.
-  \item Conflict detection:  Each processor checks the colors of  vertices assigned to it for consistency and identify a set of vertices which have color conflicts.
-  \item Conflict resolving: Re-coloring the detected vertices with conflicts.
-\end{inparaenum}
+%Gjertsen\etal\cite{gjertsen1996parallel} and Allwright\etal \cite{allwright1995comparison} adapted this idea for distributed memory architectures.  Graphs are uniformly partitioned into subgraphs and each subgraph is associated with a specific processor.  To avoid color conflicts, two adjacent vertices on different processors cannot be colored in the same time step. This restriction can be overcome by Johansson’s algorithm\cite{}, where each processor is assigned a single vertex and vertices are colored randomly in the same time step. Color inconsistency may occur in this  scheme, so the coloring procedure is recursively re-run for the vertices receiving illegal colors.
+%
+%Gebremedhin and Manne proposed a  parallel coloring algorithm algorithm (\gm) for shared memory architectures, which achieves a linear speedup in the PRAM model \cite{gebremedhin2000scalable}. In followup work \cite{gebremedhin2006speeding} they improved the \gm algorithm by ordering the vertices to reduce cache misses and performing vertex-to-processor assignments based on graph partitioning rather than arbitrary allocation. 
+%
+%The \gm algorithm consists of four phases: 
+%\begin{inparaenum}[(1)]
+%  \item Partitioning: Assuming the number of processors is p, in this phase the graph is broken down into p independent subgraphs of almost the same size, and each subgraph is assigned to one processor. 
+%  \item Pseudo-coloring: Each processor tentatively colors the vertices assigned to it in sequence. When two adjacent vertices reside on different processors are colored simultaneously, coloring inconsistency may arise.
+%  \item Conflict detection:  Each processor checks the colors of  vertices assigned to it for consistency and identify a set of vertices which have color conflicts.
+%  \item Conflict resolving: Re-coloring the detected vertices with conflicts.
+%\end{inparaenum}
 
 
 \section{Algorithm}
