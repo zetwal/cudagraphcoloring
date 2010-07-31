@@ -148,15 +148,15 @@ After studying previous work on parallel graph-coloring algorithms, we have deve
 
 \subsection{The Graph Coloring Framework}
 
-
+\begin{algorithm}
 \begin{algorithmic}
-\REQUIRE {$1 \: : \: Graph Partitioning - CPU$}
+\REQUIRE {$1 \: : \: Graph \: Partitioning - CPU$}
     \STATE{ \mbox{Logically partition graph into subgraphs}}
 	\STATE{ \mbox{Indentify boundary nodes}}
 	\STATE{ \mbox{Count neighbors outside the subgraph for each vertex}}
 \newline
 	
-\REQUIRE {$2 \: : \: Graph Coloring $\&$ Conflict Solving- GPU$}
+\REQUIRE {$2 \: : \: Graph\: Coloring $\&$ Conflict\: Solving\:- GPU$}
 	\WHILE {Number of color conflicts is high}
 		\STATE{ \mbox{Color graph using the specified heuristic}}
 		\STATE{ \mbox{Identify color conflicts}}
@@ -164,19 +164,21 @@ After studying previous work on parallel graph-coloring algorithms, we have deve
 	\ENDWHILE
 	
 
-\REQUIRE {$3 \: : \: Sequential Conflicts resolution - CPU$}
+\REQUIRE {$3 \: : \: Sequential\: Conflicts\: resolution\: - CPU$}
 	\STATE{ \mbox{Residual conflicts are eliminated}}
 		
 \end{algorithmic}\
+\end{algorithm}
+
+\textbf{Graph Partitioning:}
+The graph is initially padded with empty nodes so that it is exactly divisible by the total number of threads. We experiment with two different graph partition approaches: 1) partitioning the graph into arbitrary regular subgraphs; 2) using a graph partitioning system like METIS[Karypis] to achieve a better partition (in which case the graph is not padded). In both cases the number of partitions is set to be equal to the number of threads used, and each thread is responsible for coloring the subgraph assigned to it. 
+For uniform partition, to color a graph of $N$ vertices using $p$ threads, each thread equally takes $N/p$ vertices, which is a load-balanced approach.And when METIS is used, the resulting subgraphs tend to be unevenly sized. If some threads deal with much bigger graphs than the others do, the overall performance will be impacted.
 
 
-\textbf{Phase 1: Graph Partitioning}\
-The graph can be partitioned in 2 ways. Either the graph is padded so that it can be evenly divisible by the number of threads or METIS [Karypis] can be used to partition the graph.\
-
-\textbf{Boundary Nodes}\
+\textbf{Boundary Nodes:}\
 When a graph is divided into subgraphs, some of the vertices found in the subgraph will have neighbors only in the subgraph while others will have some which are inside while others are outside. The latter are referred to as boundary nodes and they are the ones who might have color conflicts. For many graphs, especially if METIS is not used and the partitions are small, the number of boundary nodes is roughly equal to the total number of vertices. However, it can help speedup in some case and when heuristics like MIN and MAX are used, we need to know the number of neighbors of a vertex which is outside the subgraph.\\
 
-\textbf{Phase 2: Graph Coloring $\&$ Conflicts detection}\
+\textbf{Phase 2: Graph Coloring $\&$ Conflicts detection:}\
 
 \textbf{Graph Coloring}\
 Each thread assigns colors to its subgraph but checks the whole graph before allocating colors. We tried four heuristics for color allocation:
@@ -190,6 +192,7 @@ Each thread assigns colors to its subgraph but checks the whole graph before all
 
 First Fit and SDO $\&$ LDO have already bee described in Section 3.1. We will focus on the 2 new heuristics we have devised:\\
 
+\begin{algorithm}
 \textbf{MAX OUT algorithm:}\
 \begin{algorithmic}
 \WHILE {$N_{colored} < N $}
@@ -212,9 +215,9 @@ First Fit and SDO $\&$ LDO have already bee described in Section 3.1. We will fo
     \ENDFOR
 \ENDWHILE
 \end{algorithmic}\
+\end{algorithm}
 
-
-
+\begin{algorithm}
 \textbf{MIN OUT algorithm:}\
 \begin{algorithmic}
 \WHILE {$N_{colored} < N $}
@@ -237,7 +240,7 @@ First Fit and SDO $\&$ LDO have already bee described in Section 3.1. We will fo
     \ENDFOR
 \ENDWHILE
 \end{algorithmic}\
-
+\end{algorithm}
 
 
 For both of the above algorithms as well as for SDO $\&$ LDO, when we have chosen a vertex to color, we consider all the neighbors of the latter both inside and outside the subgraph.\\
