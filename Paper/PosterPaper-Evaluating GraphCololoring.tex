@@ -171,7 +171,7 @@ GPUs have different architectures compared to parallel computers where most of t
 
 \section{Algorithm}
 
-In this paper, we propose a framework based on the \gm algorithm, which is adapted for an NVIDIA GPU platform.  In addition, two new heuristics are proposed to match the parallelism exploited by the GPU, which are shown to give better results than existing heuristics such as FF and SDO. 
+In this paper, we propose a framework based on the \gm algorithm \cite{gebremedhin2000scalable}, which is adapted for an NVIDIA GPU platform.  In addition, two new heuristics are proposed to match the parallelism exploited by the GPU, which are shown to give better results than existing heuristics such as FF and SDO. 
 
 \subsection{The Graph Coloring Framework}
 
@@ -198,18 +198,14 @@ In this paper, we propose a framework based on the \gm algorithm, which is adapt
 \end{algorithmic}\
 \end{algorithm}
 
-\textbf{Graph Partitioning:}
-The graph is initially padded with empty nodes so that it is exactly divisible by the total number of threads. We experiment with two different graph partition approaches: 1) partitioning the graph into arbitrary regular subgraphs; 2) using a graph partitioning system like METIS[Karypis] to achieve a better partition (in which case the graph is not padded). In both cases the number of partitions is set to be equal to the number of threads used, and each thread is responsible for coloring the subgraph assigned to it. 
-For uniform partition, to color a graph of $N$ vertices using $p$ threads, each thread equally takes $N/p$ vertices, which is a load-balanced approach.And when METIS is used, the resulting subgraphs tend to be unevenly sized. If some threads deal with much bigger graphs than the others do, the overall performance will be impacted.
+\textbf{Phase 1: Graph Partitioning:}
+The graph is initially padded with empty nodes so that it is exactly divisible by the total number of threads. Each thread equally takes $N/p$ vertices, which is a load-balanced approach.\\
 
+%\textbf{Boundary Nodes:}\
+%When a graph is divided into subgraphs, some of the vertices found in a subgraph have connected neighbors only in the same subgraph while others have neighbors outside.The former are referred as interior nodes and the latter are boundary nodes.Within a subgraph, the coloring procedure is conducted in sequence, so interior nodes are not likely to have color conflicts. However,since all subgraphs are colored in parallel without inter-thread communication, the boundary nodes are likely to be assigned with illegal colors conflicting with their neighbors residing in different subgraphs.  
 
-\textbf{Boundary Nodes:}\
-When a graph is divided into subgraphs, some of the vertices found in a subgraph have connected neighbors only in the same subgraph while others have neighbors outside.The former are referred as interior nodes and the latter are boundary nodes.Within a subgraph, the coloring procedure is conducted in sequence, so interior nodes are not likely to have color conflicts. However,since all subgraphs are colored in parallel without inter-thread communication, the boundary nodes are likely to be assigned with illegal colors conflicting with their neighbors residing in different subgraphs.  
- For many graphs, especially if METIS is not used and the partitions are small, the number of boundary nodes is roughly equal to the total number of vertices. However, it can help speedup in some case and when heuristics like MIN OUT and MAX OUT are used, we need to know the number of neighbors of a vertex which is outside the subgraph.\\
 
 \textbf{Phase 2: Graph Coloring $\&$ Conflicts detection:}\
-
-\textbf{Graph Coloring}\
 Each thread assigns colors to its subgraph but checks the whole graph before allocating colors. We tried four heuristics for color allocation:
 \renewcommand{\labelenumi}{\roman{enumi}) } 
 \begin{enumerate}
@@ -219,63 +215,66 @@ Each thread assigns colors to its subgraph but checks the whole graph before all
   \item MIN OUT
 \end{enumerate}
 
-First Fit and SDO $\&$ LDO have already bee described in Section 3.1. We will focus on the 2 new heuristics we have devised:\\
+The MAX OUT and MIN OUT algorithm work like the SDO $\&$ LDO except that where the latter uses saturation to decide which node to color first, MAX OUT uses the maximum number of neighbors of a vertex out of the latter's subgraph and MIN OUT uses the minimum number of neighbors outside of the subgraph respectively. For all of the 4 heuristics, when we have chosen a vertex to color, we consider all the neighbors of the latter both inside and outside the subgraph when allocating colors.\\
 
-\begin{algorithm}
-\caption{Max Out Algorithm \label{alg:MAXOUT}}
-\begin{algorithmic}
-\WHILE {$N_{colored} < N $}
-    \STATE  $ max = -1$
-    \FOR {$ i = 1\: to\: N$}
-       \IF {$!colored(v_i)$}
-           \STATE $no = Number of neighbors outside partition $
-           \IF {$no > max$}
-               \STATE $max = no$
-               \STATE $index = i$
-           \ENDIF
-           \IF {$ no == max$}
-             \IF {$d(v_i) > d(v_{index})$}
-                 \STATE $index = i$
-             \ENDIF
-           \ENDIF
-        \STATE $ Color \:v_{index} $
-        \STATE $N_{colored} ++$
-        \ENDIF
-    \ENDFOR
-\ENDWHILE
-\end{algorithmic}\
-\end{algorithm}
+%
+%First Fit and SDO $\&$ LDO have already bee described in Section 3.1. We will focus on the 2 new heuristics we have devised:\\
+%
+%\begin{algorithm}
+%\caption{Max Out Algorithm \label{alg:MAXOUT}}
+%\begin{algorithmic}
+%\WHILE {$N_{colored} < N $}
+%    \STATE  $ max = -1$
+%    \FOR {$ i = 1\: to\: N$}
+%       \IF {$!colored(v_i)$}
+%           \STATE $no = Number of neighbors outside partition $
+%           \IF {$no > max$}
+%               \STATE $max = no$
+%               \STATE $index = i$
+%           \ENDIF
+%           \IF {$ no == max$}
+%             \IF {$d(v_i) > d(v_{index})$}
+%                 \STATE $index = i$
+%             \ENDIF
+%           \ENDIF
+%        \STATE $ Color \:v_{index} $
+%        \STATE $N_{colored} ++$
+%        \ENDIF
+%    \ENDFOR
+%\ENDWHILE
+%\end{algorithmic}\
+%\end{algorithm}
+%
+%\begin{algorithm}
+%\caption{Min Out Algorithm \label{alg:MINOUT}}
+%\begin{algorithmic}
+%\WHILE {$N_{colored} < N $}
+%    \STATE  $ min = max degree$
+%    \FOR {$ i = 1\: to\: N$}
+%       \IF {$!colored(v_i)$}
+%           \STATE $no = Number of neighbors outside partition $
+%           \IF {$no < min$}
+%               \STATE $min = no$
+%               \STATE $index = i$
+%           \ENDIF
+%           \IF {$ no == min$}
+%             \IF {$d(v_i) > d(v_{index})$}
+%                 \STATE $index = i$
+%             \ENDIF
+%           \ENDIF
+%        \STATE $ Color \:v_{index} $
+%        \STATE $N_{colored} ++$
+%        \ENDIF
+%    \ENDFOR
+%\ENDWHILE
+%\end{algorithmic}\
+%\end{algorithm}
 
-\begin{algorithm}
-\caption{Min Out Algorithm \label{alg:MINOUT}}
-\begin{algorithmic}
-\WHILE {$N_{colored} < N $}
-    \STATE  $ min = max degree$
-    \FOR {$ i = 1\: to\: N$}
-       \IF {$!colored(v_i)$}
-           \STATE $no = Number of neighbors outside partition $
-           \IF {$no < min$}
-               \STATE $min = no$
-               \STATE $index = i$
-           \ENDIF
-           \IF {$ no == min$}
-             \IF {$d(v_i) > d(v_{index})$}
-                 \STATE $index = i$
-             \ENDIF
-           \ENDIF
-        \STATE $ Color \:v_{index} $
-        \STATE $N_{colored} ++$
-        \ENDIF
-    \ENDFOR
-\ENDWHILE
-\end{algorithmic}\
-\end{algorithm}
 
 
-For both of the above algorithms as well as for SDO $\&$ LDO, when we have chosen a vertex to color, we consider all the neighbors of the latter both inside and outside the subgraph.\\
 
-\textbf{Conflicts Detection}\
-Given that coloring is being done in parallel, conflicts occur frequently. They are identified by assigning one thread per boundary node that checks whether there is a conflict with one of its neighbors. If that happens, the color of that node is reset to NULL.\\
+\textbf{Phase 3: Conflicts Detection}\
+Given that coloring is being done in parallel, conflicts occur frequently. They are identified by assigning one thread per boundary node that checks whether there is a conflict with one of its neighbors. If that happens, the color of that node is reset to NULL.\
 
 Dropping to the CPU to solve the conflicts is common in many approaches but given that we have many small partitions, we tend to have lots of conflicts and resolving that on the CPU can be quite slow. So we do several passes of coloring and conflict detection until we have few conflicts which can be quickly solved sequentially on the CPU. 
 
