@@ -176,7 +176,8 @@ For uniform partition, to color a graph of $N$ vertices using $p$ threads, each 
 
 
 \textbf{Boundary Nodes:}\
-When a graph is divided into subgraphs, some of the vertices found in a subgraph have neighbors only in the subgraph while others have some which are inside while others are outside. The latter are referred to as boundary nodes and they are the ones who might have color conflicts. For many graphs, especially if METIS is not used and the partitions are small, the number of boundary nodes is roughly equal to the total number of vertices. However, it can help speedup in some case and when heuristics like MIN OUT and MAX OUT are used, we need to know the number of neighbors of a vertex which is outside the subgraph.\\
+When a graph is divided into subgraphs, some of the vertices found in a subgraph have connected neighbors only in the same subgraph while others have neighbors outside.The former are referred as interior nodes and the latter are boundary nodes.Within a subgraph, the coloring procedure is conducted in sequence, so interior nodes are not likely to have color conflicts. However,since all subgraphs are colored in parallel without inter-thread communication, the boundary nodes are likely to be assigned with illegal colors conflicting with their neighbors residing in different subgraphs.  
+ For many graphs, especially if METIS is not used and the partitions are small, the number of boundary nodes is roughly equal to the total number of vertices. However, it can help speedup in some case and when heuristics like MIN OUT and MAX OUT are used, we need to know the number of neighbors of a vertex which is outside the subgraph.\\
 
 \textbf{Phase 2: Graph Coloring $\&$ Conflicts detection:}\
 
