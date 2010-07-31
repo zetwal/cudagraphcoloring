@@ -253,47 +253,59 @@ Dropping to the CPU to solve the conflicts is common in many approaches but give
 
 
 \section{Experiments and Results}
-The algorithms have been implemented using the CUDA API and the tests are mainly carried out on a  one processor of a Tesla S1070. The configuration is as follows:
-Number of Cores: 240
-Memory: ...
-CPU: ...
+The algorithm has been implemented using the CUDA API and the tests were carried out on a Tesla S1070. The configuration is as follows:
+\begin{itemize}
+  \item Number of Cores:
+  \item Memory:
+\end{itemize}
 
-Table 1
+
+
+The tests were carried out on these 9 real graphs from the University of Florida Sparse Matrix Collection [] which were regrouped in 3 categories
 
 \begin{table}
 \scriptsize
 \begin{center}
-\begin{tabular}{l r r r r}
+\begin{tabular}{c c c c c}
 \hline
-Name & $|V|$ & $|E|$ & Max Degree & Avg Degree \\
+Name & $|V|$ & $|E|$ & Max Degree & Avg Degree \
 \\
 \hline
+Structural Engineering  \\
 ct20stif & 52,329 & 1,375,396 & 206 & 50 \\
 nasasrb & 54,870 & 1,366,097 & 275 & 47 \\
 pwtk  & 217,918 & 5,926,171 & 179 & 52 \\
 \\
+Civil Engineering \\
 pkustk10 & 81,920 & 2,114,154 & 89 & 52 \\
 pkustk11 & 87,804 & 2,565,054 & 131 & 55 \\
 pkustk13 & 94,893 & 3,260,967 & 299 & 68\\
 \\
+Automotive \\
 hood & 220,542 & 5,273,947 & 76  & 47 \\
 msdoor & 417,792 & 9,912,536 & 76 & 46 \\
 ldoor & 958,464 & 22,785,136 & 76 & 46 \\
 
 \end{tabular}
-\caption{Information of tested graphs}
+\caption{Graph properties and source}
 \label{amean_time}
 \end{center}
 \end{table}
 
 
+
+Say more about the graphs.  Range of similar average degree.  Variation in max-degree and size.  Similar number of colors, but size impacts execution time significantly due to polynomial algorithm.  etc. etc.
+  
+
+Sequential First Fit and SDO $\&$ LDO were run on each of the above graphs to get a color and timing baseline.  
+    
 \begin{table}
 \scriptsize
 \begin{center}
-\begin{tabular}{l r r r r}
+\begin{tabular}{l c c c c}
 \hline
 Name & Colors  & Time  & Colors & Time \\
- & FF & FF &   SDO$\&$LDO &  SDO$\&$LDO\\
+ & FF & FF &   SDO$\&$LDO &  SDO$\&$LDO\
 \\
 \hline
 ct20stif & 49 & 29 & 48 & 203387 \\
@@ -315,59 +327,48 @@ ldoor & 42 & 450 & 35 & 34584800 \\
 \end{table}
 
 
+While the colors are accurate, the timing information for the sequential SDO $\&$ LDO could have been improved. The latter has is from a naive implementation which is quite inefficient. Nevertheless, the sequential SDO $\&$ LDO has been reported by its authors [...] to be O (N$^2$) and despite yielding a good coloring is quite slow. On the other hand, First Fit which is fast yields a poor coloration!\
+Ideally what we would really want is a fast algorithm that generates as few colors as possible.
 
-
-
-The table below shows 9 real graphs from [uof]. The graphs have been divided into 3 groups according to their domain:
-
-   1. Structural Engineering
-
-          o ct20stif : CT20 Engine Block stiffness matrix - Boeing
-          o nasasrb: Struncture from Nasa Langley , shuttle rocket booster - NASA
-          o pwtk: pressurized wind tunnel stifness matrix - Boeing
-
-
-   
-
-o
-
-   2. Automotive
-          * hood:
-          * msdoor:
-          * ldoor:
-    o
-         3. Civil Engineering
-                * pkustk10:
-                * pkustk11:
-                * pkustk13:
-
-               
-
-            Their detailed characteristics are shown in table 2 below.  In the last two columns, we also show timing of the two heuristics on the CPU, serving as the baseline.  To obtain these timings, the program is run 10 times and the colors and timings are the average of the 10 runs.
-
-            Say more about the graphs.  Range of similar average degree.  Variation in max-degree and size.  Similar number of colors, but size impacts execution time significantly due to polynomial algorithm.  etc. etc.
-
-(tables and figures are coming soon)
-
-The performance and number of colors resulting from the First Fit heuristic and the Combined SDO$\&$LDO is shown for each graph. As we can see, though First Fit heuristic is much faster than the Combined SDO$\&$LDO algorithm, the resulting number of colors is often much higher.  If number of colors is important to the application, then we would like to achieve the results of the more precise algorithm, but not at the dramatically increased execution time.  (need to quantify how much slower and how much worse is the coloring.)
-
+           
 \subsection{Algorithms Compared}
 
-Now we investigate the impact of parallelizing the combined SDO$\&$LDO for the GPU on both performance and number of colors obtained.  For each graph, we used the following methodology. We varied the number of threads and compared the number of colors and speedup over the CPU baseline for each. We use the sequential combined SDO$\&$LDO CPU code to compare the colors and speedup for the parallel SDO$\&$LDO, MAX and MIN heuristics, while we use the CPU FirstFit as a baseline for the parallel First Fit.
+To investigate the impact of parallel graph coloring algorithms on  both performance and number of colors obtained, the number of threads is linearly incremented and the timing and color obtained is compared.\\
 
 \textbf{Number of threads}\
 Given that the graphs have very different sizes, it does not make sense to use the same number of threads for each. For example, for a graph of 50 000 nodes, if 1024 threads are used, each thread handles about 48 vertices while for a graph of 500 000 nodes, each thread will operate on around 480 vertices. Since GPU cores are much slower than state-of-the-art processors speedup gains are the result of using as many cores as possible where each is operating on just a few vertices.
 
-To determine subgraph sizes that tend to give fewer colors, we linearly decreased the size of the subgraph by varying the number of threads for each of the 9 real graphs that we have. The results are shown below:
+To determine subgraph sizes that tend to give fewer colors, we linearly decreased the size of the subgraph by varying the number of threads for each of the 9 real graphs that we have. The results is shown in Figure~\ref{figureSubGraph} and Table~\ref{optimalColoringTable}.\\
 
 \begin{figure}
   \centering
   \includegraphics[scale=0.5]{figures/subgraphSize.png}
-  \caption{ Subgraph sizes }
+  \caption{Subgraph size for Optimal color per algorithm and graph}
+  \label{figureSubGraph}
 \end{figure}
 
 
-\textbf{Automatic Pass determination}\
+
+\begin{table}
+\scriptsize
+\begin{center}
+\begin{tabular}{c c c}
+\hline
+Parallel Algorithm  & Average  & Standard Deviation \\
+\hline
+FF & 8.2 & 1.9 \\
+SDO$\&$LDO & 12.2 & 13.2 \\
+MAX OUT & 14.0 & 14.0 \\
+MIN OUT & 9.3 & 3.8 \\
+\end{tabular}
+\caption{Subgraph size for optimal coloring}
+\label{optimalColoringTable}
+\end{center}
+\end{table}
+
+
+
+\subsection{Multi Passes}\
 In the second set of experiments, we allow the program to determine the number of GPU passes it requires. We have seen that if the CPU has fewer than 200 conflicts to solve it is very fast(It is better to use a percentage, like percentage of the total number of vertices, but the stop criterion dose not have math ). (How did you arrive at this number of 200?)  - can we instead say that we move over to CPU when the number of remaining conflicts is negligible So after each pass we check to see the number of conflicts and if it is approximately less than 200, we terminate the GPU Passes and send the remaining conflicts to the CPU for solving.\
 
 \begin{figure}
