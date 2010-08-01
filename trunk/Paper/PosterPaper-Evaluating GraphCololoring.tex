@@ -47,14 +47,20 @@
 \copyrightyear{2005}
 \copyrightdata{[to be supplied]}
 
-\titlebanner{banner above paper title}        % These are ignored unless
+%\titlebanner{banner above paper title}        % These are ignored unless
 \preprintfooter{short description of paper}   % 'preprint' option specified.
 
 \title{Evaluating Graph Coloring on GPUs}
 
-\authorinfo{Name1\and Name2\and Name3\and Name4\and Name5}
-           {Affiliation}
-           {Email 1/2/3/4/5}
+%\authorinfo{Name1\and Name2\and Name3\and Name4\and Name5}
+ %          {Affiliation}
+  %         {Email 1/2/3/4/5}
+  
+%  \authorinfo{Omitted for double blind review}]
+  \authorinfo{Author, Affiliation and Email Omitted for double blind review}
+ %          {Affiliation}
+  %         {Email 1/2/3/4/5}
+
 
 \maketitle
 
@@ -211,7 +217,7 @@ In this paper, we propose a framework based on the \gm algorithm \cite{gebremedh
 
 
 \textbf{Phase 1: Graph Partitioning:}
-The graph is initially padded with empty nodes so that it is exactly divisible by the total number of threads. Each thread equally takes $N/p$ vertices, which is a load-balanced approach.
+The graph is initially padded with empty nodes so that it is exactly divisible by the total number of threads. Each thread equally takes $N/p$ vertices, which is a load-balanced approach.\\
 
 %\textbf{Boundary Nodes:}\
 %When a graph is divided into subgraphs, some of the vertices found in a subgraph have connected neighbors only in the same subgraph while others have neighbors outside.The former are referred as interior nodes and the latter are boundary nodes.Within a subgraph, the coloring procedure is conducted in sequence, so interior nodes are not likely to have color conflicts. However,since all subgraphs are colored in parallel without inter-thread communication, the boundary nodes are likely to be assigned with illegal colors conflicting with their neighbors residing in different subgraphs.  
@@ -227,7 +233,7 @@ Each thread assigns colors to its subgraph but checks the whole graph before all
   \item MIN OUT: Color is allocated to the vertex having fewest neighbors out of the subgraph and then highest degree.
 \end{enumerate}
 
-Given that coloring is being performed in parallel, conflicts occur between vertices found in different subgraphs. Conflicts are identified by assigning one thread per boundary node which checks for color conflicts and reset the color of these nodes to null.
+Given that coloring is being performed in parallel, conflicts occur between vertices found in different subgraphs. Conflicts are identified by assigning one thread per boundary node which checks for color conflicts and reset the color of these nodes to null.\\
 
 %For all of the 4 heuristics, when we have chosen a vertex to color, we consider all the neighbors of the latter both inside and outside the subgraph %when allocating colors.\\
 
