@@ -367,8 +367,8 @@ The algorithm has been implemented using the CUDA API and the tests were carried
 \scriptsize
 \begin{tabular}{c c c c c c c c }
 \hline
-  &   &  &  \multicolumn{3}{c}{Colors} &  \\
-Name & $n$ & $m$ & $\Delta$ & FF & SDO $\&$ LDO &  FF Time \
+Name  &  $n$ & $m$ &  $\Delta$ & \multicolumn{2}{c}{Colors}  & Time  \\ \cline{5-6}
+ &  &  &  & FF & SDO $\&$ LDO &  FF  \
 \\
 \hline
 hood & 220,542 & 5,273,947 & 76 & 42 & 36 & 104.7\\
@@ -386,12 +386,11 @@ To investigate the impact of parallel graph coloring algorithms on  both perform
 \begin{tabular}{c c c c c }
 \hline
  %% \multicolumn{4}{c}{Colors} &  \\
-Name & &  & Colors & \\
-\hline
+Name & \multicolumn{4}{c}{Colors} \\ \cline{2-5}
  & FF & SDO $\&$ LDO  & MAX OUT & MIN OUT \\
 \hline
-hood & 36 & 36 & 36 & 36 \\
-pkustk10 & 40 & 40 & 39 & 39\\
+hood & 36 & 37 & 36 & 35 \\
+pkustk10 & 41 & 41 & 39 & 39\\
 pwtk & 39 & 39 & 38 & 38\\
 \end{tabular}
 \caption{ Optimal colors obtained by parallel algorithms.}
