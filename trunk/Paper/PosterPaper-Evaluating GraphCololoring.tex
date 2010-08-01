@@ -59,7 +59,8 @@
 \maketitle
 
 \begin{abstract}
-This paper evaluates features of graph coloring algorithms implemented on graphics processing units (GPUs), comparing coloring heuristics and thread decompositions.  As compared to prior work on graph coloring for other parallel architectures, we find that the large number of cores and relatively high global memory bandwidth of a GPU lead to different strategies for the parallel implementation.  Specifically, we find that a simple uniform block partitioning is very effective on GPUs.  We also discover that our parallel coloring heuristics lead to the same or fewer colors than a prior approach for a distributed-memory cluster architecture.  Our algorithm resolves many coloring conflicts across partitioned blocks on the GPU by iterating through the coloring process, before returning to the CPU to resolve remaining conflicts. With this approach we get as few color (if not fewer) than the best sequential graph coloring algorithm and we are not too far off the fastest sequential graph coloring algorithms which had poor color quality.
+This paper evaluates features of graph coloring algorithms implemented on graphics processing units (GPUs), comparing coloring heuristics and thread decompositions.  As compared to prior work on graph coloring for other parallel architectures, we find that the large number of cores and relatively high global memory bandwidth of a GPU lead to different strategies for the parallel implementation.  Specifically, we find that a simple uniform block partitioning is very effective on GPUs and our parallel coloring heuristics lead to the same or fewer colors than prior approaches for distributed-memory cluster architecture. Our algorithm resolves many coloring conflicts across partitioned blocks on the GPU by iterating through the coloring process, before returning to the CPU to resolve remaining conflicts. With this approach we get as few color (if not fewer) than the best sequential graph coloring algorithm and we are not too far off the fastest sequential graph coloring algorithms which had poor color quality.
+
 
 %Overall, parallel graph coloring speeds up well for the sparse graphs we studied, commonly yielding speedups above 1000X over a baseline CPU implementation.
 \end{abstract}
@@ -74,7 +75,7 @@ Graph coloring, Parallel algorithm, GPU, CUDA
 
 \section{Introduction}
 
-Graph coloring refers to the assignment of labels or colors to elements of a graph (vertices or edges) subject to certain constraints. In this paper, we consider the specific problem of assigning colors to vertices so that no two neighboring vertices (vertices connected by an edge) have the same color. There are several known applications of graph coloring like assigning frequencies to wireless access points, time-tabling and scheduling and register allocation and printed circuit testing among others.
+Graph coloring refers to the assignment of labels or colors to elements of a graph (vertices or edges) subject to certain constraints. In this paper, we consider the specific problem of assigning colors to vertices so that no two neighboring vertices (vertices connected by an edge) have the same color. There are several known applications of graph coloring like assigning frequencies to wireless access points, time-tabling and scheduling, register allocation and printed circuit testing among others.
 
 Graph coloring is NP-hard, and even computing a $n^{1-\epsilon}$-approximation of the chromatic number of a graph is NP-hard. Therefore, a number of heuristics have been developed to assign colors to vertices; some commonly used heuristics include First Fit, Largest Degree Order and Saturation Degree Order\cite{al2006new}.  These heuristics tend to trade off minimizing the number of colors and minimizing execution time but generally the faster algorithms have poor coloring quality while the slow ones tend to be better. Combinations of these algorithms have also been used to create better heuristics like the combined SDO $\&$ LDO \cite{al2006new}.
 
@@ -380,11 +381,10 @@ hood & 220,542 & 5,273,947 & 76 & 42 & 36 & 104.7\\
 pkustk10 & 81,920 & 2,114,154 & 89 & 42 & 42 & 39\\
 pwtk & 217,918 & 5,926,171 & 179 & 57 & 48 & 48\\
 \end{tabular}
-\caption{Graph properties - 
-$n$: number of vertices, $m$ the number of edgess $\&$ $\Delta$: maximum vertex degree}
+\caption{Graph properties - $n$: number of vertices, $m$ the number of edges $\&$ $\Delta$: maximum vertex degree}
 \label{tbl:properties}
-
 \end{table}
+
 
 \subsection{Results}
 
