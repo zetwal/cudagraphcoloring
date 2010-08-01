@@ -59,7 +59,7 @@
 \maketitle
 
 \begin{abstract}
-This paper evaluates features of graph coloring algorithms implemented on graphics processing units (GPUs), comparing coloring heuristics and thread decompositions.  As compared to prior work on graph coloring for other parallel architectures, we find that the large number of cores and relatively high global memory bandwidth of a GPU lead to different strategies for the parallel implementation.  Specifically, we find that a simple uniform block partitioning is very effective on GPUs and our parallel coloring heuristics lead to the same or fewer colors than prior approaches for distributed-memory cluster architecture. Our algorithm resolves many coloring conflicts across partitioned blocks on the GPU by iterating through the coloring process, before returning to the CPU to resolve remaining conflicts. With this approach we get as few color (if not fewer) than the best sequential graph coloring algorithm and we are not too far off the fastest sequential graph coloring algorithms which had poor color quality.
+This paper evaluates features of graph coloring algorithms implemented on graphics processing units (GPUs), comparing coloring heuristics and thread decompositions.  As compared to prior work on graph coloring for other parallel architectures, we find that the large number of cores and relatively high global memory bandwidth of a GPU lead to different strategies for the parallel implementation.  Specifically, we find that a simple uniform block partitioning is very effective on GPUs and our parallel coloring heuristics lead to the same or fewer colors than prior approaches for distributed-memory cluster architecture. Our algorithm resolves many coloring conflicts across partitioned blocks on the GPU by iterating through the coloring process, before returning to the CPU to resolve remaining conflicts. With this approach we get as few color (if not fewer) than the best sequential graph coloring algorithm and performance is close to the fastest sequential graph coloring algorithms which had poor color quality.
 
 
 %Overall, parallel graph coloring speeds up well for the sparse graphs we studied, commonly yielding speedups above 1000X over a baseline CPU implementation.
@@ -77,7 +77,7 @@ Graph coloring, Parallel algorithm, GPU, CUDA
 
 Graph coloring refers to the assignment of labels or colors to elements of a graph (vertices or edges) subject to certain constraints. In this paper, we consider the specific problem of assigning colors to vertices so that no two neighboring vertices (vertices connected by an edge) have the same color. There are several known applications of graph coloring like assigning frequencies to wireless access points, time-tabling and scheduling, register allocation and printed circuit testing among others.
 
-Graph coloring is NP-hard, and even computing a $n^{1-\epsilon}$-approximation of the chromatic number of a graph is NP-hard \cite{zuckerman07}. Therefore, a number of heuristics have been developed to assign colors to vertices; some commonly used heuristics include First Fit, Largest Degree Order and Saturation Degree Order\cite{al2006new}.  These heuristics tend to trade off minimizing the number of colors and minimizing execution time but generally the faster algorithms have poor coloring quality while the slow ones tend to be better. Combinations of these algorithms have also been used to create better heuristics like the combined SDO $\&$ LDO \cite{al2006new}.
+Graph coloring is NP-hard, and even computing a $n^{1-\epsilon}$-approximation of the chromatic number of a graph is NP-hard \cite{zuckerman07}. Therefore, a number of heuristics have been developed to assign colors to vertices; some commonly used heuristics include First Fit, Largest Degree Order and Saturation Degree Order\cite{al2006new}.  These heuristics tend to trade off minimizing the number of colors and minimizing execution time but generally the faster algorithms have poor coloring quality while the slow ones tend to yield fewer colors. Combinations of these algorithms have also been used to create better heuristics like the combined SDO $\&$ LDO \cite{al2006new}.
 
 This paper examines a graphics processing unit (GPU) mapping of parallel graph coloring.  Prior parallel graph coloring algorithms have been evaluated on conventional shared-memory multiprocessors \cite{gebremedhin2000scalable} or distributed systems \cite{bozdag2008a} but to the best of our knowledge, this is the first study of how GPU architectures affect performance gains and number of assigned colors in a parallel implementation.  Our study demonstrates that features of the GPU architecture significantly impact the algorithms selected. Specifically, the support for efficient fine-grain multithreading facilitates strong performance gains over CPU implementations. Because hundreds or even thousands of threads can be applied to the parallel coloring, we can obtain as few colors as the best sequential algorithm while operating nearly as fast as the fastest sequential algorithms. 
 
@@ -174,7 +174,7 @@ GPUs have different architectures compared to parallel computers where most of t
 \begin{figure*}[t]
   \centering
   \includegraphics[scale=0.28]{figures/newPlot.png}
-  \caption{ First row: Colors vs Threads (Subgraph size)  Second row: best performance for each algorithm}
+  \caption{ First row: Colors vs Threads (Subgraph size) - Second row: best performance for each algorithm.}
   \label{fig:results}
 \end{figure*}
 
@@ -195,7 +195,7 @@ In this paper, we propose a framework based on the \gm algorithm \cite{gebremedh
 	\STATE{ \mbox{Count neighbors outside the subgraph for each vertex}}
 \newline
 	
-\REQUIRE {$2 \: : \: Graph\: Coloring $\&$ Conflict\: Solving\:- GPU$}
+\REQUIRE {$2 \: : \: Graph\: Coloring\: $\&$ \: Conflict\: Solving\:- GPU$}
 	\WHILE {Number of color conflicts is high}
 		\STATE{ \mbox{Color graph using the specified heuristic}}
 		\STATE{ \mbox{Identify color conflicts}}
@@ -203,7 +203,7 @@ In this paper, we propose a framework based on the \gm algorithm \cite{gebremedh
 	\ENDWHILE
 	
 
-\REQUIRE {$3 \: : \: Sequential\: Conflicts\: Rsolution\: - CPU$}
+\REQUIRE {$3 \: : \: Sequential\: Conflicts\: Resolution\: - CPU$}
 	\STATE{ \mbox{Residual conflicts are eliminated}}
 		
 \end{algorithmic}
@@ -221,10 +221,10 @@ The graph is initially padded with empty nodes so that it is exactly divisible b
 Each thread assigns colors to its subgraph but checks the whole graph before allocating colors. We tried four heuristics including two proposed heuristics (MAX OUT and MIN OUT)for color allocation:
 \renewcommand{\labelenumi}{\roman{enumi}) } 
 \begin{enumerate}
-  \item First Fit: Allocate the smallest possible color to each vertex
-  \item SDO $\&$ LDO: Color is allocated to the vertex having the highest saturation and then highest degree
-  \item MAX OUT: Color is allocated to the vertex having most neighbors out of the subgraph and then highest degree
-  \item MIN OUT: Color is allocated to the vertex having fewest neighbors out of the subgraph and then highest degree
+  \item First Fit: Allocate the smallest possible color to each vertex - no specific criteria is used to choose which vertex to color first.
+  \item SDO $\&$ LDO: Color is allocated to the vertex having the highest saturation and then highest degree.
+  \item MAX OUT: Color is allocated to the vertex having most neighbors out of the subgraph and then highest degree.
+  \item MIN OUT: Color is allocated to the vertex having fewest neighbors out of the subgraph and then highest degree.
 \end{enumerate}
 
 Given that coloring is being performed in parallel, conflicts occur between vertices found in different subgraphs. Conflicts are identified by assigning one thread per boundary node which checks for color conflicts and reset the color of these nodes to null.
@@ -285,12 +285,12 @@ Given that coloring is being performed in parallel, conflicts occur between vert
 %\end{algorithm}
 
 
-\textbf{Phase 3: Conflicts Resolving}\
+\textbf{Phase 3: Sequential Conflicts Resolution}\
 Dropping to the CPU to solve the conflicts is common in many approaches but given that we have many small partitions, we tend to have lots of conflicts and resolving that on the CPU can be quite slow. So we do multiple passes of step 2 on GPU until the number of conflicts become very small and can be quickly solved sequentially on the CPU. 
 
 
 \section{Experiments and Results}
-The algorithm has been implemented using the CUDA API and the tests were carried out on a Tesla S1070 with real graphs from the University of Florida Sparse Matrix Collection. In this paper we will focus on 3 different graphs shown in Table~\ref{tbl:properties}.
+The algorithm has been implemented using the CUDA API and the tests were carried out on a Tesla S1070 with real graphs from the University of Florida Sparse Matrix Collection\cite{uofMatrix}. In this paper we will focus on 3 different graphs shown in Table~\ref{tbl:properties}.
 
 %pkustk10 & 42 & 39 & 42 & 226838 \\
 %pkustk11 & 57 & 48 & 51 & 250112 \\
@@ -367,8 +367,8 @@ The algorithm has been implemented using the CUDA API and the tests were carried
 \scriptsize
 \begin{tabular}{c c c c c c c c }
 \hline
-Name  &  $n$ & $m$ &  $\Delta$ & \multicolumn{2}{c}{Colors}  & Time  \\ \cline{5-6}
- &  &  &  & FF & SDO $\&$ LDO &  FF  \
+Name  &   &  &   & \multicolumn{2}{c}{Colors}  & Time(ms)  \\ \cline{5-6}
+ & $n$ & $m$  & $\Delta$ & FF & SDO $\&$ LDO &  FF  \
 \\
 \hline
 hood & 220,542 & 5,273,947 & 76 & 42 & 36 & 104.7\\
@@ -385,19 +385,17 @@ To investigate the impact of parallel graph coloring algorithms on  both perform
 \scriptsize
 \begin{tabular}{c c c c c }
 \hline
- %% \multicolumn{4}{c}{Colors} &  \\
-Name & \multicolumn{4}{c}{Colors} \\ \cline{2-5}
- & FF & SDO $\&$ LDO  & MAX OUT & MIN OUT \\
+Name & FF & SDO $\&$ LDO  & MAX OUT & MIN OUT \\
 \hline
-hood & 36 & 37 & 36 & 35 \\
-pkustk10 & 41 & 41 & 39 & 39\\
-pwtk & 39 & 39 & 38 & 38\\
+hood & 36.5 & 37.2 & 35.9 & 35.9 \\
+pkustk10 & 40.5 & 40.9 & 39.3 & 39.5\\
+pwtk & 38.8 & 38.8 & 38.8 & 38.8\\
 \end{tabular}
-\caption{ Optimal colors obtained by parallel algorithms.}
+\caption{ Average Optimal colors obtained by parallel algorithms.}
 \label{tbl:colors}
 \end{table}
-The results show that MAX and MIN generally yield fewer colors than other algorithms and we also notice that good coloration is obtained at relatively small graph sizes.
-In terms of speed among the parallel graph coloring algorithms, First Fit is the fastest followed by SDO $\&$ LDO, MIN and MAX which take roughtly the same amount of time.
+The results (average of 10 runs) show that MAX and MIN generally yield fewer colors than other algorithms and we also notice that good coloration is obtained at relatively small subgraph sizes.
+In terms of speed among the parallel graph coloring algorithms, First Fit is the fastest followed by SDO $\&$ LDO, MIN and MAX which take roughly the same amount of time. The best combination of good coloring and high performance is given by Parallel SDO $\&$ LDO, and it’s running time is within a factor of 2 of sequential First Fit.
 
 %\textbf{Number of threads}\
 %Given that the graphs have very different sizes, it does not make sense to use the same number of threads for each. For example, for a graph of 50 000 nodes, if 1024 threads are used, each thread handles about 48 vertices while for a graph of 500 000 nodes, each thread will operate on around 480 vertices. Since GPU cores are much slower than state-of-the-art processors speedup gains are the result of using as many cores as possible where each is operating on just a few vertices.
@@ -470,7 +468,7 @@ In terms of speed among the parallel graph coloring algorithms, First Fit is the
 
 \section{Conclusion}
 
-The proposed GPU implementation provides much better coloring quality in terms of number of colors used, and the running time is comparable to FF (known as the fastest sequential coloring algorithm). In many cases, it can even beat the sequential SDO $\&$ LDO which is reported to use smallest number of colors in \cite{bozdag2008a}.
+The proposed GPU implementation provides much better coloring quality in terms of number of colors used, and the running time is comparable to FF (known as the fastest sequential coloring algorithm). In many cases, it can even beat the sequential SDO $\&$ LDO which is reported to use smallest number of colors as well as colors reported in \cite{bozdag2008a}.
 
 
 %\appendix
