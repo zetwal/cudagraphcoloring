@@ -302,7 +302,7 @@ The tests were carried out on different categories of real graphs from the Unive
 \begin{center}
 \begin{tabular}{c c c c c c c c }
 \hline
-  &   &  &  &   \multicolumn{2}{c}{Colors} &  \\
+  &   &  &  & \multicolumn{2}{c}{Colors} &  \\
 Name & $n$ & $m$ & $\Delta$ & FF & SDO $\&$ LDO & FF Time \
 \\
 \hline
@@ -390,7 +390,9 @@ pkustk13 & 94,893 & 3,260,967 & 299 & 57 & 51 & 66\\
 
 \subsection{Results}
 
-To investigate the impact of parallel graph coloring algorithms on  both performance and number of colors obtained, the number of threads is linearly incremented and the timing and color obtained is compared.\\
+To investigate the impact of parallel graph coloring algorithms on  both performance and number of colors obtained, the number of threads is linearly incremented and the timing and color obtained is compared and the results are shown in Figure ~\ref{fig:results}\\
+
+The results show how different algorithms affect the number of colors and performance as a function of the number of threads. MAX and MIN generally perform constantly across the range while parallel First Fit anf
 %
 %\textbf{Number of threads}\
 %Given that the graphs have very different sizes, it does not make sense to use the same number of threads for each. For example, for a graph of 50 000 nodes, if 1024 threads are used, each thread handles about 48 vertices while for a graph of 500 000 nodes, each thread will operate on around 480 vertices. Since GPU cores are much slower than state-of-the-art processors speedup gains are the result of using as many cores as possible where each is operating on just a few vertices.
