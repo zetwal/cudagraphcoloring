@@ -369,7 +369,7 @@ The algorithm has been implemented using the CUDA API and the tests were carried
 %While the colors are accurate, the timing information for the sequential SDO $\&$ LDO could have been improved. The latter has is from a naive implementation which is quite inefficient. Nevertheless, the sequential SDO $\&$ LDO has been reported by its authors [...] to be O (N$^2$) and despite yielding a good coloring is quite slow. On the other hand, First Fit which is fast yields a poor coloration!\
 %Ideally what we would really want is a fast algorithm that generates as few colors as possible.
 
-\begin{table}
+\begin{table}[!ht]
 \scriptsize
 \begin{tabular}{c c c c c c c c }
 \hline
@@ -384,6 +384,8 @@ pwtk & 217,918 & 5,926,171 & 179 & 57 & 48 & 48\\
 \caption{Graph properties - $n$: number of vertices, $m$ the number of edges $\&$ $\Delta$: maximum vertex degree}
 \label{tbl:properties}
 \end{table}
+
+
 
 
 \subsection{Results}
