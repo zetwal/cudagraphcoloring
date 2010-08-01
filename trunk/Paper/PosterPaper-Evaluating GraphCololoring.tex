@@ -229,7 +229,8 @@ Each thread assigns colors to its subgraph but checks the whole graph before all
   \item MIN OUT: Color is allocated to the vertex having fewest neighbors out of the subgraph and then highest degree
 \end{enumerate}
 
-Given that coloring is being performed in parallel, conflicts occur accorssing subgraphs. Conflicted nodes are identified by assigning one thread per boundary node that checks whether there is a conflict with one of its neighbors. The nodes detected in this step need to be re-assign colors in the nex step.\
+Given that coloring is being performed in parallel, sometimes conflicts occur between vertices found in different subgraphs. Conflicts are identified by assigning one thread per boundary node which checks for color conflicts and reset the color of these nodes to null.
+
 %For all of the 4 heuristics, when we have chosen a vertex to color, we consider all the neighbors of the latter both inside and outside the subgraph %when allocating colors.\\
 
 %
@@ -311,15 +312,16 @@ The tests were carried out on different categories of real graphs from the Unive
 Name & $n$ & $m$ & $\Delta$ & FF & SDO $\&$ LDO & FF Time \
 \\
 \hline
+hood & 220,542 & 5,273,947 & 76 & 42 & 36 & 104.7\\
 pkustk10 & 81,920 & 2,114,154 & 89 & 42 & 42 & 39\\
-pkustk11 & 87,804 & 2,565,054 & 131 & 57 & 51 & 48\\
-pkustk13 & 94,893 & 3,260,967 & 299 & 57 & 51 & 66\\
-\\
+pwtk & 217,918 & 5,926,171 & 179 & 57 & 48 & 48\\
 \end{tabular}
 \caption{Graph properties}
 \label{tbl:properties}
 \end{center}
 \end{table}
+
+
 
 %pkustk10 & 42 & 39 & 42 & 226838 \\
 %pkustk11 & 57 & 48 & 51 & 250112 \\
