@@ -402,11 +402,11 @@ __global__ void conflictSolveSDO(int *adjacencyList, int *conflict, int *graphCo
                         index = i;
                 }
 				
-				if (graphColors[index] == 0)
-					numColored = color(index,adjacencyList,graphColors, maxDegree, numColored, start, end, randomListD[partitionIndex*10 + randomCount]);
+			//	if (graphColors[index] == 0)
+			//		numColored = color(index,adjacencyList,graphColors, maxDegree, numColored, start, end, randomListD[partitionIndex*10 + randomCount]);
             }
 
-			//numColored = color(index,adjacencyList,graphColors, maxDegree, numColored, start, end, randomListD[partitionIndex*10 + randomCount]);
+			numColored = color(index,adjacencyList,graphColors, maxDegree, numColored, start, end, randomListD[partitionIndex*10 + randomCount]);
         }
     }
 }

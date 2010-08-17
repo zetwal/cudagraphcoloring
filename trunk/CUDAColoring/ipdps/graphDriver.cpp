@@ -9,9 +9,15 @@
 #include <assert.h>
 #include <fstream>
 
+#include <set>
+
 #include "graphColoring.h" 
 #include "tree.h"
 using namespace std;  
+
+
+int *degreeList;
+int *saturationList;
 
 
 //----------------------- Utilities -----------------------//
@@ -657,6 +663,10 @@ int color(int vertex, int *adjacencyList, int *graphColors, int maxDegree, int n
     
     if (graphColors[vertex] == 0)
         numColored++;
+	else{
+		//cout << "Recoloring" << endl;
+		graphColors[vertex] = 0;
+	}
 	//	else
 	//		cout << "Old color: " << graphColors[vertex] << "   ";
     
@@ -747,10 +757,10 @@ int sdoIm(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, 
 			}
 
 //          cout << "Num colored: " << numColored << endl;                          
-            if (graphColors[index] == 0){
+            //if (graphColors[index] == 0){
             	numColored = color(index,adjacencyList,graphColors, maxDegree, numColored);
                 iterations++;
-            }
+            //}
 		}
     }
 
@@ -813,8 +823,117 @@ int sdoIm(int *adjacencyList, int *graphColors, int *degreeList, int sizeGraph, 
 
 //----------------------- New CPU representation -----------------------//
 
+
+
+
+
+struct classcomp {
+	bool operator() (const int& lhs, const int& rhs) const
+	{
+		if (saturationList[rhs] > saturationList[lhs])
+			return true;
+		else 
+			if (saturationList[rhs] == saturationList[lhs])
+				if (degreeList[rhs] > degreeList[lhs])
+					return true;
+				else 
+					if (degreeList[rhs] == degreeList[lhs])
+						if (rhs > lhs)
+							return true;
+		
+		return false;
+	}
+	
+};
+
+void color(int vertex, int *adjacencyList, int *graphColors, int *colorList, int maxDegree, multiset<int, classcomp> &treeGraph){
+	int colorAssigned = -1;
+	int neighbour;
+	int neighTemp;
+	
+	multiset<int, classcomp>::iterator it;
+	
+	//Color the node
+	for (int i=1; i<maxDegree; i++)
+		if (colorList[vertex*maxDegree + i] == 0){
+			colorAssigned = i;
+			graphColors[vertex] = colorAssigned;
+			break;
+		}
+	
+	//cout << vertex << " : " << saturationList[vertex] << " , " <<degreeList[vertex] << " - " << colorAssigned << endl;
+	
+	for (int i=0; i<degreeList[vertex]; i++){
+		neighbour = adjacencyList[vertex*maxDegree + i];
+		
+		if (graphColors[neighbour] != 0)
+			continue;
+		
+		if (colorList[neighbour*maxDegree + colorAssigned] == 0){
+			//remove from graph
+			it = treeGraph.find(neighbour);	
+			neighTemp = *it;
+			treeGraph.erase(it);
+			
+			// update saturation 
+			colorList[neighbour*maxDegree + colorAssigned] = colorAssigned;
+			saturationList[neighbour]++;
+			
+			//reinsert in graph
+			treeGraph.insert(neighTemp);
+		}
+	}
+	
+}
+
+
+
+
+void seqGraphColoring(int *adjacencyList, int *graphColors, int *degreeList, int maxDegree, int graphSize){
+	int index, saturation, degree;
+	
+	multiset<int, classcomp> treeGraph;
+	multiset<int, classcomp>::iterator it;
+	
+	
+	int *colorList = new int[graphSize*maxDegree];  
+	memset(colorList, 0, graphSize*maxDegree*sizeof(int));
+	
+	saturationList = new int[graphSize];  
+	memset(saturationList, 0, graphSize*sizeof(int));
+	
+
+	
+	cout << "Tree SDO New" << endl;
+	
+	// represent the graph information as a tree sorted by saturation and degree
+	for (int i=0; i<graphSize; i++){
+		treeGraph.insert(i);
+	}
+	
+
+	// Color the graph
+	for (int i=0; i<graphSize; i++){
+		it = treeGraph.end();	it--;
+		
+		index = *it;
+		treeGraph.erase(it);
+		
+		color(index, adjacencyList, graphColors, colorList, maxDegree, treeGraph);
+	}
+	
+	delete []colorList;
+	delete []saturationList;
+}
+
+
+
+
+
+
 // Author: Pascal
 // colors the vertex with the min possible color
+/*
 void color(int vertex, int *adjacencyList, int *graphColors, int *colorList, int *saturationList, int *degreeList, int maxDegree, tree &graph){
 	int colorAssigned = -1;
 	int neighbour;
@@ -851,10 +970,16 @@ void color(int vertex, int *adjacencyList, int *graphColors, int *colorList, int
 	}
 	
 }
+*/
 
 
 
 
+
+
+
+
+/*
 void seqGraphColoring(int *adjacencyList, int *graphColors, int *degreeList, int maxDegree, int graphSize){
 	int index, saturation, degree;
 	tree graph;
@@ -895,7 +1020,7 @@ void seqGraphColoring(int *adjacencyList, int *graphColors, int *degreeList, int
 	delete []colorList;
 	delete []saturationList;
 }
-
+*/
 
 
 
@@ -1586,7 +1711,10 @@ int main(int argc, char *argv[]){
 	// Some further intializations
 	int *graphColors = new int[graphSize];          
 	int *boundaryList = new int[graphSize]; 
-	int *degreeList = new int[graphSize];
+	
+	//int *degreeList = new int[graphSize];
+	degreeList = new int[graphSize];
+	
 	int *numOutside = new int[graphSize];
 	
 	memset(graphColors, 0, graphSize*sizeof(int)); 
